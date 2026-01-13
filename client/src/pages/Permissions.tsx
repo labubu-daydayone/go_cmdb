@@ -22,7 +22,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Plus, Trash2, Link, UserPlus, FolderPlus, X, Search, Copy, MoveRight, Layers } from 'lucide-react';
+import { Plus, Trash2, Link, UserPlus, FolderPlus, X, Search, Copy, MoveRight, Layers, ChevronLeft, ChevronRight } from 'lucide-react';
 import { MultiSelect } from '@/components/ui/multi-select';
 import { useWebSocket } from '@/hooks/useWebSocket';
 import { permissionAPI, userAPI } from '@/lib/api';
@@ -137,7 +137,8 @@ export default function Permissions() {
 
   // 资源列表分页
   const [resourcePage, setResourcePage] = useState(1);
-  const [resourcePageSize] = useState(10);
+  const [resourcePageSize, setResourcePageSize] = useState(10);
+  const [resourceSearchTerm, setResourceSearchTerm] = useState('');
 
   const token = localStorage.getItem('token');
   const { subscribe, unsubscribe } = useWebSocket(token);
@@ -923,13 +924,14 @@ export default function Permissions() {
                             <DrawerDescription>选择资源类型和ID</DrawerDescription>
                           </DrawerHeader>
                           <div className="px-4 space-y-4 flex-1 overflow-y-auto">
-                            <div className="grid grid-cols-2 gap-4">
-                              <div className="space-y-2">
+                            <div className="flex gap-4 items-end">
+                              <div className="space-y-2 w-48">
                                 <Label>资源类型</Label>
                                 <Select value={selectedResourceType} onValueChange={(val) => {
                                   setSelectedResourceType(val);
                                   setResourcePage(1);
                                   setSelectedResourceId('');
+                                  setResourceSearchTerm('');
                                 }}>
                                   <SelectTrigger className="w-full">
                                     <SelectValue />
@@ -940,6 +942,21 @@ export default function Permissions() {
                                     <SelectItem value="script">脚本</SelectItem>
                                   </SelectContent>
                                 </Select>
+                              </div>
+                              <div className="flex-1 space-y-2">
+                                <Label>搜索关键字</Label>
+                                <div className="relative">
+                                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                                  <Input
+                                    placeholder="输入关键字搜索..."
+                                    value={resourceSearchTerm}
+                                    onChange={(e) => {
+                                      setResourceSearchTerm(e.target.value);
+                                      setResourcePage(1);
+                                    }}
+                                    className="pl-9"
+                                  />
+                                </div>
                               </div>
                             </div>
 
@@ -957,10 +974,21 @@ export default function Permissions() {
                                     </thead>
                                     <tbody>
                                       {(() => {
-                                        const resources = getMockResources(selectedResourceType);
+                                        let resources: any[] = getMockResources(selectedResourceType);
+                                        
+                                        // 搜索过滤
+                                        if (resourceSearchTerm) {
+                                          resources = resources.filter((r: any) => 
+                                            r.name.toLowerCase().includes(resourceSearchTerm.toLowerCase()) ||
+                                            (r.description && r.description.toLowerCase().includes(resourceSearchTerm.toLowerCase())) ||
+                                            (r.path && r.path.toLowerCase().includes(resourceSearchTerm.toLowerCase()))
+                                          );
+                                        }
+                                        
                                         const start = (resourcePage - 1) * resourcePageSize;
                                         const end = start + resourcePageSize;
                                         const paginatedResources = resources.slice(start, end);
+                                        const totalPages = Math.ceil(resources.length / resourcePageSize);
                                         
                                         return paginatedResources.map((resource: any) => (
                                           <tr
@@ -999,27 +1027,97 @@ export default function Permissions() {
                                   </table>
                                 </div>
                                 <div className="flex items-center justify-between p-3 border-t bg-muted/20">
-                                  <div className="text-sm text-muted-foreground">
-                                    共 {getMockResources(selectedResourceType).length} 条记录，当前第 {resourcePage} 页
-                                  </div>
-                                  <div className="flex gap-2">
-                                    <Button
-                                      size="sm"
-                                      variant="outline"
-                                      onClick={() => setResourcePage(p => Math.max(1, p - 1))}
-                                      disabled={resourcePage === 1}
-                                    >
-                                      上一页
-                                    </Button>
-                                    <Button
-                                      size="sm"
-                                      variant="outline"
-                                      onClick={() => setResourcePage(p => p + 1)}
-                                      disabled={resourcePage * resourcePageSize >= getMockResources(selectedResourceType).length}
-                                    >
-                                      下一页
-                                    </Button>
-                                  </div>
+                                  {(() => {
+                                    let resources: any[] = getMockResources(selectedResourceType);
+                                    if (resourceSearchTerm) {
+                                      resources = resources.filter((r: any) => 
+                                        r.name.toLowerCase().includes(resourceSearchTerm.toLowerCase()) ||
+                                        (r.description && r.description.toLowerCase().includes(resourceSearchTerm.toLowerCase())) ||
+                                        (r.path && r.path.toLowerCase().includes(resourceSearchTerm.toLowerCase()))
+                                      );
+                                    }
+                                    const totalPages = Math.ceil(resources.length / resourcePageSize);
+                                    
+                                    // 生成页码按钮
+                                    const getPageNumbers = () => {
+                                      const pages: (number | string)[] = [];
+                                      if (totalPages <= 7) {
+                                        for (let i = 1; i <= totalPages; i++) pages.push(i);
+                                      } else {
+                                        if (resourcePage <= 3) {
+                                          for (let i = 1; i <= 5; i++) pages.push(i);
+                                          pages.push('...');
+                                          pages.push(totalPages);
+                                        } else if (resourcePage >= totalPages - 2) {
+                                          pages.push(1);
+                                          pages.push('...');
+                                          for (let i = totalPages - 4; i <= totalPages; i++) pages.push(i);
+                                        } else {
+                                          pages.push(1);
+                                          pages.push('...');
+                                          for (let i = resourcePage - 1; i <= resourcePage + 1; i++) pages.push(i);
+                                          pages.push('...');
+                                          pages.push(totalPages);
+                                        }
+                                      }
+                                      return pages;
+                                    };
+                                    
+                                    return (
+                                      <>
+                                        <div className="text-sm text-muted-foreground">
+                                          共 {resources.length} 条记录
+                                        </div>
+                                        <div className="flex items-center gap-2">
+                                          <Button
+                                            size="sm"
+                                            variant="outline"
+                                            onClick={() => setResourcePage(p => Math.max(1, p - 1))}
+                                            disabled={resourcePage === 1}
+                                          >
+                                            <ChevronLeft className="h-4 w-4" />
+                                          </Button>
+                                          {getPageNumbers().map((page, idx) => (
+                                            page === '...' ? (
+                                              <span key={`ellipsis-${idx}`} className="px-2 text-muted-foreground">...</span>
+                                            ) : (
+                                              <Button
+                                                key={page}
+                                                size="sm"
+                                                variant={resourcePage === page ? 'default' : 'outline'}
+                                                onClick={() => setResourcePage(page as number)}
+                                                className="min-w-[2.5rem]"
+                                              >
+                                                {page}
+                                              </Button>
+                                            )
+                                          ))}
+                                          <Button
+                                            size="sm"
+                                            variant="outline"
+                                            onClick={() => setResourcePage(p => Math.min(totalPages, p + 1))}
+                                            disabled={resourcePage >= totalPages}
+                                          >
+                                            <ChevronRight className="h-4 w-4" />
+                                          </Button>
+                                          <Select value={resourcePageSize.toString()} onValueChange={(val) => {
+                                            setResourcePageSize(Number(val));
+                                            setResourcePage(1);
+                                          }}>
+                                            <SelectTrigger className="w-32">
+                                              <SelectValue />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                              <SelectItem value="10">10 条/页</SelectItem>
+                                              <SelectItem value="20">20 条/页</SelectItem>
+                                              <SelectItem value="50">50 条/页</SelectItem>
+                                              <SelectItem value="100">100 条/页</SelectItem>
+                                            </SelectContent>
+                                          </Select>
+                                        </div>
+                                      </>
+                                    );
+                                  })()}
                                 </div>
                               </div>
                             </div>
