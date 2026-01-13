@@ -23,6 +23,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Plus, Trash2, Link, UserPlus, FolderPlus, X, Search } from 'lucide-react';
+import { MultiSelect } from '@/components/ui/multi-select';
 import { useWebSocket } from '@/hooks/useWebSocket';
 import { permissionAPI, userAPI } from '@/lib/api';
 
@@ -536,94 +537,43 @@ export default function Permissions() {
                           <DrawerDescription>使用搜索框查找并选择权限</DrawerDescription>
                         </DrawerHeader>
                         <div className="px-4 space-y-4 flex-1 overflow-y-auto">
-                          {/* 已分配权限显示区域 */}
                           <div className="space-y-2">
-                            <Label>已分配的权限</Label>
-                            <div className="flex flex-wrap gap-2 min-h-[60px] p-3 border rounded-lg bg-background">
-                              {getRolePermissions(role).map((perm, index) => (
-                                <Badge
-                                  key={perm.id}
-                                  className={`${getPermissionColor(index)} cursor-pointer hover:opacity-80 flex items-center gap-1`}
-                                  onClick={() => handleRemovePermission(role.id, perm.id)}
-                                >
-                                  {perm.name}
-                                  <X className="h-3 w-3" />
-                                </Badge>
-                              ))}
-                              {(!role.permissions || role.permissions.length === 0) && (
-                                <span className="text-sm text-muted-foreground">请从下方列表选择权限</span>
-                              )}
-                            </div>
-                          </div>
+                            <Label>选择权限</Label>
+                            <MultiSelect
+                              options={permissions.map((p) => ({
+                                id: p.id,
+                                name: p.name,
+                                description: `${p.resource} - ${p.action}`,
+                              }))}
+                              selected={role.permissions || []}
+                              onChange={(selectedIds) => {
+                                // 找出新增的权限
+                                const added = selectedIds.filter(
+                                  (id) => !role.permissions?.includes(id)
+                                );
+                                // 找出删除的权限
+                                const removed = (role.permissions || []).filter(
+                                  (id) => !selectedIds.includes(id)
+                                );
 
-                          {/* 搜索框 */}
-                          <div className="space-y-2">
-                            <Label>搜索并添加权限</Label>
-                            <div className="relative">
-                              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                              <Input
-                                placeholder="输入权限名称、资源或操作进行搜索..."
-                                value={permissionSearchTerm}
-                                onChange={(e) => setPermissionSearchTerm(e.target.value)}
-                                className="pl-10"
-                              />
-                            </div>
-                          </div>
+                                // 执行添加操作
+                                added.forEach((id) => {
+                                  permissionAPI
+                                    .assignPermissionToRole(role.id, id)
+                                    .then(() => loadData());
+                                });
 
-                          {/* 权限列表 */}
-                          <div className="space-y-2">
-                            <Label>可用权限列表</Label>
-                            <div className="border rounded-lg max-h-[400px] overflow-y-auto">
-                              {filteredPermissions
-                                .filter((p) => !role.permissions?.includes(p.id))
-                                .map((perm, index) => (
-                                  <div
-                                    key={perm.id}
-                                    className="p-3 hover:bg-muted/50 cursor-pointer border-b last:border-b-0 transition-colors"
-                                    onClick={() => {
-                                      handleAssignPermission();
-                                      setSelectedPermissionId(perm.id);
-                                      setTimeout(() => {
-                                        handleAssignPermission();
-                                      }, 100);
-                                    }}
-                                  >
-                                    <div className="flex items-center justify-between">
-                                      <div className="flex-1">
-                                        <div className="font-medium text-sm">{perm.name}</div>
-                                        <div className="text-xs text-muted-foreground mt-1">
-                                          {perm.description}
-                                        </div>
-                                        <div className="flex gap-2 mt-1">
-                                          <Badge variant="outline" className="text-xs">
-                                            {perm.resource}
-                                          </Badge>
-                                          <Badge variant="outline" className="text-xs">
-                                            {perm.action}
-                                          </Badge>
-                                        </div>
-                                      </div>
-                                      <Button
-                                        size="sm"
-                                        variant="ghost"
-                                        onClick={(e) => {
-                                          e.stopPropagation();
-                                          permissionAPI.assignPermissionToRole(role.id, perm.id).then(() => {
-                                            loadData();
-                                          });
-                                        }}
-                                      >
-                                        <Plus className="h-4 w-4" />
-                                      </Button>
-                                    </div>
-                                  </div>
-                                ))}
-                              {filteredPermissions.filter((p) => !role.permissions?.includes(p.id)).length === 0 && (
-                                <div className="p-8 text-center text-sm text-muted-foreground">
-                                  {permissionSearchTerm ? '未找到匹配的权限' : '所有权限已分配'}
-                                </div>
-                              )}
-                            </div>
+                                // 执行删除操作
+                                removed.forEach((id) => {
+                                  permissionAPI
+                                    .removePermissionFromRole(role.id, id)
+                                    .then(() => loadData());
+                                });
+                              }}
+                              placeholder="点击选择权限..."
+                              searchPlaceholder="搜索权限名称、资源或操作..."
+                              getOptionColor={getPermissionColor}
+                            />
                           </div>
                         </div>
                         <DrawerFooter>
