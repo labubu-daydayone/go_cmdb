@@ -33,7 +33,6 @@ function ProtectedRoute({ path, component: Component }: { path: string; componen
     </Route>
   );
 }
-
 function Router() {
   const { isAuthenticated, isLoading } = useAuth();
   const [location] = useLocation();

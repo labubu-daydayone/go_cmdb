@@ -1,6 +1,8 @@
 import axios, { AxiosInstance } from 'axios';
+import { mockAPI } from './mockData';
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080/api/v1';
+const USE_MOCK_DATA = import.meta.env.VITE_USE_MOCK !== 'false'; // 默认使用Mock数据
 
 // 创建axios实例
 const apiClient: AxiosInstance = axios.create({
@@ -38,7 +40,7 @@ apiClient.interceptors.response.use(
 );
 
 // ===== 认证相关 =====
-export const authAPI = {
+export const authAPI = USE_MOCK_DATA ? mockAPI.auth : {
   login: (username: string, password: string) =>
     apiClient.post('/auth/login', { username, password }),
   register: (username: string, email: string, password: string) =>
@@ -48,7 +50,7 @@ export const authAPI = {
 };
 
 // ===== 用户管理 =====
-export const userAPI = {
+export const userAPI = USE_MOCK_DATA ? mockAPI.user : {
   create: (username: string, email: string, password: string) =>
     apiClient.post('/users/create', { username, email, password }),
   list: (page: number = 1, pageSize: number = 10) =>
@@ -74,7 +76,7 @@ export const userAPI = {
 };
 
 // ===== 权限管理 =====
-export const permissionAPI = {
+export const permissionAPI = USE_MOCK_DATA ? mockAPI.permission : {
   // 角色
   createRole: (name: string, description: string) =>
     apiClient.post('/permissions/roles/create', { name, description }),
