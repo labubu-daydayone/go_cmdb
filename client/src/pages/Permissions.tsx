@@ -22,7 +22,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Plus, Trash2, Link, UserPlus, FolderPlus, X, Search } from 'lucide-react';
+import { Plus, Trash2, Link, UserPlus, FolderPlus, X, Search, Copy, MoveRight, Layers } from 'lucide-react';
 import { MultiSelect } from '@/components/ui/multi-select';
 import { useWebSocket } from '@/hooks/useWebSocket';
 import { permissionAPI, userAPI } from '@/lib/api';
@@ -128,6 +128,12 @@ export default function Permissions() {
   const [addResourceToGroupOpen, setAddResourceToGroupOpen] = useState(false);
   const [selectedResourceType, setSelectedResourceType] = useState<string>('domain');
   const [selectedResourceId, setSelectedResourceId] = useState('');
+
+  // 批量操作相关状态
+  const [batchOperationOpen, setBatchOperationOpen] = useState(false);
+  const [batchOperationType, setBatchOperationType] = useState<'copy' | 'move' | 'add-by-type' | 'remove'>('copy');
+  const [sourceGroupId, setSourceGroupId] = useState('');
+  const [batchResourceType, setBatchResourceType] = useState<string>('domain');
 
   const token = localStorage.getItem('token');
   const { subscribe, unsubscribe } = useWebSocket(token);
@@ -292,6 +298,62 @@ export default function Permissions() {
       await permissionAPI.addResourceToGroup(selectedGroup.id, selectedResourceId);
       setSelectedResourceType('domain');
       setSelectedResourceId('');
+      loadData();
+    } catch (error) {
+      console.error('添加资源失败:', error);
+    }
+  };
+
+  // 批量操作处理
+  const handleBatchOperation = async () => {
+    if (!selectedGroup) return;
+
+    try {
+      switch (batchOperationType) {
+        case 'copy':
+          // 从其他组复制资源
+          if (!sourceGroupId) return;
+          const sourceGroup = groups.find(g => g.id === sourceGroupId);
+          if (sourceGroup?.resources) {
+            for (const resource of sourceGroup.resources) {
+              await permissionAPI.addResourceToGroup(selectedGroup.id, resource.id);
+            }
+          }
+          break;
+
+        case 'move':
+          // 移动资源（复制+删除）
+          if (!sourceGroupId) return;
+          const srcGroup = groups.find(g => g.id === sourceGroupId);
+          if (srcGroup?.resources) {
+            for (const resource of srcGroup.resources) {
+              await permissionAPI.addResourceToGroup(selectedGroup.id, resource.id);
+              await permissionAPI.removeResourceFromGroup(sourceGroupId, resource.id);
+            }
+          }
+          break;
+
+        case 'add-by-type':
+          // 按类型批量添加
+          const resources = getMockResources(batchResourceType);
+          for (const resource of resources) {
+            await permissionAPI.addResourceToGroup(selectedGroup.id, resource.id);
+          }
+          break;
+
+        case 'remove':
+          // 批量移除资源
+          if (selectedGroup.resources) {
+            for (const resource of selectedGroup.resources) {
+              await permissionAPI.removeResourceFromGroup(selectedGroup.id, resource.id);
+            }
+          }
+          break;
+      }
+
+      setBatchOperationOpen(false);
+      setSourceGroupId('');
+      setBatchResourceType('domain');
       setAddResourceToGroupOpen(false);
       loadData();
     } catch (error) {
@@ -780,17 +842,18 @@ export default function Permissions() {
                       <Badge variant="outline">{group.resources?.length || 0}</Badge>
                     </div>
 
-                    <div className="flex gap-2 pt-2">
-                      <Drawer open={addUserToGroupOpen && selectedGroup?.id === group.id} onOpenChange={(open) => {
-                        setAddUserToGroupOpen(open);
-                        if (open) setSelectedGroup(group);
-                      }}>
-                        <DrawerTrigger asChild>
-                          <Button variant="outline" size="sm" className="flex-1">
-                            <UserPlus className="mr-2 h-4 w-4" />
-                            添加用户
-                          </Button>
-                        </DrawerTrigger>
+                    <div className="space-y-2 pt-2">
+                      <div className="flex gap-2">
+                        <Drawer open={addUserToGroupOpen && selectedGroup?.id === group.id} onOpenChange={(open) => {
+                          setAddUserToGroupOpen(open);
+                          if (open) setSelectedGroup(group);
+                        }}>
+                          <DrawerTrigger asChild>
+                            <Button variant="outline" size="sm" className="flex-1">
+                              <UserPlus className="mr-2 h-4 w-4" />
+                              添加用户
+                            </Button>
+                          </DrawerTrigger>
                         <DrawerContent className="h-[80vh]">
                           <DrawerHeader>
                             <DrawerTitle>添加用户到 {group.name}</DrawerTitle>
@@ -901,6 +964,126 @@ export default function Permissions() {
                           <DrawerFooter>
                             <Button onClick={handleAddResourceToGroup} disabled={!selectedResourceId}>
                               添加资源
+                            </Button>
+                            <DrawerClose asChild>
+                              <Button variant="outline">取消</Button>
+                            </DrawerClose>
+                          </DrawerFooter>
+                        </DrawerContent>
+                      </Drawer>
+                      </div>
+
+                      <Drawer open={batchOperationOpen && selectedGroup?.id === group.id} onOpenChange={(open) => {
+                        setBatchOperationOpen(open);
+                        if (open) setSelectedGroup(group);
+                      }}>
+                        <DrawerTrigger asChild>
+                          <Button variant="outline" size="sm" className="w-full">
+                            <Layers className="mr-2 h-4 w-4" />
+                            批量操作
+                          </Button>
+                        </DrawerTrigger>
+                        <DrawerContent className="h-[80vh]">
+                          <DrawerHeader>
+                            <DrawerTitle>批量操作 - {group.name}</DrawerTitle>
+                            <DrawerDescription>选择操作类型并执行</DrawerDescription>
+                          </DrawerHeader>
+                          <div className="px-4 space-y-4 flex-1 overflow-y-auto">
+                            <div className="space-y-2">
+                              <Label>操作类型</Label>
+                              <Select value={batchOperationType} onValueChange={(value: any) => setBatchOperationType(value)}>
+                                <SelectTrigger>
+                                  <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="copy">
+                                    <div className="flex items-center">
+                                      <Copy className="mr-2 h-4 w-4" />
+                                      从其他组复制资源
+                                    </div>
+                                  </SelectItem>
+                                  <SelectItem value="move">
+                                    <div className="flex items-center">
+                                      <MoveRight className="mr-2 h-4 w-4" />
+                                      从其他组移动资源
+                                    </div>
+                                  </SelectItem>
+                                  <SelectItem value="add-by-type">
+                                    <div className="flex items-center">
+                                      <FolderPlus className="mr-2 h-4 w-4" />
+                                      按类型批量添加
+                                    </div>
+                                  </SelectItem>
+                                  <SelectItem value="remove">
+                                    <div className="flex items-center">
+                                      <Trash2 className="mr-2 h-4 w-4" />
+                                      批量移除所有资源
+                                    </div>
+                                  </SelectItem>
+                                </SelectContent>
+                              </Select>
+                            </div>
+
+                            {(batchOperationType === 'copy' || batchOperationType === 'move') && (
+                              <div className="space-y-2">
+                                <Label>选择源权限组</Label>
+                                <Select value={sourceGroupId} onValueChange={setSourceGroupId}>
+                                  <SelectTrigger>
+                                    <SelectValue placeholder="选择权限组" />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    {groups.filter(g => g.id !== group.id).map((g) => (
+                                      <SelectItem key={g.id} value={g.id}>
+                                        {g.name} ({g.resources?.length || 0}个资源)
+                                      </SelectItem>
+                                    ))}
+                                  </SelectContent>
+                                </Select>
+                                {sourceGroupId && (
+                                  <div className="text-sm text-muted-foreground mt-2">
+                                    {batchOperationType === 'copy' ? '将复制' : '将移动'}
+                                    {' '}{groups.find(g => g.id === sourceGroupId)?.resources?.length || 0}
+                                    {' '}个资源到 {group.name}
+                                  </div>
+                                )}
+                              </div>
+                            )}
+
+                            {batchOperationType === 'add-by-type' && (
+                              <div className="space-y-2">
+                                <Label>选择资源类型</Label>
+                                <Select value={batchResourceType} onValueChange={setBatchResourceType}>
+                                  <SelectTrigger>
+                                    <SelectValue />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    <SelectItem value="domain">域名 ({getMockResources('domain').length}个)</SelectItem>
+                                    <SelectItem value="nginx">Nginx配置 ({getMockResources('nginx').length}个)</SelectItem>
+                                    <SelectItem value="script">脚本 ({getMockResources('script').length}个)</SelectItem>
+                                  </SelectContent>
+                                </Select>
+                                <div className="text-sm text-muted-foreground mt-2">
+                                  将添加所有 {batchResourceType === 'domain' ? '域名' : batchResourceType === 'nginx' ? 'Nginx配置' : '脚本'} 类型的资源
+                                </div>
+                              </div>
+                            )}
+
+                            {batchOperationType === 'remove' && (
+                              <div className="p-4 bg-destructive/10 border border-destructive/20 rounded-lg">
+                                <p className="text-sm text-destructive font-medium">
+                                  警告：此操作将移除 {group.name} 中的所有 {group.resources?.length || 0} 个资源
+                                </p>
+                              </div>
+                            )}
+                          </div>
+                          <DrawerFooter>
+                            <Button 
+                              onClick={handleBatchOperation}
+                              disabled={
+                                (batchOperationType === 'copy' || batchOperationType === 'move') && !sourceGroupId
+                              }
+                            >
+                              执行操作
                             </Button>
                             <DrawerClose asChild>
                               <Button variant="outline">取消</Button>
