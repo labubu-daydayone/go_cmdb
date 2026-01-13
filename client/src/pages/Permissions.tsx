@@ -127,7 +127,7 @@ export default function Permissions() {
   // 权限组资源管理
   const [addResourceToGroupOpen, setAddResourceToGroupOpen] = useState(false);
   const [selectedResourceType, setSelectedResourceType] = useState<string>('domain');
-  const [selectedResourceId, setSelectedResourceId] = useState('');
+  const [selectedResourceIds, setSelectedResourceIds] = useState<string[]>([]);
 
   // 批量操作相关状态
   const [batchOperationOpen, setBatchOperationOpen] = useState(false);
@@ -298,11 +298,16 @@ export default function Permissions() {
 
   // 添加资源到权限组
   const handleAddResourceToGroup = async () => {
-    if (!selectedGroup || !selectedResourceType || !selectedResourceId) return;
+    if (!selectedGroup || !selectedResourceType || selectedResourceIds.length === 0) return;
     try {
-      await permissionAPI.addResourceToGroup(selectedGroup.id, selectedResourceId);
+      // 批量添加所有选中的资源
+      await Promise.all(
+        selectedResourceIds.map(resourceId => 
+          permissionAPI.addResourceToGroup(selectedGroup.id, resourceId)
+        )
+      );
       setSelectedResourceType('domain');
-      setSelectedResourceId('');
+      setSelectedResourceIds([]);
       loadData();
     } catch (error) {
       console.error('添加资源失败:', error);
@@ -929,7 +934,7 @@ export default function Permissions() {
                               <Select value={selectedResourceType} onValueChange={(val) => {
                                 setSelectedResourceType(val);
                                 setResourcePage(1);
-                                setSelectedResourceId('');
+                                setSelectedResourceIds([]);
                                 setResourceSearchTerm('');
                               }}>
                                 <SelectTrigger className="w-48">
@@ -988,10 +993,9 @@ export default function Permissions() {
                                         return paginatedResources.map((resource: any) => (
                                           <tr
                                             key={resource.id}
-                                            className={`border-t cursor-pointer hover:bg-muted/30 transition-colors ${
-                                              selectedResourceId === resource.id ? 'bg-blue-50' : ''
+                                            className={`hover:bg-muted/50 transition-colors ${
+                                              selectedResourceIds.includes(resource.id) ? 'bg-blue-50' : ''
                                             }`}
-                                            onClick={() => setSelectedResourceId(resource.id)}
                                           >
                                             <td className="p-3">
                                               <div className="font-medium">{resource.name}</div>
@@ -1004,16 +1008,18 @@ export default function Permissions() {
                                               </div>
                                             </td>
                                             <td className="p-3 text-center">
-                                              <Button
-                                                size="sm"
-                                                variant={selectedResourceId === resource.id ? 'default' : 'outline'}
-                                                onClick={(e) => {
-                                                  e.stopPropagation();
-                                                  setSelectedResourceId(resource.id);
+                                              <input
+                                                type="checkbox"
+                                                checked={selectedResourceIds.includes(resource.id)}
+                                                onChange={(e) => {
+                                                  if (e.target.checked) {
+                                                    setSelectedResourceIds([...selectedResourceIds, resource.id]);
+                                                  } else {
+                                                    setSelectedResourceIds(selectedResourceIds.filter(id => id !== resource.id));
+                                                  }
                                                 }}
-                                              >
-                                                {selectedResourceId === resource.id ? '已选中' : '选择'}
-                                              </Button>
+                                                className="w-4 h-4 cursor-pointer"
+                                              />
                                             </td>
                                           </tr>
                                         ));
@@ -1118,8 +1124,8 @@ export default function Permissions() {
                             </div>
                           </div>
                           <DrawerFooter>
-                            <Button onClick={handleAddResourceToGroup} disabled={!selectedResourceId}>
-                              添加资源
+                            <Button onClick={handleAddResourceToGroup} disabled={selectedResourceIds.length === 0}>
+                              添加资源 {selectedResourceIds.length > 0 && `(${selectedResourceIds.length})`}
                             </Button>
                             <DrawerClose asChild>
                               <Button variant="outline">取消</Button>
