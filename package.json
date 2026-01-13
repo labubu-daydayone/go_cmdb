@@ -4,8 +4,8 @@
   "type": "module",
   "license": "MIT",
   "scripts": {
-    "dev": "vite --host",
-    "build": "vite build && esbuild server/index.ts --platform=node --packages=external --bundle --format=esm --outdir=dist",
+    "dev": "VITE_API_URL=http://localhost:8080/api/v1 VITE_WS_URL=ws://localhost:8080/api/v1/ws/connect vite --host",
+    "build": "VITE_API_URL=/api/v1 VITE_WS_URL=ws://api/v1/ws/connect vite build && esbuild server/index.ts --platform=node --packages=external --bundle --format=esm --outdir=dist",
     "start": "NODE_ENV=production node dist/index.js",
     "preview": "vite preview --host",
     "check": "tsc --noEmit",
