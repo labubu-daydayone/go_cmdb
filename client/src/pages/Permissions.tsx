@@ -385,7 +385,8 @@ export default function Permissions() {
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="read">读取</SelectItem>
-                        <SelectItem value="write">写入</SelectItem>
+                        <SelectItem value="create">创建</SelectItem>
+                        <SelectItem value="update">更新</SelectItem>
                         <SelectItem value="delete">删除</SelectItem>
                         <SelectItem value="execute">执行</SelectItem>
                       </SelectContent>

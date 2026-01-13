@@ -27,8 +27,8 @@ let mockUsers = [
 
 // Mock角色权限关联
 let mockRolePermissions: { [roleId: string]: string[] } = {
-  '1': ['1', '2', '3', '4'], // Admin角色拥有所有权限
-  '2': ['1'], // User角色只有读取权限
+  '1': ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12'], // Admin角色拥有所有权限
+  '2': ['1', '5', '9'], // User角色只有读取权限
 };
 
 // Mock角色数据
@@ -49,51 +49,102 @@ let mockRoles = [
 
 // Mock权限数据
 let mockPermissions = [
+  // 用户管理权限
   {
     id: '1',
-    name: '用户列表-读取',
-    description: '查看用户列表',
+    name: '用户管理-读取',
+    description: '查看用户列表和详情',
     action: 'read',
     resource: 'user',
     created_at: new Date().toISOString(),
   },
   {
     id: '2',
-    name: '用户管理-写入',
-    description: '创建和编辑用户',
-    action: 'write',
+    name: '用户管理-创建',
+    description: '创建新用户',
+    action: 'create',
     resource: 'user',
     created_at: new Date().toISOString(),
   },
   {
     id: '3',
+    name: '用户管理-更新',
+    description: '编辑用户信息',
+    action: 'update',
+    resource: 'user',
+    created_at: new Date().toISOString(),
+  },
+  {
+    id: '4',
+    name: '用户管理-删除',
+    description: '删除用户',
+    action: 'delete',
+    resource: 'user',
+    created_at: new Date().toISOString(),
+  },
+  // 权限管理权限
+  {
+    id: '5',
     name: '权限管理-读取',
-    description: '查看权限列表',
+    description: '查看权限、角色、权限组列表',
     action: 'read',
     resource: 'permission',
     created_at: new Date().toISOString(),
   },
   {
-    id: '4',
-    name: '权限管理-写入',
-    description: '创建和编辑权限',
-    action: 'write',
+    id: '6',
+    name: '权限管理-创建',
+    description: '创建权限、角色、权限组',
+    action: 'create',
     resource: 'permission',
     created_at: new Date().toISOString(),
   },
   {
-    id: '5',
+    id: '7',
+    name: '权限管理-更新',
+    description: '编辑权限、角色、权限组',
+    action: 'update',
+    resource: 'permission',
+    created_at: new Date().toISOString(),
+  },
+  {
+    id: '8',
+    name: '权限管理-删除',
+    description: '删除权限、角色、权限组',
+    action: 'delete',
+    resource: 'permission',
+    created_at: new Date().toISOString(),
+  },
+  // 域名管理权限
+  {
+    id: '9',
     name: '域名管理-读取',
-    description: '查看域名列表',
+    description: '查看域名列表和详情',
     action: 'read',
     resource: 'domain',
     created_at: new Date().toISOString(),
   },
   {
-    id: '6',
-    name: '域名管理-写入',
-    description: '创建和编辑域名',
-    action: 'write',
+    id: '10',
+    name: '域名管理-创建',
+    description: '添加新域名',
+    action: 'create',
+    resource: 'domain',
+    created_at: new Date().toISOString(),
+  },
+  {
+    id: '11',
+    name: '域名管理-更新',
+    description: '编辑域名配置',
+    action: 'update',
+    resource: 'domain',
+    created_at: new Date().toISOString(),
+  },
+  {
+    id: '12',
+    name: '域名管理-删除',
+    description: '删除域名',
+    action: 'delete',
     resource: 'domain',
     created_at: new Date().toISOString(),
   },
