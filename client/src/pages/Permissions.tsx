@@ -799,42 +799,42 @@ export default function Permissions() {
                           <div className="px-4 space-y-4 flex-1 overflow-y-auto">
                             <div className="space-y-2">
                               <Label>选择用户</Label>
-                              <div className="space-y-2">
-                                {users.filter(u => !group.users?.includes(u.id)).map((user) => (
-                                  <div
-                                    key={user.id}
-                                    className={`p-3 border rounded-lg cursor-pointer transition-colors ${
-                                      selectedUserId === user.id
-                                        ? 'border-blue-500 bg-blue-50'
-                                        : 'border-gray-200 hover:border-blue-300'
-                                    }`}
-                                    onClick={() => setSelectedUserId(user.id)}
-                                  >
-                                    <div className="flex items-center justify-between">
-                                      <div>
-                                        <div className="font-medium">{user.username}</div>
-                                        <div className="text-sm text-muted-foreground">{user.email}</div>
-                                      </div>
-                                      {user.role === 'admin' && (
-                                        <Badge variant="secondary">管理员</Badge>
-                                      )}
-                                    </div>
-                                  </div>
-                                ))}
-                                {users.filter(u => !group.users?.includes(u.id)).length === 0 && (
-                                  <div className="text-center text-muted-foreground py-4">
-                                    所有用户已添加到该权限组
-                                  </div>
-                                )}
-                              </div>
+                              <MultiSelect
+                                options={users.map(u => ({
+                                  id: u.id,
+                                  name: u.username,
+                                  description: u.email,
+                                }))}
+                                selected={group.users || []}
+                                onChange={(userIds) => {
+                                  // 找出新增的用户ID
+                                  const addedUsers = userIds.filter(id => !group.users?.includes(id));
+                                  // 找出删除的用户ID
+                                  const removedUsers = (group.users || []).filter(id => !userIds.includes(id));
+                                  
+                                  // 执行添加操作
+                                  addedUsers.forEach(userId => {
+                                    permissionAPI.addUserToGroup(group.id, userId);
+                                  });
+                                  
+                                  // 执行删除操作
+                                  removedUsers.forEach(userId => {
+                                    permissionAPI.removeUserFromGroup(group.id, userId);
+                                  });
+                                  
+                                  // 更新本地状态
+                                  setGroups(groups.map(g => 
+                                    g.id === group.id ? { ...g, users: userIds } : g
+                                  ));
+                                }}
+                                placeholder="点击选择用户..."
+                                searchPlaceholder="搜索用户名或邮箱..."
+                              />
                             </div>
                           </div>
                           <DrawerFooter>
-                            <Button onClick={handleAddUserToGroup} disabled={!selectedUserId}>
-                              添加用户
-                            </Button>
                             <DrawerClose asChild>
-                              <Button variant="outline">取消</Button>
+                              <Button variant="outline">关闭</Button>
                             </DrawerClose>
                           </DrawerFooter>
                         </DrawerContent>

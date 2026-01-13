@@ -120,6 +120,8 @@ export const permissionAPI = USE_MOCK_DATA ? mockAPI.permission : {
   // 权限组用户管理
   addUserToGroup: (groupId: string, userId: string) =>
     apiClient.post('/permissions/groups/add-user', { group_id: groupId, user_id: userId }),
+  removeUserFromGroup: (groupId: string, userId: string) =>
+    apiClient.post('/permissions/groups/remove-user', { group_id: groupId, user_id: userId }),
 
   // 权限检查
   getUserPermissions: (userId: string) =>

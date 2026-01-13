@@ -498,5 +498,16 @@ export const mockAPI = {
       }
       return response(200, 'User added to group');
     },
+    removeUserFromGroup: async (groupId: string, userId: string) => {
+      await delay();
+      const group = mockGroups.find(g => g.id === groupId);
+      if (!group) {
+        throw { code: 404, message: 'Group not found' };
+      }
+      if (group.users) {
+        group.users = group.users.filter(id => id !== userId);
+      }
+      return response(200, 'User removed from group');
+    },
   },
 };
