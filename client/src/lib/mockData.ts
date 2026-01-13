@@ -3,6 +3,22 @@
  * 用于前端开发时模拟后端API响应
  */
 
+// Mock角色数据
+let mockRoles = [
+  {
+    id: '1',
+    name: 'Admin',
+    description: '系统管理员',
+    created_at: new Date().toISOString(),
+  },
+  {
+    id: '2',
+    name: 'User',
+    description: '普通用户',
+    created_at: new Date().toISOString(),
+  },
+];
+
 // Mock用户数据
 let mockUsers = [
   {
@@ -31,19 +47,30 @@ let mockRolePermissions: { [roleId: string]: string[] } = {
   '2': ['1', '5', '9'], // User角色只有读取权限
 };
 
-// Mock角色数据
-let mockRoles = [
+// Mock权限组数据
+let mockGroups: Array<{
+  id: string;
+  name: string;
+  description: string;
+  created_at: string;
+  users?: string[];
+  resources?: string[];
+}> = [
   {
     id: '1',
-    name: 'Admin',
-    description: '系统管理员',
+    name: '项目A团队',
+    description: '项目A的成员权限组',
     created_at: new Date().toISOString(),
+    users: [],
+    resources: [],
   },
   {
     id: '2',
-    name: 'User',
-    description: '普通用户',
+    name: '项目B团队',
+    description: '项目B的成员权限组',
     created_at: new Date().toISOString(),
+    users: [],
+    resources: [],
   },
 ];
 
@@ -146,16 +173,6 @@ let mockPermissions = [
     description: '删除域名',
     action: 'delete',
     resource: 'domain',
-    created_at: new Date().toISOString(),
-  },
-];
-
-// Mock权限组数据
-let mockGroups = [
-  {
-    id: '1',
-    name: 'Group A',
-    description: '权限组A',
     created_at: new Date().toISOString(),
   },
 ];
@@ -438,6 +455,50 @@ export const mockAPI = {
     revoke: async (userId: string, resourceId: string, action: string) => {
       await delay();
       return response(200, 'Permission revoked');
+    },
+    deleteRole: async (roleId: string) => {
+      await delay();
+      const index = mockRoles.findIndex(r => r.id === roleId);
+      if (index === -1) {
+        throw { code: 404, message: 'Role not found' };
+      }
+      mockRoles.splice(index, 1);
+      delete mockRolePermissions[roleId];
+      return response(200, 'Role deleted');
+    },
+    deletePermission: async (permId: string) => {
+      await delay();
+      const index = mockPermissions.findIndex(p => p.id === permId);
+      if (index === -1) {
+        throw { code: 404, message: 'Permission not found' };
+      }
+      mockPermissions.splice(index, 1);
+      // 从所有角色中移除该权限
+      Object.keys(mockRolePermissions).forEach(roleId => {
+        mockRolePermissions[roleId] = mockRolePermissions[roleId].filter(id => id !== permId);
+      });
+      return response(200, 'Permission deleted');
+    },
+    deletePermissionGroup: async (groupId: string) => {
+      await delay();
+      const index = mockGroups.findIndex(g => g.id === groupId);
+      if (index === -1) {
+        throw { code: 404, message: 'Group not found' };
+      }
+      mockGroups.splice(index, 1);
+      return response(200, 'Group deleted');
+    },
+    addUserToGroup: async (groupId: string, userId: string) => {
+      await delay();
+      const group = mockGroups.find(g => g.id === groupId);
+      if (!group) {
+        throw { code: 404, message: 'Group not found' };
+      }
+      if (!group.users) group.users = [];
+      if (!group.users.includes(userId)) {
+        group.users.push(userId);
+      }
+      return response(200, 'User added to group');
     },
   },
 };

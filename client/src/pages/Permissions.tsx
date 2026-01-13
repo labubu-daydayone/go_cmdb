@@ -5,13 +5,22 @@ import { Input } from '../components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
 import { Badge } from '../components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs';
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '../components/ui/dialog';
 import { Label } from '../components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
 import { Checkbox } from '../components/ui/checkbox';
 import { useWebSocket } from '../hooks/useWebSocket';
 import { toast } from 'sonner';
-import { Shield, Users, Key, FolderKey, Plus, Trash2, Link, X } from 'lucide-react';
+import { Shield, Users, Key, FolderKey, Plus, Trash2, Link, X, UserPlus, FolderPlus } from 'lucide-react';
+import {
+  Drawer,
+  DrawerClose,
+  DrawerContent,
+  DrawerDescription,
+  DrawerFooter,
+  DrawerHeader,
+  DrawerTitle,
+  DrawerTrigger,
+} from '../components/ui/drawer';
 
 interface Role {
   id: string;
@@ -44,13 +53,15 @@ export default function Permissions() {
   const [selectedGroup, setSelectedGroup] = useState<PermissionGroup | null>(null);
   const [loading, setLoading] = useState(false);
 
-  // 新建对话框状态
+  // 新建抽屉状态
   const [newRoleOpen, setNewRoleOpen] = useState(false);
   const [newPermissionOpen, setNewPermissionOpen] = useState(false);
   const [newGroupOpen, setNewGroupOpen] = useState(false);
-  const [assignPermissionOpen, setAssignPermissionOpen] = useState(false);
+  const [assignPermOpen, setAssignPermOpen] = useState(false);
+  const [addUserToGroupOpen, setAddUserToGroupOpen] = useState(false);
+  const [addResourceToGroupOpen, setAddResourceToGroupOpen] = useState(false);
 
-  // 表单数据
+  // 表单状态
   const [roleName, setRoleName] = useState('');
   const [roleDesc, setRoleDesc] = useState('');
   const [permName, setPermName] = useState('');
@@ -59,14 +70,16 @@ export default function Permissions() {
   const [permResource, setPermResource] = useState('user');
   const [groupName, setGroupName] = useState('');
   const [groupDesc, setGroupDesc] = useState('');
-  const [selectedPermissionIds, setSelectedPermissionIds] = useState<string[]>([]);
+  const [selectedPermissions, setSelectedPermissions] = useState<string[]>([]);
+  const [selectedUserId, setSelectedUserId] = useState('');
+  const [resourceType, setResourceType] = useState('domain');
+  const [resourceId, setResourceId] = useState('');
 
+  // WebSocket
   const token = localStorage.getItem('token');
-
-  // WebSocket连接
-  useWebSocket(token, {
+  const { subscribe, unsubscribe } = useWebSocket(token, {
     onMessage: (message) => {
-      if (message.resource === 'role' || message.resource === 'permission' || message.resource === 'group') {
+      if (message.type === 'list_update' || message.type === 'resource_update') {
         loadData();
       }
     },
@@ -74,26 +87,34 @@ export default function Permissions() {
 
   useEffect(() => {
     loadData();
+    
+    // 订阅实时更新
+    subscribe('permission:list');
+    
+    return () => {
+      unsubscribe('permission:list');
+    };
   }, []);
 
   const loadData = async () => {
     setLoading(true);
     try {
-      const [rolesRes, permsRes, groupsRes] = await Promise.all([
+      const [rolesData, permsData, groupsData] = await Promise.all([
         permissionAPI.listRoles(),
         permissionAPI.list(),
         permissionAPI.listGroups(),
       ]);
-      setRoles(rolesRes.data.items || []);
-      setPermissions(permsRes.data.items || []);
-      setGroups(groupsRes.data.items || []);
-    } catch (error: any) {
-      toast.error(error.message || '加载失败');
+      setRoles(rolesData.data?.items || []);
+      setPermissions(permsData.data?.items || []);
+      setGroups(groupsData.data?.items || []);
+    } catch (error) {
+      toast.error('加载数据失败');
     } finally {
       setLoading(false);
     }
   };
 
+  // 创建角色
   const handleCreateRole = async () => {
     if (!roleName.trim()) {
       toast.error('请输入角色名称');
@@ -106,11 +127,12 @@ export default function Permissions() {
       setRoleName('');
       setRoleDesc('');
       loadData();
-    } catch (error: any) {
-      toast.error(error.message || '创建失败');
+    } catch (error) {
+      toast.error('创建失败');
     }
   };
 
+  // 创建权限
   const handleCreatePermission = async () => {
     if (!permName.trim()) {
       toast.error('请输入权限名称');
@@ -125,11 +147,12 @@ export default function Permissions() {
       setPermAction('read');
       setPermResource('user');
       loadData();
-    } catch (error: any) {
-      toast.error(error.message || '创建失败');
+    } catch (error) {
+      toast.error('创建失败');
     }
   };
 
+  // 创建权限组
   const handleCreateGroup = async () => {
     if (!groupName.trim()) {
       toast.error('请输入权限组名称');
@@ -142,170 +165,232 @@ export default function Permissions() {
       setGroupName('');
       setGroupDesc('');
       loadData();
-    } catch (error: any) {
-      toast.error(error.message || '创建失败');
+    } catch (error) {
+      toast.error('创建失败');
     }
   };
 
+  // 分配权限到角色
   const handleAssignPermissions = async () => {
-    if (!selectedRole || selectedPermissionIds.length === 0) {
-      toast.error('请选择权限');
+    if (!selectedRole || selectedPermissions.length === 0) {
+      toast.error('请选择要分配的权限');
       return;
     }
     try {
-      // 批量分配权限
-      await Promise.all(
-        selectedPermissionIds.map(permId =>
-          permissionAPI.assignPermissionToRole(selectedRole.id, permId)
-        )
-      );
-      toast.success(`已分配 ${selectedPermissionIds.length} 个权限`);
-      setAssignPermissionOpen(false);
-      setSelectedPermissionIds([]);
+      for (const permId of selectedPermissions) {
+        await permissionAPI.assignPermissionToRole(selectedRole.id, permId);
+      }
+      toast.success(`成功分配 ${selectedPermissions.length} 个权限`);
+      setAssignPermOpen(false);
+      setSelectedPermissions([]);
       loadData();
-    } catch (error: any) {
-      toast.error(error.message || '分配失败');
+    } catch (error) {
+      toast.error('分配失败');
     }
   };
 
-  const handleRemovePermission = async (roleId: string, permId: string) => {
+  // 添加用户到权限组
+  const handleAddUserToGroup = async () => {
+    if (!selectedGroup || !selectedUserId) {
+      toast.error('请选择用户');
+      return;
+    }
     try {
-      await permissionAPI.removePermissionFromRole(roleId, permId);
-      toast.success('权限已移除');
+      await permissionAPI.addUserToGroup(selectedGroup.id, selectedUserId);
+      toast.success('用户添加成功');
+      setAddUserToGroupOpen(false);
+      setSelectedUserId('');
       loadData();
-    } catch (error: any) {
-      toast.error(error.message || '移除失败');
+    } catch (error) {
+      toast.error('添加失败');
     }
   };
 
-  const togglePermissionSelection = (permId: string) => {
-    setSelectedPermissionIds(prev =>
-      prev.includes(permId)
-        ? prev.filter(id => id !== permId)
-        : [...prev, permId]
+  // 添加资源到权限组
+  const handleAddResourceToGroup = async () => {
+    if (!selectedGroup || !resourceId) {
+      toast.error('请输入资源ID');
+      return;
+    }
+    try {
+      await permissionAPI.addResourceToGroup(selectedGroup.id, `${resourceType}:${resourceId}`);
+      toast.success('资源添加成功');
+      setAddResourceToGroupOpen(false);
+      setResourceId('');
+      loadData();
+    } catch (error) {
+      toast.error('添加失败');
+    }
+  };
+
+  // 删除角色
+  const handleDeleteRole = async (roleId: string) => {
+    if (!confirm('确定要删除这个角色吗？')) return;
+    try {
+      await permissionAPI.deleteRole(roleId);
+      toast.success('角色删除成功');
+      loadData();
+    } catch (error) {
+      toast.error('删除失败');
+    }
+  };
+
+  // 删除权限
+  const handleDeletePermission = async (permId: string) => {
+    if (!confirm('确定要删除这个权限吗？')) return;
+    try {
+      await permissionAPI.deletePermission(permId);
+      toast.success('权限删除成功');
+      loadData();
+    } catch (error) {
+      toast.error('删除失败');
+    }
+  };
+
+  // 删除权限组
+  const handleDeleteGroup = async (groupId: string) => {
+    if (!confirm('确定要删除这个权限组吗？')) return;
+    try {
+      await permissionAPI.deletePermissionGroup(groupId);
+      toast.success('权限组删除成功');
+      loadData();
+    } catch (error) {
+      toast.error('删除失败');
+    }
+  };
+
+  // 切换权限选择
+  const togglePermission = (permId: string) => {
+    setSelectedPermissions(prev =>
+      prev.includes(permId) ? prev.filter(id => id !== permId) : [...prev, permId]
     );
   };
 
-  // 获取可分配的权限（排除已分配的）
-  const getAvailablePermissions = () => {
-    if (!selectedRole) return permissions;
-    const assignedIds = (selectedRole.permissions || []).map(p => p.id);
-    return permissions.filter(p => !assignedIds.includes(p.id));
-  };
-
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-          <h1 className="text-2xl md:text-3xl font-bold">权限管理</h1>
-          <p className="text-gray-500 text-sm md:text-base">管理系统角色、权限和权限组</p>
-        </div>
+    <div className="container mx-auto py-6 space-y-6">
+      <div className="flex items-center justify-between">
+        <h1 className="text-3xl font-bold">权限管理</h1>
       </div>
 
       <Tabs defaultValue="overview" className="space-y-4">
-        <TabsList className="grid w-full grid-cols-4 h-auto">
-          <TabsTrigger value="overview" className="text-xs sm:text-sm py-2">
-            <Shield className="w-4 h-4 mr-1 sm:mr-2" />
-            <span className="hidden sm:inline">概览</span>
-          </TabsTrigger>
-          <TabsTrigger value="roles" className="text-xs sm:text-sm py-2">
-            <Users className="w-4 h-4 mr-1 sm:mr-2" />
-            <span className="hidden sm:inline">角色</span>
-          </TabsTrigger>
-          <TabsTrigger value="permissions" className="text-xs sm:text-sm py-2">
-            <Key className="w-4 h-4 mr-1 sm:mr-2" />
-            <span className="hidden sm:inline">权限</span>
-          </TabsTrigger>
-          <TabsTrigger value="groups" className="text-xs sm:text-sm py-2">
-            <FolderKey className="w-4 h-4 mr-1 sm:mr-2" />
-            <span className="hidden sm:inline">权限组</span>
-          </TabsTrigger>
+        <TabsList className="grid w-full grid-cols-4">
+          <TabsTrigger value="overview">概览</TabsTrigger>
+          <TabsTrigger value="roles">角色</TabsTrigger>
+          <TabsTrigger value="permissions">权限</TabsTrigger>
+          <TabsTrigger value="groups">权限组</TabsTrigger>
         </TabsList>
 
-        {/* 概览标签 */}
+        {/* 概览标签页 */}
         <TabsContent value="overview" className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {roles.map((role) => (
-              <Card key={role.id} className="hover:shadow-md transition-shadow">
-                <CardHeader className="pb-3">
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1 min-w-0">
-                      <CardTitle className="text-lg truncate">{role.name}</CardTitle>
-                      <CardDescription className="text-sm truncate">{role.description}</CardDescription>
-                    </div>
-                    <Badge variant="outline" className="ml-2 shrink-0">
-                      {role.permissions?.length || 0} 权限
-                    </Badge>
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-2">
-                    <div className="flex items-center justify-between text-sm">
-                      <span className="text-gray-600">已分配权限:</span>
-                    </div>
-                    <div className="flex flex-wrap gap-1.5 max-h-24 overflow-y-auto">
-                      {role.permissions && role.permissions.length > 0 ? (
-                        role.permissions.map((perm) => (
-                          <Badge
-                            key={perm.id}
-                            variant="secondary"
-                            className="text-xs flex items-center gap-1"
-                          >
-                            {perm.name}
-                            <button
-                              onClick={() => handleRemovePermission(role.id, perm.id)}
-                              className="hover:text-red-600"
-                            >
-                              <X className="w-3 h-3" />
-                            </button>
-                          </Badge>
-                        ))
-                      ) : (
-                        <span className="text-sm text-gray-400">暂无权限</span>
-                      )}
-                    </div>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      className="w-full mt-2"
-                      onClick={() => {
-                        setSelectedRole(role);
-                        setAssignPermissionOpen(true);
-                      }}
-                    >
-                      <Plus className="w-4 h-4 mr-1" />
-                      分配权限
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
+          <div className="grid gap-4 md:grid-cols-3">
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">角色总数</CardTitle>
+                <Users className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{roles.length}</div>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">权限总数</CardTitle>
+                <Key className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{permissions.length}</div>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">权限组总数</CardTitle>
+                <FolderKey className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{groups.length}</div>
+              </CardContent>
+            </Card>
           </div>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>角色权限关联</CardTitle>
+              <CardDescription>查看每个角色拥有的权限</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                {roles.map((role) => (
+                  <div key={role.id} className="border rounded-lg p-4">
+                    <div className="flex items-center justify-between mb-2">
+                      <div>
+                        <h3 className="font-semibold">{role.name}</h3>
+                        <p className="text-sm text-muted-foreground">{role.description}</p>
+                      </div>
+                      <Badge>{role.permissions?.length || 0} 个权限</Badge>
+                    </div>
+                    <div className="flex flex-wrap gap-2 mt-3">
+                      {role.permissions?.map((perm) => (
+                        <Badge key={perm.id} variant="secondary">
+                          {perm.name}
+                        </Badge>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>权限组详情</CardTitle>
+              <CardDescription>查看权限组的用户和资源</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                {groups.map((group) => (
+                  <div key={group.id} className="border rounded-lg p-4">
+                    <div className="flex items-center justify-between mb-2">
+                      <div>
+                        <h3 className="font-semibold">{group.name}</h3>
+                        <p className="text-sm text-muted-foreground">{group.description}</p>
+                      </div>
+                      <div className="flex gap-2">
+                        <Badge variant="outline">{group.users?.length || 0} 个用户</Badge>
+                        <Badge variant="outline">{group.resources?.length || 0} 个资源</Badge>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
         </TabsContent>
 
-        {/* 角色标签 */}
+        {/* 角色标签页 */}
         <TabsContent value="roles" className="space-y-4">
-          <div className="flex justify-end">
-            <Dialog open={newRoleOpen} onOpenChange={setNewRoleOpen}>
-              <DialogTrigger asChild>
+          <div className="flex justify-between items-center">
+            <h2 className="text-xl font-semibold">角色列表</h2>
+            <Drawer open={newRoleOpen} onOpenChange={setNewRoleOpen}>
+              <DrawerTrigger asChild>
                 <Button>
-                  <Plus className="w-4 h-4 mr-2" />
+                  <Plus className="mr-2 h-4 w-4" />
                   新建角色
                 </Button>
-              </DialogTrigger>
-              <DialogContent className="sm:max-w-[425px]">
-                <DialogHeader>
-                  <DialogTitle>新建角色</DialogTitle>
-                  <DialogDescription>创建一个新的系统角色</DialogDescription>
-                </DialogHeader>
-                <div className="grid gap-4 py-4">
+              </DrawerTrigger>
+              <DrawerContent>
+                <DrawerHeader>
+                  <DrawerTitle>创建新角色</DrawerTitle>
+                  <DrawerDescription>填写角色信息</DrawerDescription>
+                </DrawerHeader>
+                <div className="px-4 space-y-4">
                   <div className="space-y-2">
                     <Label htmlFor="role-name">角色名称</Label>
                     <Input
                       id="role-name"
                       value={roleName}
                       onChange={(e) => setRoleName(e.target.value)}
-                      placeholder="例如: 管理员"
+                      placeholder="例如：管理员"
                     />
                   </div>
                   <div className="space-y-2">
@@ -318,24 +403,83 @@ export default function Permissions() {
                     />
                   </div>
                 </div>
-                <DialogFooter>
+                <DrawerFooter>
                   <Button onClick={handleCreateRole}>创建</Button>
-                </DialogFooter>
-              </DialogContent>
-            </Dialog>
+                  <DrawerClose asChild>
+                    <Button variant="outline">取消</Button>
+                  </DrawerClose>
+                </DrawerFooter>
+              </DrawerContent>
+            </Drawer>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
             {roles.map((role) => (
               <Card key={role.id}>
                 <CardHeader>
-                  <CardTitle>{role.name}</CardTitle>
+                  <div className="flex items-center justify-between">
+                    <CardTitle className="text-lg">{role.name}</CardTitle>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => handleDeleteRole(role.id)}
+                    >
+                      <Trash2 className="h-4 w-4 text-destructive" />
+                    </Button>
+                  </div>
                   <CardDescription>{role.description}</CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <div className="flex items-center justify-between text-sm">
-                    <span className="text-gray-600">权限数量:</span>
-                    <Badge>{role.permissions?.length || 0}</Badge>
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm text-muted-foreground">权限数量</span>
+                      <Badge>{role.permissions?.length || 0}</Badge>
+                    </div>
+                    <Drawer open={assignPermOpen && selectedRole?.id === role.id} onOpenChange={(open) => {
+                      setAssignPermOpen(open);
+                      if (open) setSelectedRole(role);
+                    }}>
+                      <DrawerTrigger asChild>
+                        <Button variant="outline" size="sm" className="w-full">
+                          <Link className="mr-2 h-4 w-4" />
+                          分配权限
+                        </Button>
+                      </DrawerTrigger>
+                      <DrawerContent>
+                        <DrawerHeader>
+                          <DrawerTitle>为 {role.name} 分配权限</DrawerTitle>
+                          <DrawerDescription>选择要分配的权限（可多选）</DrawerDescription>
+                        </DrawerHeader>
+                        <div className="px-4 max-h-[400px] overflow-y-auto">
+                          <div className="space-y-2">
+                            {permissions.map((perm) => (
+                              <div key={perm.id} className="flex items-center space-x-2 p-2 border rounded">
+                                <Checkbox
+                                  id={`perm-${perm.id}`}
+                                  checked={selectedPermissions.includes(perm.id)}
+                                  onCheckedChange={() => togglePermission(perm.id)}
+                                />
+                                <label
+                                  htmlFor={`perm-${perm.id}`}
+                                  className="flex-1 cursor-pointer"
+                                >
+                                  <div className="font-medium">{perm.name}</div>
+                                  <div className="text-sm text-muted-foreground">{perm.description}</div>
+                                </label>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                        <DrawerFooter>
+                          <Button onClick={handleAssignPermissions}>
+                            分配 ({selectedPermissions.length})
+                          </Button>
+                          <DrawerClose asChild>
+                            <Button variant="outline">取消</Button>
+                          </DrawerClose>
+                        </DrawerFooter>
+                      </DrawerContent>
+                    </Drawer>
                   </div>
                 </CardContent>
               </Card>
@@ -343,29 +487,30 @@ export default function Permissions() {
           </div>
         </TabsContent>
 
-        {/* 权限标签 */}
+        {/* 权限标签页 */}
         <TabsContent value="permissions" className="space-y-4">
-          <div className="flex justify-end">
-            <Dialog open={newPermissionOpen} onOpenChange={setNewPermissionOpen}>
-              <DialogTrigger asChild>
+          <div className="flex justify-between items-center">
+            <h2 className="text-xl font-semibold">权限列表</h2>
+            <Drawer open={newPermissionOpen} onOpenChange={setNewPermissionOpen}>
+              <DrawerTrigger asChild>
                 <Button>
-                  <Plus className="w-4 h-4 mr-2" />
+                  <Plus className="mr-2 h-4 w-4" />
                   新建权限
                 </Button>
-              </DialogTrigger>
-              <DialogContent className="sm:max-w-[425px]">
-                <DialogHeader>
-                  <DialogTitle>新建权限</DialogTitle>
-                  <DialogDescription>创建一个新的系统权限</DialogDescription>
-                </DialogHeader>
-                <div className="grid gap-4 py-4">
+              </DrawerTrigger>
+              <DrawerContent>
+                <DrawerHeader>
+                  <DrawerTitle>创建新权限</DrawerTitle>
+                  <DrawerDescription>填写权限信息</DrawerDescription>
+                </DrawerHeader>
+                <div className="px-4 space-y-4">
                   <div className="space-y-2">
                     <Label htmlFor="perm-name">权限名称</Label>
                     <Input
                       id="perm-name"
                       value={permName}
                       onChange={(e) => setPermName(e.target.value)}
-                      placeholder="例如: 用户管理-读取"
+                      placeholder="例如：用户管理-读取"
                     />
                   </div>
                   <div className="space-y-2">
@@ -408,24 +553,36 @@ export default function Permissions() {
                     </Select>
                   </div>
                 </div>
-                <DialogFooter>
+                <DrawerFooter>
                   <Button onClick={handleCreatePermission}>创建</Button>
-                </DialogFooter>
-              </DialogContent>
-            </Dialog>
+                  <DrawerClose asChild>
+                    <Button variant="outline">取消</Button>
+                  </DrawerClose>
+                </DrawerFooter>
+              </DrawerContent>
+            </Drawer>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
             {permissions.map((perm) => (
               <Card key={perm.id}>
-                <CardHeader className="pb-3">
-                  <CardTitle className="text-base">{perm.name}</CardTitle>
-                  <CardDescription className="text-sm">{perm.description}</CardDescription>
+                <CardHeader>
+                  <div className="flex items-center justify-between">
+                    <CardTitle className="text-base">{perm.name}</CardTitle>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => handleDeletePermission(perm.id)}
+                    >
+                      <Trash2 className="h-4 w-4 text-destructive" />
+                    </Button>
+                  </div>
+                  <CardDescription>{perm.description}</CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <div className="flex flex-wrap gap-2">
-                    <Badge variant="outline">{perm.action}</Badge>
-                    <Badge variant="secondary">{perm.resource}</Badge>
+                  <div className="flex gap-2">
+                    <Badge variant="secondary">{perm.action}</Badge>
+                    <Badge variant="outline">{perm.resource}</Badge>
                   </div>
                 </CardContent>
               </Card>
@@ -433,29 +590,30 @@ export default function Permissions() {
           </div>
         </TabsContent>
 
-        {/* 权限组标签 */}
+        {/* 权限组标签页 */}
         <TabsContent value="groups" className="space-y-4">
-          <div className="flex justify-end">
-            <Dialog open={newGroupOpen} onOpenChange={setNewGroupOpen}>
-              <DialogTrigger asChild>
+          <div className="flex justify-between items-center">
+            <h2 className="text-xl font-semibold">权限组列表</h2>
+            <Drawer open={newGroupOpen} onOpenChange={setNewGroupOpen}>
+              <DrawerTrigger asChild>
                 <Button>
-                  <Plus className="w-4 h-4 mr-2" />
+                  <Plus className="mr-2 h-4 w-4" />
                   新建权限组
                 </Button>
-              </DialogTrigger>
-              <DialogContent className="sm:max-w-[425px]">
-                <DialogHeader>
-                  <DialogTitle>新建权限组</DialogTitle>
-                  <DialogDescription>创建一个新的权限组</DialogDescription>
-                </DialogHeader>
-                <div className="grid gap-4 py-4">
+              </DrawerTrigger>
+              <DrawerContent>
+                <DrawerHeader>
+                  <DrawerTitle>创建新权限组</DrawerTitle>
+                  <DrawerDescription>填写权限组信息</DrawerDescription>
+                </DrawerHeader>
+                <div className="px-4 space-y-4">
                   <div className="space-y-2">
                     <Label htmlFor="group-name">权限组名称</Label>
                     <Input
                       id="group-name"
                       value={groupName}
                       onChange={(e) => setGroupName(e.target.value)}
-                      placeholder="例如: 开发组"
+                      placeholder="例如：项目A团队"
                     />
                   </div>
                   <div className="space-y-2">
@@ -468,29 +626,124 @@ export default function Permissions() {
                     />
                   </div>
                 </div>
-                <DialogFooter>
+                <DrawerFooter>
                   <Button onClick={handleCreateGroup}>创建</Button>
-                </DialogFooter>
-              </DialogContent>
-            </Dialog>
+                  <DrawerClose asChild>
+                    <Button variant="outline">取消</Button>
+                  </DrawerClose>
+                </DrawerFooter>
+              </DrawerContent>
+            </Drawer>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
             {groups.map((group) => (
               <Card key={group.id}>
                 <CardHeader>
-                  <CardTitle>{group.name}</CardTitle>
+                  <div className="flex items-center justify-between">
+                    <CardTitle className="text-lg">{group.name}</CardTitle>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => handleDeleteGroup(group.id)}
+                    >
+                      <Trash2 className="h-4 w-4 text-destructive" />
+                    </Button>
+                  </div>
                   <CardDescription>{group.description}</CardDescription>
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-2">
                     <div className="flex items-center justify-between text-sm">
-                      <span className="text-gray-600">成员数:</span>
-                      <Badge>{group.users?.length || 0}</Badge>
+                      <span className="text-muted-foreground">用户数量</span>
+                      <Badge variant="outline">{group.users?.length || 0}</Badge>
                     </div>
                     <div className="flex items-center justify-between text-sm">
-                      <span className="text-gray-600">资源数:</span>
-                      <Badge>{group.resources?.length || 0}</Badge>
+                      <span className="text-muted-foreground">资源数量</span>
+                      <Badge variant="outline">{group.resources?.length || 0}</Badge>
+                    </div>
+                    <div className="flex gap-2 mt-3">
+                      <Drawer open={addUserToGroupOpen && selectedGroup?.id === group.id} onOpenChange={(open) => {
+                        setAddUserToGroupOpen(open);
+                        if (open) setSelectedGroup(group);
+                      }}>
+                        <DrawerTrigger asChild>
+                          <Button variant="outline" size="sm" className="flex-1">
+                            <UserPlus className="mr-2 h-4 w-4" />
+                            添加用户
+                          </Button>
+                        </DrawerTrigger>
+                        <DrawerContent>
+                          <DrawerHeader>
+                            <DrawerTitle>添加用户到 {group.name}</DrawerTitle>
+                            <DrawerDescription>选择要添加的用户</DrawerDescription>
+                          </DrawerHeader>
+                          <div className="px-4 space-y-4">
+                            <div className="space-y-2">
+                              <Label htmlFor="user-select">用户ID</Label>
+                              <Input
+                                id="user-select"
+                                value={selectedUserId}
+                                onChange={(e) => setSelectedUserId(e.target.value)}
+                                placeholder="输入用户ID"
+                              />
+                            </div>
+                          </div>
+                          <DrawerFooter>
+                            <Button onClick={handleAddUserToGroup}>添加</Button>
+                            <DrawerClose asChild>
+                              <Button variant="outline">取消</Button>
+                            </DrawerClose>
+                          </DrawerFooter>
+                        </DrawerContent>
+                      </Drawer>
+                      <Drawer open={addResourceToGroupOpen && selectedGroup?.id === group.id} onOpenChange={(open) => {
+                        setAddResourceToGroupOpen(open);
+                        if (open) setSelectedGroup(group);
+                      }}>
+                        <DrawerTrigger asChild>
+                          <Button variant="outline" size="sm" className="flex-1">
+                            <FolderPlus className="mr-2 h-4 w-4" />
+                            添加资源
+                          </Button>
+                        </DrawerTrigger>
+                        <DrawerContent>
+                          <DrawerHeader>
+                            <DrawerTitle>添加资源到 {group.name}</DrawerTitle>
+                            <DrawerDescription>选择资源类型和ID</DrawerDescription>
+                          </DrawerHeader>
+                          <div className="px-4 space-y-4">
+                            <div className="space-y-2">
+                              <Label htmlFor="resource-type">资源类型</Label>
+                              <Select value={resourceType} onValueChange={setResourceType}>
+                                <SelectTrigger id="resource-type">
+                                  <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="domain">域名</SelectItem>
+                                  <SelectItem value="nginx">Nginx配置</SelectItem>
+                                  <SelectItem value="script">脚本</SelectItem>
+                                </SelectContent>
+                              </Select>
+                            </div>
+                            <div className="space-y-2">
+                              <Label htmlFor="resource-id">资源ID</Label>
+                              <Input
+                                id="resource-id"
+                                value={resourceId}
+                                onChange={(e) => setResourceId(e.target.value)}
+                                placeholder="输入资源ID"
+                              />
+                            </div>
+                          </div>
+                          <DrawerFooter>
+                            <Button onClick={handleAddResourceToGroup}>添加</Button>
+                            <DrawerClose asChild>
+                              <Button variant="outline">取消</Button>
+                            </DrawerClose>
+                          </DrawerFooter>
+                        </DrawerContent>
+                      </Drawer>
                     </div>
                   </div>
                 </CardContent>
@@ -499,69 +752,6 @@ export default function Permissions() {
           </div>
         </TabsContent>
       </Tabs>
-
-      {/* 分配权限对话框 */}
-      <Dialog open={assignPermissionOpen} onOpenChange={setAssignPermissionOpen}>
-        <DialogContent className="sm:max-w-[600px] max-h-[80vh] overflow-hidden flex flex-col">
-          <DialogHeader>
-            <DialogTitle>为 {selectedRole?.name} 分配权限</DialogTitle>
-            <DialogDescription>
-              选择要分配的权限（已选择 {selectedPermissionIds.length} 个）
-            </DialogDescription>
-          </DialogHeader>
-          <div className="flex-1 overflow-y-auto py-4">
-            <div className="space-y-2">
-              {getAvailablePermissions().map((perm) => (
-                <div
-                  key={perm.id}
-                  className={`
-                    flex items-start gap-3 p-3 rounded-lg border cursor-pointer
-                    transition-colors hover:bg-gray-50
-                    ${selectedPermissionIds.includes(perm.id) ? 'border-blue-500 bg-blue-50' : 'border-gray-200'}
-                  `}
-                  onClick={() => togglePermissionSelection(perm.id)}
-                >
-                  <Checkbox
-                    checked={selectedPermissionIds.includes(perm.id)}
-                    onCheckedChange={() => togglePermissionSelection(perm.id)}
-                    className="mt-0.5"
-                  />
-                  <div className="flex-1 min-w-0">
-                    <div className="font-medium text-sm">{perm.name}</div>
-                    <div className="text-xs text-gray-500 mt-0.5">{perm.description}</div>
-                    <div className="flex gap-1.5 mt-1.5">
-                      <Badge variant="outline" className="text-xs">{perm.action}</Badge>
-                      <Badge variant="secondary" className="text-xs">{perm.resource}</Badge>
-                    </div>
-                  </div>
-                </div>
-              ))}
-              {getAvailablePermissions().length === 0 && (
-                <div className="text-center py-8 text-gray-500">
-                  所有权限已分配
-                </div>
-              )}
-            </div>
-          </div>
-          <DialogFooter>
-            <Button
-              variant="outline"
-              onClick={() => {
-                setAssignPermissionOpen(false);
-                setSelectedPermissionIds([]);
-              }}
-            >
-              取消
-            </Button>
-            <Button
-              onClick={handleAssignPermissions}
-              disabled={selectedPermissionIds.length === 0}
-            >
-              分配 {selectedPermissionIds.length > 0 && `(${selectedPermissionIds.length})`}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 }

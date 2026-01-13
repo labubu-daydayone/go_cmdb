@@ -109,6 +109,18 @@ export const permissionAPI = USE_MOCK_DATA ? mockAPI.permission : {
   removeResourceFromGroup: (groupId: string, resourceId: string) =>
     apiClient.post('/permissions/groups/remove-resource', { group_id: groupId, resource_id: resourceId }),
 
+  // 删除
+  deleteRole: (roleId: string) =>
+    apiClient.post('/permissions/roles/delete', { role_id: roleId }),
+  deletePermission: (permId: string) =>
+    apiClient.post('/permissions/delete', { permission_id: permId }),
+  deletePermissionGroup: (groupId: string) =>
+    apiClient.post('/permissions/groups/delete', { group_id: groupId }),
+
+  // 权限组用户管理
+  addUserToGroup: (groupId: string, userId: string) =>
+    apiClient.post('/permissions/groups/add-user', { group_id: groupId, user_id: userId }),
+
   // 权限检查
   getUserPermissions: (userId: string) =>
     apiClient.get('/permissions/users/get-permissions', { params: { user_id: userId } }),
