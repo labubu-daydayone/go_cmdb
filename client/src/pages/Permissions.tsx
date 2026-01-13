@@ -546,7 +546,7 @@ export default function Permissions() {
                                 description: `${p.resource} - ${p.action}`,
                               }))}
                               selected={role.permissions || []}
-                              onChange={(selectedIds) => {
+                              onChange={async (selectedIds) => {
                                 // 找出新增的权限
                                 const added = selectedIds.filter(
                                   (id) => !role.permissions?.includes(id)
@@ -556,19 +556,25 @@ export default function Permissions() {
                                   (id) => !selectedIds.includes(id)
                                 );
 
-                                // 执行添加操作
-                                added.forEach((id) => {
-                                  permissionAPI
-                                    .assignPermissionToRole(role.id, id)
-                                    .then(() => loadData());
-                                });
+                                try {
+                                  // 执行添加操作
+                                  const addPromises = added.map((id) =>
+                                    permissionAPI.assignPermissionToRole(role.id, id)
+                                  );
 
-                                // 执行删除操作
-                                removed.forEach((id) => {
-                                  permissionAPI
-                                    .removePermissionFromRole(role.id, id)
-                                    .then(() => loadData());
-                                });
+                                  // 执行删除操作
+                                  const removePromises = removed.map((id) =>
+                                    permissionAPI.removePermissionFromRole(role.id, id)
+                                  );
+
+                                  // 等待所有操作完成
+                                  await Promise.all([...addPromises, ...removePromises]);
+
+                                  // 重新加载数据
+                                  await loadData();
+                                } catch (error) {
+                                  console.error('权限分配失败:', error);
+                                }
                               }}
                               placeholder="点击选择权限..."
                               searchPlaceholder="搜索权限名称、资源或操作..."

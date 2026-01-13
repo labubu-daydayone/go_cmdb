@@ -331,12 +331,10 @@ export const mockAPI = {
       await delay();
       const start = (page - 1) * pageSize;
       const end = start + pageSize;
-      // 为每个角色附加权限列表
+      // 为每个角色附加权限ID列表
       const rolesWithPermissions = mockRoles.slice(start, end).map(role => ({
         ...role,
-        permissions: (mockRolePermissions[role.id] || []).map(permId => 
-          mockPermissions.find(p => p.id === permId)
-        ).filter(Boolean),
+        permissions: mockRolePermissions[role.id] || [],
       }));
       return response(200, 'Roles fetched', {
         items: rolesWithPermissions,
