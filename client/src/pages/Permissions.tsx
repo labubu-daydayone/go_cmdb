@@ -622,35 +622,37 @@ export default function Permissions() {
                       placeholder="例如：用户列表-读取"
                     />
                   </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="perm-resource">资源类型</Label>
-                    <Select value={newPermResource} onValueChange={setNewPermResource}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="选择资源类型" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="user">用户管理</SelectItem>
-                        <SelectItem value="permission">权限管理</SelectItem>
-                        <SelectItem value="domain">域名管理</SelectItem>
-                        <SelectItem value="nginx">Nginx配置</SelectItem>
-                        <SelectItem value="script">脚本管理</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="perm-action">操作类型</Label>
-                    <Select value={newPermAction} onValueChange={setNewPermAction}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="选择操作类型" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="read">读取</SelectItem>
-                        <SelectItem value="create">创建</SelectItem>
-                        <SelectItem value="update">更新</SelectItem>
-                        <SelectItem value="delete">删除</SelectItem>
-                        <SelectItem value="execute">执行</SelectItem>
-                      </SelectContent>
-                    </Select>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="perm-resource">资源类型</Label>
+                      <Select value={newPermResource} onValueChange={setNewPermResource}>
+                        <SelectTrigger className="w-full">
+                          <SelectValue placeholder="选择资源" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="user">用户管理</SelectItem>
+                          <SelectItem value="permission">权限管理</SelectItem>
+                          <SelectItem value="domain">域名管理</SelectItem>
+                          <SelectItem value="nginx">Nginx配置</SelectItem>
+                          <SelectItem value="script">脚本管理</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="perm-action">操作类型</Label>
+                      <Select value={newPermAction} onValueChange={setNewPermAction}>
+                        <SelectTrigger className="w-full">
+                          <SelectValue placeholder="选择操作" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="read">读取</SelectItem>
+                          <SelectItem value="create">创建</SelectItem>
+                          <SelectItem value="update">更新</SelectItem>
+                          <SelectItem value="delete">删除</SelectItem>
+                          <SelectItem value="execute">执行</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="perm-desc">权限描述</Label>
