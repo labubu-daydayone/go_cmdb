@@ -413,7 +413,7 @@ export default function Permissions() {
                   新建角色
                 </Button>
               </DrawerTrigger>
-              <DrawerContent>
+              <DrawerContent className="h-[80vh]">
                 <DrawerHeader>
                   <DrawerTitle>创建新角色</DrawerTitle>
                   <DrawerDescription>填写角色信息</DrawerDescription>
@@ -480,7 +480,7 @@ export default function Permissions() {
                           分配权限
                         </Button>
                       </DrawerTrigger>
-                      <DrawerContent>
+                      <DrawerContent className="h-[80vh]">
                         <DrawerHeader>
                           <DrawerTitle>为 {role.name} 分配权限</DrawerTitle>
                           <DrawerDescription>选择要分配的权限（可多选）</DrawerDescription>
@@ -533,7 +533,7 @@ export default function Permissions() {
                   新建权限
                 </Button>
               </DrawerTrigger>
-              <DrawerContent>
+              <DrawerContent className="h-[80vh]">
                 <DrawerHeader>
                   <DrawerTitle>创建新权限</DrawerTitle>
                   <DrawerDescription>填写权限信息</DrawerDescription>
@@ -636,7 +636,7 @@ export default function Permissions() {
                   新建权限组
                 </Button>
               </DrawerTrigger>
-              <DrawerContent>
+              <DrawerContent className="h-[80vh]">
                 <DrawerHeader>
                   <DrawerTitle>创建新权限组</DrawerTitle>
                   <DrawerDescription>填写权限组信息</DrawerDescription>
@@ -708,7 +708,7 @@ export default function Permissions() {
                             添加用户
                           </Button>
                         </DrawerTrigger>
-                        <DrawerContent>
+                        <DrawerContent className="h-[80vh]">
                           <DrawerHeader>
                             <DrawerTitle>添加用户到 {group.name}</DrawerTitle>
                             <DrawerDescription>选择要添加的用户</DrawerDescription>
@@ -762,7 +762,7 @@ export default function Permissions() {
                             添加资源
                           </Button>
                         </DrawerTrigger>
-                        <DrawerContent>
+                        <DrawerContent className="h-[80vh]">
                           <DrawerHeader>
                             <DrawerTitle>添加资源到 {group.name}</DrawerTitle>
                             <DrawerDescription>选择资源类型和ID</DrawerDescription>
