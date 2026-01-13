@@ -924,36 +924,34 @@ export default function Permissions() {
                             <DrawerDescription>选择资源类型和ID</DrawerDescription>
                           </DrawerHeader>
                           <div className="px-4 space-y-4 flex-1 overflow-y-auto">
-                            <div className="space-y-2">
-                              <Label>资源类型</Label>
-                              <div className="flex gap-3 items-center">
-                                <Select value={selectedResourceType} onValueChange={(val) => {
-                                  setSelectedResourceType(val);
-                                  setResourcePage(1);
-                                  setSelectedResourceId('');
-                                  setResourceSearchTerm('');
-                                }}>
-                                  <SelectTrigger className="w-48">
-                                    <SelectValue />
-                                  </SelectTrigger>
-                                  <SelectContent>
-                                    <SelectItem value="domain">域名</SelectItem>
-                                    <SelectItem value="nginx">Nginx配置</SelectItem>
-                                    <SelectItem value="script">脚本</SelectItem>
-                                  </SelectContent>
-                                </Select>
-                                <div className="relative flex-1">
-                                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                                  <Input
-                                    placeholder="输入关键字搜索..."
-                                    value={resourceSearchTerm}
-                                    onChange={(e) => {
-                                      setResourceSearchTerm(e.target.value);
-                                      setResourcePage(1);
-                                    }}
-                                    className="pl-9"
-                                  />
-                                </div>
+                            <div className="flex gap-3 items-center">
+                              <Label className="whitespace-nowrap">资源类型</Label>
+                              <Select value={selectedResourceType} onValueChange={(val) => {
+                                setSelectedResourceType(val);
+                                setResourcePage(1);
+                                setSelectedResourceId('');
+                                setResourceSearchTerm('');
+                              }}>
+                                <SelectTrigger className="w-48">
+                                  <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="domain">域名</SelectItem>
+                                  <SelectItem value="nginx">Nginx配置</SelectItem>
+                                  <SelectItem value="script">脚本</SelectItem>
+                                </SelectContent>
+                              </Select>
+                              <div className="relative flex-1">
+                                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                                <Input
+                                  placeholder="输入关键字搜索..."
+                                  value={resourceSearchTerm}
+                                  onChange={(e) => {
+                                    setResourceSearchTerm(e.target.value);
+                                    setResourcePage(1);
+                                  }}
+                                  className="pl-9"
+                                />
                               </div>
                             </div>
 
