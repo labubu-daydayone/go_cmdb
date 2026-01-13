@@ -154,12 +154,23 @@ export default function Permissions() {
         permissionAPI.listGroups(),
         userAPI.list(),
       ]);
-      setRoles(rolesRes.data || rolesRes);
-      setPermissions(permsRes.data || permsRes);
-      setGroups(groupsRes.data || groupsRes);
-      setUsers(usersRes.data || usersRes);
+      // 确保数据格式正确，处理分页响应和直接数组响应
+      const rolesData = rolesRes.data?.items || rolesRes.data || rolesRes;
+      const permsData = permsRes.data?.items || permsRes.data || permsRes;
+      const groupsData = groupsRes.data?.items || groupsRes.data || groupsRes;
+      const usersData = usersRes.data?.items || usersRes.data || usersRes;
+      
+      setRoles(Array.isArray(rolesData) ? rolesData : []);
+      setPermissions(Array.isArray(permsData) ? permsData : []);
+      setGroups(Array.isArray(groupsData) ? groupsData : []);
+      setUsers(Array.isArray(usersData) ? usersData : []);
     } catch (error) {
       console.error('加载数据失败:', error);
+      // 出错时设置为空数组，避免map错误
+      setRoles([]);
+      setPermissions([]);
+      setGroups([]);
+      setUsers([]);
     }
   };
 
