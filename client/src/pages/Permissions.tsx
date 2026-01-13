@@ -45,10 +45,18 @@ interface PermissionGroup {
   resources?: any[];
 }
 
+interface User {
+  id: string;
+  username: string;
+  email: string;
+  is_admin: boolean;
+}
+
 export default function Permissions() {
   const [roles, setRoles] = useState<Role[]>([]);
   const [permissions, setPermissions] = useState<Permission[]>([]);
   const [groups, setGroups] = useState<PermissionGroup[]>([]);
+  const [users, setUsers] = useState<User[]>([]);
   const [selectedRole, setSelectedRole] = useState<Role | null>(null);
   const [selectedGroup, setSelectedGroup] = useState<PermissionGroup | null>(null);
   const [loading, setLoading] = useState(false);
@@ -96,17 +104,44 @@ export default function Permissions() {
     };
   }, []);
 
+  // 模拟资源数据
+  const getMockResources = (type: string) => {
+    switch (type) {
+      case 'domain':
+        return [
+          { id: '1', name: 'example.com', description: '主域名', status: 'active' },
+          { id: '2', name: 'test.com', description: '测试域名', status: 'pending' },
+          { id: '3', name: 'demo.com', description: '演示域名', status: 'active' },
+        ];
+      case 'nginx':
+        return [
+          { id: '1', name: 'default.conf', description: '默认配置', status: 'active' },
+          { id: '2', name: 'ssl.conf', description: 'SSL配置', status: 'active' },
+        ];
+      case 'script':
+        return [
+          { id: '1', name: 'backup.sh', description: '备份脚本', status: 'active' },
+          { id: '2', name: 'deploy.sh', description: '部署脚本', status: 'active' },
+        ];
+      default:
+        return [];
+    }
+  };
+
   const loadData = async () => {
     setLoading(true);
     try {
-      const [rolesData, permsData, groupsData] = await Promise.all([
+      const { userAPI } = await import('../lib/api');
+      const [rolesData, permsData, groupsData, usersData] = await Promise.all([
         permissionAPI.listRoles(),
         permissionAPI.list(),
         permissionAPI.listGroups(),
+        userAPI.list(),
       ]);
       setRoles(rolesData.data?.items || []);
       setPermissions(permsData.data?.items || []);
       setGroups(groupsData.data?.items || []);
+      setUsers(usersData.data?.items || []);
     } catch (error) {
       toast.error('加载数据失败');
     } finally {
@@ -678,15 +713,35 @@ export default function Permissions() {
                             <DrawerTitle>添加用户到 {group.name}</DrawerTitle>
                             <DrawerDescription>选择要添加的用户</DrawerDescription>
                           </DrawerHeader>
-                          <div className="px-4 space-y-4">
+                          <div className="px-4 space-y-4 max-h-[60vh] overflow-y-auto">
                             <div className="space-y-2">
-                              <Label htmlFor="user-select">用户ID</Label>
-                              <Input
-                                id="user-select"
-                                value={selectedUserId}
-                                onChange={(e) => setSelectedUserId(e.target.value)}
-                                placeholder="输入用户ID"
-                              />
+                              <Label>选择用户</Label>
+                              <div className="space-y-2">
+                                {users.filter(u => !group.users?.includes(u.id)).map((user) => (
+                                  <div
+                                    key={user.id}
+                                    className={`p-3 border rounded-lg cursor-pointer transition-colors ${
+                                      selectedUserId === user.id
+                                        ? 'border-blue-500 bg-blue-50'
+                                        : 'border-gray-200 hover:border-blue-300'
+                                    }`}
+                                    onClick={() => setSelectedUserId(user.id)}
+                                  >
+                                    <div className="flex items-center justify-between">
+                                      <div>
+                                        <p className="font-medium">{user.username}</p>
+                                        <p className="text-sm text-gray-500">{user.email}</p>
+                                      </div>
+                                      {user.is_admin && (
+                                        <Badge variant="secondary">管理员</Badge>
+                                      )}
+                                    </div>
+                                  </div>
+                                ))}
+                                {users.filter(u => !group.users?.includes(u.id)).length === 0 && (
+                                  <p className="text-sm text-gray-500 text-center py-4">所有用户已在该组中</p>
+                                )}
+                              </div>
                             </div>
                           </div>
                           <DrawerFooter>
@@ -712,10 +767,13 @@ export default function Permissions() {
                             <DrawerTitle>添加资源到 {group.name}</DrawerTitle>
                             <DrawerDescription>选择资源类型和ID</DrawerDescription>
                           </DrawerHeader>
-                          <div className="px-4 space-y-4">
+                          <div className="px-4 space-y-4 max-h-[60vh] overflow-y-auto">
                             <div className="space-y-2">
                               <Label htmlFor="resource-type">资源类型</Label>
-                              <Select value={resourceType} onValueChange={setResourceType}>
+                              <Select value={resourceType} onValueChange={(value) => {
+                                setResourceType(value);
+                                setResourceId(''); // 清空选中的资源
+                              }}>
                                 <SelectTrigger id="resource-type">
                                   <SelectValue />
                                 </SelectTrigger>
@@ -727,13 +785,36 @@ export default function Permissions() {
                               </Select>
                             </div>
                             <div className="space-y-2">
-                              <Label htmlFor="resource-id">资源ID</Label>
-                              <Input
-                                id="resource-id"
-                                value={resourceId}
-                                onChange={(e) => setResourceId(e.target.value)}
-                                placeholder="输入资源ID"
-                              />
+                              <Label>选择{resourceType === 'domain' ? '域名' : resourceType === 'nginx' ? 'Nginx配置' : '脚本'}</Label>
+                              <div className="space-y-2">
+                                {/* 模拟资源列表 - 实际应该从 API 加载 */}
+                                {getMockResources(resourceType).map((resource: any) => (
+                                  <div
+                                    key={resource.id}
+                                    className={`p-3 border rounded-lg cursor-pointer transition-colors ${
+                                      resourceId === resource.id
+                                        ? 'border-blue-500 bg-blue-50'
+                                        : 'border-gray-200 hover:border-blue-300'
+                                    }`}
+                                    onClick={() => setResourceId(resource.id)}
+                                  >
+                                    <div className="flex items-center justify-between">
+                                      <div>
+                                        <p className="font-medium">{resource.name}</p>
+                                        <p className="text-sm text-gray-500">{resource.description || resource.id}</p>
+                                      </div>
+                                      {resource.status && (
+                                        <Badge variant={resource.status === 'active' ? 'default' : 'secondary'}>
+                                          {resource.status}
+                                        </Badge>
+                                      )}
+                                    </div>
+                                  </div>
+                                ))}
+                                {getMockResources(resourceType).length === 0 && (
+                                  <p className="text-sm text-gray-500 text-center py-4">暂无{resourceType === 'domain' ? '域名' : resourceType === 'nginx' ? 'Nginx配置' : '脚本'}</p>
+                                )}
+                              </div>
                             </div>
                           </div>
                           <DrawerFooter>

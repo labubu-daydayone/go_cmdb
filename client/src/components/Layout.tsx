@@ -39,8 +39,8 @@ export default function Layout({ children }: LayoutProps) {
       <aside
         className={`
           fixed md:static inset-y-0 left-0 z-30
-          w-64 bg-gradient-to-b from-blue-600 to-blue-700 text-white
-          transform transition-transform duration-300 ease-in-out
+          w-64 md:w-56 lg:w-64 bg-gradient-to-b from-blue-600 to-blue-700 text-white
+          transform transition-transform duration-300 ease-in-out flex-shrink-0
           ${sidebarOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}
         `}
       >
@@ -112,7 +112,7 @@ export default function Layout({ children }: LayoutProps) {
 
         {/* 页面内容 */}
         <main className="flex-1 overflow-auto">
-          <div className="p-4 md:p-6 lg:p-8">
+          <div className="container mx-auto p-4 md:p-6 lg:p-8 max-w-7xl">
             {children}
           </div>
         </main>
