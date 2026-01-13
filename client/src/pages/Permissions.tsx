@@ -135,6 +135,10 @@ export default function Permissions() {
   const [sourceGroupId, setSourceGroupId] = useState('');
   const [batchResourceType, setBatchResourceType] = useState<string>('domain');
 
+  // 资源列表分页
+  const [resourcePage, setResourcePage] = useState(1);
+  const [resourcePageSize] = useState(10);
+
   const token = localStorage.getItem('token');
   const { subscribe, unsubscribe } = useWebSocket(token);
 
@@ -919,45 +923,104 @@ export default function Permissions() {
                             <DrawerDescription>选择资源类型和ID</DrawerDescription>
                           </DrawerHeader>
                           <div className="px-4 space-y-4 flex-1 overflow-y-auto">
-                            <div className="space-y-2">
-                              <Label>资源类型</Label>
-                              <Select value={selectedResourceType} onValueChange={setSelectedResourceType}>
-                                <SelectTrigger>
-                                  <SelectValue />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  <SelectItem value="domain">域名</SelectItem>
-                                  <SelectItem value="nginx">Nginx配置</SelectItem>
-                                  <SelectItem value="script">脚本</SelectItem>
-                                </SelectContent>
-                              </Select>
+                            <div className="grid grid-cols-2 gap-4">
+                              <div className="space-y-2">
+                                <Label>资源类型</Label>
+                                <Select value={selectedResourceType} onValueChange={(val) => {
+                                  setSelectedResourceType(val);
+                                  setResourcePage(1);
+                                  setSelectedResourceId('');
+                                }}>
+                                  <SelectTrigger className="w-full">
+                                    <SelectValue />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    <SelectItem value="domain">域名</SelectItem>
+                                    <SelectItem value="nginx">Nginx配置</SelectItem>
+                                    <SelectItem value="script">脚本</SelectItem>
+                                  </SelectContent>
+                                </Select>
+                              </div>
                             </div>
 
                             <div className="space-y-2">
                               <Label>选择资源</Label>
-                              <div className="space-y-2">
-                                {getMockResources(selectedResourceType).map((resource: any) => (
-                                  <div
-                                    key={resource.id}
-                                    className={`p-3 border rounded-lg cursor-pointer transition-colors ${
-                                      selectedResourceId === resource.id
-                                        ? 'border-blue-500 bg-blue-50'
-                                        : 'border-gray-200 hover:border-blue-300'
-                                    }`}
-                                    onClick={() => setSelectedResourceId(resource.id)}
-                                  >
-                                    <div className="font-medium">{resource.name}</div>
-                                    {resource.status && (
-                                      <div className="text-sm text-muted-foreground">状态: {resource.status}</div>
-                                    )}
-                                    {resource.path && (
-                                      <div className="text-sm text-muted-foreground">{resource.path}</div>
-                                    )}
-                                    {resource.description && (
-                                      <div className="text-sm text-muted-foreground">{resource.description}</div>
-                                    )}
+                              <div className="border rounded-lg overflow-hidden">
+                                <div className="overflow-x-auto">
+                                  <table className="w-full">
+                                    <thead className="bg-muted/50">
+                                      <tr>
+                                        <th className="text-left p-3 text-sm font-medium">资源名称</th>
+                                        <th className="text-left p-3 text-sm font-medium">详细信息</th>
+                                        <th className="text-center p-3 text-sm font-medium w-24">操作</th>
+                                      </tr>
+                                    </thead>
+                                    <tbody>
+                                      {(() => {
+                                        const resources = getMockResources(selectedResourceType);
+                                        const start = (resourcePage - 1) * resourcePageSize;
+                                        const end = start + resourcePageSize;
+                                        const paginatedResources = resources.slice(start, end);
+                                        
+                                        return paginatedResources.map((resource: any) => (
+                                          <tr
+                                            key={resource.id}
+                                            className={`border-t cursor-pointer hover:bg-muted/30 transition-colors ${
+                                              selectedResourceId === resource.id ? 'bg-blue-50' : ''
+                                            }`}
+                                            onClick={() => setSelectedResourceId(resource.id)}
+                                          >
+                                            <td className="p-3">
+                                              <div className="font-medium">{resource.name}</div>
+                                            </td>
+                                            <td className="p-3">
+                                              <div className="text-sm text-muted-foreground">
+                                                {resource.status && `状态: ${resource.status}`}
+                                                {resource.path && resource.path}
+                                                {resource.description && resource.description}
+                                              </div>
+                                            </td>
+                                            <td className="p-3 text-center">
+                                              <Button
+                                                size="sm"
+                                                variant={selectedResourceId === resource.id ? 'default' : 'outline'}
+                                                onClick={(e) => {
+                                                  e.stopPropagation();
+                                                  setSelectedResourceId(resource.id);
+                                                }}
+                                              >
+                                                {selectedResourceId === resource.id ? '已选中' : '选择'}
+                                              </Button>
+                                            </td>
+                                          </tr>
+                                        ));
+                                      })()}
+                                    </tbody>
+                                  </table>
+                                </div>
+                                <div className="flex items-center justify-between p-3 border-t bg-muted/20">
+                                  <div className="text-sm text-muted-foreground">
+                                    共 {getMockResources(selectedResourceType).length} 条记录，当前第 {resourcePage} 页
                                   </div>
-                                ))}
+                                  <div className="flex gap-2">
+                                    <Button
+                                      size="sm"
+                                      variant="outline"
+                                      onClick={() => setResourcePage(p => Math.max(1, p - 1))}
+                                      disabled={resourcePage === 1}
+                                    >
+                                      上一页
+                                    </Button>
+                                    <Button
+                                      size="sm"
+                                      variant="outline"
+                                      onClick={() => setResourcePage(p => p + 1)}
+                                      disabled={resourcePage * resourcePageSize >= getMockResources(selectedResourceType).length}
+                                    >
+                                      下一页
+                                    </Button>
+                                  </div>
+                                </div>
                               </div>
                             </div>
                           </div>
