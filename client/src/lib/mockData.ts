@@ -25,6 +25,12 @@ let mockUsers = [
   },
 ];
 
+// Mock角色权限关联
+let mockRolePermissions: { [roleId: string]: string[] } = {
+  '1': ['1', '2', '3', '4'], // Admin角色拥有所有权限
+  '2': ['1'], // User角色只有读取权限
+};
+
 // Mock角色数据
 let mockRoles = [
   {
@@ -45,18 +51,50 @@ let mockRoles = [
 let mockPermissions = [
   {
     id: '1',
-    name: 'Read',
-    description: '读取权限',
+    name: '用户列表-读取',
+    description: '查看用户列表',
     action: 'read',
-    resource: '*',
+    resource: 'user',
     created_at: new Date().toISOString(),
   },
   {
     id: '2',
-    name: 'Write',
-    description: '写入权限',
+    name: '用户管理-写入',
+    description: '创建和编辑用户',
     action: 'write',
-    resource: '*',
+    resource: 'user',
+    created_at: new Date().toISOString(),
+  },
+  {
+    id: '3',
+    name: '权限管理-读取',
+    description: '查看权限列表',
+    action: 'read',
+    resource: 'permission',
+    created_at: new Date().toISOString(),
+  },
+  {
+    id: '4',
+    name: '权限管理-写入',
+    description: '创建和编辑权限',
+    action: 'write',
+    resource: 'permission',
+    created_at: new Date().toISOString(),
+  },
+  {
+    id: '5',
+    name: '域名管理-读取',
+    description: '查看域名列表',
+    action: 'read',
+    resource: 'domain',
+    created_at: new Date().toISOString(),
+  },
+  {
+    id: '6',
+    name: '域名管理-写入',
+    description: '创建和编辑域名',
+    action: 'write',
+    resource: 'domain',
     created_at: new Date().toISOString(),
   },
 ];
@@ -225,8 +263,15 @@ export const mockAPI = {
       await delay();
       const start = (page - 1) * pageSize;
       const end = start + pageSize;
+      // 为每个角色附加权限列表
+      const rolesWithPermissions = mockRoles.slice(start, end).map(role => ({
+        ...role,
+        permissions: (mockRolePermissions[role.id] || []).map(permId => 
+          mockPermissions.find(p => p.id === permId)
+        ).filter(Boolean),
+      }));
       return response(200, 'Roles fetched', {
-        items: mockRoles.slice(start, end),
+        items: rolesWithPermissions,
         total: mockRoles.length,
         page,
         page_size: pageSize,
@@ -304,10 +349,19 @@ export const mockAPI = {
     },
     assignPermissionToRole: async (roleId: string, permissionId: string) => {
       await delay();
+      if (!mockRolePermissions[roleId]) {
+        mockRolePermissions[roleId] = [];
+      }
+      if (!mockRolePermissions[roleId].includes(permissionId)) {
+        mockRolePermissions[roleId].push(permissionId);
+      }
       return response(200, 'Permission assigned to role');
     },
     removePermissionFromRole: async (roleId: string, permissionId: string) => {
       await delay();
+      if (mockRolePermissions[roleId]) {
+        mockRolePermissions[roleId] = mockRolePermissions[roleId].filter(id => id !== permissionId);
+      }
       return response(200, 'Permission removed from role');
     },
     addResourceToGroup: async (groupId: string, resourceId: string) => {
