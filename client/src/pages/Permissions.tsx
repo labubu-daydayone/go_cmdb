@@ -536,12 +536,33 @@ export default function Permissions() {
                           <DrawerDescription>使用搜索框查找并选择权限</DrawerDescription>
                         </DrawerHeader>
                         <div className="px-4 space-y-4 flex-1 overflow-y-auto">
+                          {/* 已分配权限显示区域 */}
                           <div className="space-y-2">
-                            <Label>搜索权限</Label>
+                            <Label>已分配的权限</Label>
+                            <div className="flex flex-wrap gap-2 min-h-[60px] p-3 border rounded-lg bg-background">
+                              {getRolePermissions(role).map((perm, index) => (
+                                <Badge
+                                  key={perm.id}
+                                  className={`${getPermissionColor(index)} cursor-pointer hover:opacity-80 flex items-center gap-1`}
+                                  onClick={() => handleRemovePermission(role.id, perm.id)}
+                                >
+                                  {perm.name}
+                                  <X className="h-3 w-3" />
+                                </Badge>
+                              ))}
+                              {(!role.permissions || role.permissions.length === 0) && (
+                                <span className="text-sm text-muted-foreground">请从下方列表选择权限</span>
+                              )}
+                            </div>
+                          </div>
+
+                          {/* 搜索框 */}
+                          <div className="space-y-2">
+                            <Label>搜索并添加权限</Label>
                             <div className="relative">
                               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                               <Input
-                                placeholder="输入权限名称、资源或操作..."
+                                placeholder="输入权限名称、资源或操作进行搜索..."
                                 value={permissionSearchTerm}
                                 onChange={(e) => setPermissionSearchTerm(e.target.value)}
                                 className="pl-10"
@@ -549,49 +570,65 @@ export default function Permissions() {
                             </div>
                           </div>
 
+                          {/* 权限列表 */}
                           <div className="space-y-2">
-                            <Label>选择权限</Label>
-                            <Select value={selectedPermissionId} onValueChange={setSelectedPermissionId}>
-                              <SelectTrigger>
-                                <SelectValue placeholder="从列表中选择权限" />
-                              </SelectTrigger>
-                              <SelectContent>
-                                {filteredPermissions
-                                  .filter((p) => !role.permissions?.includes(p.id))
-                                  .map((perm) => (
-                                    <SelectItem key={perm.id} value={perm.id}>
-                                      <div className="flex flex-col">
-                                        <span className="font-medium">{perm.name}</span>
-                                        <span className="text-xs text-muted-foreground">
-                                          {perm.resource} - {perm.action}
-                                        </span>
+                            <Label>可用权限列表</Label>
+                            <div className="border rounded-lg max-h-[400px] overflow-y-auto">
+                              {filteredPermissions
+                                .filter((p) => !role.permissions?.includes(p.id))
+                                .map((perm, index) => (
+                                  <div
+                                    key={perm.id}
+                                    className="p-3 hover:bg-muted/50 cursor-pointer border-b last:border-b-0 transition-colors"
+                                    onClick={() => {
+                                      handleAssignPermission();
+                                      setSelectedPermissionId(perm.id);
+                                      setTimeout(() => {
+                                        handleAssignPermission();
+                                      }, 100);
+                                    }}
+                                  >
+                                    <div className="flex items-center justify-between">
+                                      <div className="flex-1">
+                                        <div className="font-medium text-sm">{perm.name}</div>
+                                        <div className="text-xs text-muted-foreground mt-1">
+                                          {perm.description}
+                                        </div>
+                                        <div className="flex gap-2 mt-1">
+                                          <Badge variant="outline" className="text-xs">
+                                            {perm.resource}
+                                          </Badge>
+                                          <Badge variant="outline" className="text-xs">
+                                            {perm.action}
+                                          </Badge>
+                                        </div>
                                       </div>
-                                    </SelectItem>
-                                  ))}
-                                {filteredPermissions.filter((p) => !role.permissions?.includes(p.id)).length === 0 && (
-                                  <SelectItem value="no-results" disabled>
-                                    {permissionSearchTerm ? '未找到匹配的权限' : '所有权限已分配'}
-                                  </SelectItem>
-                                )}
-                              </SelectContent>
-                            </Select>
-                          </div>
-
-                          {selectedPermissionId && (
-                            <div className="p-3 border rounded-lg bg-muted/50">
-                              <div className="text-sm font-medium mb-1">已选择</div>
-                              <div className="text-sm">
-                                {permissions.find((p) => p.id === selectedPermissionId)?.name}
-                              </div>
+                                      <Button
+                                        size="sm"
+                                        variant="ghost"
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          permissionAPI.assignPermissionToRole(role.id, perm.id).then(() => {
+                                            loadData();
+                                          });
+                                        }}
+                                      >
+                                        <Plus className="h-4 w-4" />
+                                      </Button>
+                                    </div>
+                                  </div>
+                                ))}
+                              {filteredPermissions.filter((p) => !role.permissions?.includes(p.id)).length === 0 && (
+                                <div className="p-8 text-center text-sm text-muted-foreground">
+                                  {permissionSearchTerm ? '未找到匹配的权限' : '所有权限已分配'}
+                                </div>
+                              )}
                             </div>
-                          )}
+                          </div>
                         </div>
                         <DrawerFooter>
-                          <Button onClick={handleAssignPermission} disabled={!selectedPermissionId}>
-                            分配权限
-                          </Button>
                           <DrawerClose asChild>
-                            <Button variant="outline">取消</Button>
+                            <Button variant="outline">关闭</Button>
                           </DrawerClose>
                         </DrawerFooter>
                       </DrawerContent>
