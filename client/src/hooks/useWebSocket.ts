@@ -1,4 +1,5 @@
 import { useEffect, useRef, useCallback, useState } from 'react';
+import { useMockWebSocket } from './useMockWebSocket';
 
 export interface WebSocketMessage {
   type: string;
@@ -19,7 +20,9 @@ export interface UseWebSocketOptions {
   reconnectInterval?: number;
 }
 
-export const useWebSocket = (token: string | null, options: UseWebSocketOptions = {}) => {
+const USE_MOCK_WS = import.meta.env.VITE_USE_MOCK !== 'false'; // 默认使用Mock WebSocket
+
+const useRealWebSocket = (token: string | null, options: UseWebSocketOptions = {}) => {
   const {
     onMessage,
     onConnect,
@@ -141,4 +144,11 @@ export const useWebSocket = (token: string | null, options: UseWebSocketOptions 
     disconnect,
     reconnect: connect,
   };
+};
+
+export const useWebSocket = (token: string | null, options: UseWebSocketOptions = {}) => {
+  if (USE_MOCK_WS) {
+    return useMockWebSocket(token, options);
+  }
+  return useRealWebSocket(token, options);
 };
