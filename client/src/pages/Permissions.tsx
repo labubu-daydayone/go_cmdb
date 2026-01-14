@@ -47,7 +47,7 @@ interface PermissionGroup {
   name: string;
   description: string;
   users?: string[];
-  resources?: Array<{ type: string; id: string }>;
+  resources?: string[];
 }
 
 interface User {
@@ -325,8 +325,8 @@ export default function Permissions() {
           if (!sourceGroupId) return;
           const sourceGroup = groups.find(g => g.id === sourceGroupId);
           if (sourceGroup?.resources) {
-            for (const resource of sourceGroup.resources) {
-              await permissionAPI.addResourceToGroup(selectedGroup.id, resource.id);
+            for (const resourceId of sourceGroup.resources) {
+              await permissionAPI.addResourceToGroup(selectedGroup.id, resourceId);
             }
           }
           break;
@@ -336,9 +336,9 @@ export default function Permissions() {
           if (!sourceGroupId) return;
           const srcGroup = groups.find(g => g.id === sourceGroupId);
           if (srcGroup?.resources) {
-            for (const resource of srcGroup.resources) {
-              await permissionAPI.addResourceToGroup(selectedGroup.id, resource.id);
-              await permissionAPI.removeResourceFromGroup(sourceGroupId, resource.id);
+            for (const resourceId of srcGroup.resources) {
+              await permissionAPI.addResourceToGroup(selectedGroup.id, resourceId);
+              await permissionAPI.removeResourceFromGroup(sourceGroupId, resourceId);
             }
           }
           break;
@@ -354,8 +354,8 @@ export default function Permissions() {
         case 'remove':
           // 批量移除资源
           if (selectedGroup.resources) {
-            for (const resource of selectedGroup.resources) {
-              await permissionAPI.removeResourceFromGroup(selectedGroup.id, resource.id);
+            for (const resourceId of selectedGroup.resources) {
+              await permissionAPI.removeResourceFromGroup(selectedGroup.id, resourceId);
             }
           }
           break;
@@ -849,7 +849,28 @@ export default function Permissions() {
                     </div>
                     <div className="flex items-center justify-between text-sm">
                       <span className="text-muted-foreground">资源数</span>
-                      <Badge variant="outline">{group.resources?.length || 0}</Badge>
+                      <Badge 
+                        variant="outline" 
+                        className="cursor-help"
+                        title={(() => {
+                          if (!group.resources || group.resources.length === 0) return '暂无资源';
+                          const resourceTypes: { [key: string]: number } = {};
+                          group.resources.forEach(resourceId => {
+                            const type = resourceId.split('-')[0];
+                            resourceTypes[type] = (resourceTypes[type] || 0) + 1;
+                          });
+                          const typeNames: { [key: string]: string } = {
+                            'domain': '域名',
+                            'nginx': 'Nginx配置',
+                            'script': '脚本'
+                          };
+                          return Object.entries(resourceTypes)
+                            .map(([type, count]) => `${count}个${typeNames[type] || type}`)
+                            .join(', ');
+                        })()}
+                      >
+                        {group.resources?.length || 0}个
+                      </Badge>
                     </div>
 
                     <div className="space-y-2 pt-2">

@@ -432,10 +432,21 @@ export const mockAPI = {
     },
     addResourceToGroup: async (groupId: string, resourceId: string) => {
       await delay();
+      const group = mockGroups.find(g => g.id === groupId);
+      if (group) {
+        if (!group.resources) group.resources = [];
+        if (!group.resources.includes(resourceId)) {
+          group.resources.push(resourceId);
+        }
+      }
       return response(200, 'Resource added to group');
     },
     removeResourceFromGroup: async (groupId: string, resourceId: string) => {
       await delay();
+      const group = mockGroups.find(g => g.id === groupId);
+      if (group && group.resources) {
+        group.resources = group.resources.filter(id => id !== resourceId);
+      }
       return response(200, 'Resource removed from group');
     },
     getUserPermissions: async (userId: string) => {
