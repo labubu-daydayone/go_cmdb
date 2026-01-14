@@ -148,3 +148,7 @@
 ## 标签切换和WebSocket问题修复
 - [x] 修复标签无法切换的问题（使用onPointerDown代替on Click）
 - [x] 修复用户列表WebSocket消息循环问题（禁用Mock WebSocket自动消息）
+
+## 标签拖拽功能修复
+- [x] 修复标签无法拖拽移动的问题（恢复onClick，让dnd-kit自动区分点击和拖拽）
+- [x] 保持点击切换功能正常工作

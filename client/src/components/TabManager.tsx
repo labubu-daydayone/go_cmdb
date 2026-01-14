@@ -195,9 +195,9 @@ const SortableTab: React.FC<SortableTabProps> = ({ tab, isActive, onRemove, onAc
         {...attributes}
         {...listeners}
         className="text-sm truncate flex-1 cursor-move"
-        onPointerDown={(e) => {
-          // 只在鼠标左键点击时切换标签
-          if (e.button === 0 && !isDragging) {
+        onClick={(e) => {
+          // 点击切换标签，dnd-kit会自动区分点击和拖拽
+          if (!isDragging) {
             onActivate(tab.id);
           }
         }}
