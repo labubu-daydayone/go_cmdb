@@ -225,7 +225,11 @@ export const TabBar: React.FC = () => {
   const { tabs, activeTabId, removeTab, setActiveTab, reorderTabs } = useTabManager();
   
   const sensors = useSensors(
-    useSensor(PointerSensor),
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 8, // 鼠标移动8px才触发拖拽，小于8px认为是点击
+      },
+    }),
     useSensor(KeyboardSensor, {
       coordinateGetter: sortableKeyboardCoordinates,
     })
