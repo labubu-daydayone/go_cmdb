@@ -104,7 +104,8 @@ export const TabProvider: React.FC<TabProviderProps> = ({ children }) => {
   }, [activeTabId]);
 
   const addTab = (tab: Omit<Tab, 'id'>) => {
-    const id = tab.path.replace(/\//g, '-').substring(1) || 'home';
+    // 特殊处理：首页路径 '/' 使用固定ID 'dashboard'
+    const id = tab.path === '/' ? 'dashboard' : tab.path.replace(/\//g, '-').substring(1);
     const existingTab = tabs.find(t => t.id === id);
     
     if (existingTab) {
