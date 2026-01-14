@@ -555,7 +555,7 @@ export default function Permissions() {
             </Drawer>
           </div>
 
-          <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4">
             {roles.map((role) => (
               <Card key={role.id}>
                 <CardHeader>
@@ -752,7 +752,7 @@ export default function Permissions() {
             </Drawer>
           </div>
 
-          <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4">
             {permissions.map((perm) => (
               <Card key={perm.id}>
                 <CardHeader>
@@ -831,7 +831,7 @@ export default function Permissions() {
             </Drawer>
           </div>
 
-          <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4">
             {groups.map((group) => (
               <Card key={group.id}>
                 <CardHeader>
