@@ -11,6 +11,7 @@ interface LayoutProps {
 }
 
 interface MenuItem {
+  id?: string;
   label: string;
   href?: string;
   closable?: boolean;
@@ -21,7 +22,30 @@ export default function Layout({ children }: LayoutProps) {
   const [, setLocation] = useLocation();
   const { user, logout } = useAuth();
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
-  const [expandedMenus, setExpandedMenus] = useState<string[]>(['domain', 'website', 'system']);
+  
+  // 从localStorage加载展开状态
+  const loadExpandedMenus = (): string[] => {
+    try {
+      const saved = localStorage.getItem('cmdb_expanded_menus');
+      if (saved) {
+        return JSON.parse(saved);
+      }
+    } catch (error) {
+      console.error('Failed to load expanded menus:', error);
+    }
+    return ['domain', 'website', 'system'];
+  };
+  
+  const [expandedMenus, setExpandedMenus] = useState<string[]>(loadExpandedMenus);
+  
+  // 保存展开状态到localStorage
+  React.useEffect(() => {
+    try {
+      localStorage.setItem('cmdb_expanded_menus', JSON.stringify(expandedMenus));
+    } catch (error) {
+      console.error('Failed to save expanded menus:', error);
+    }
+  }, [expandedMenus]);
 
   const handleLogout = () => {
     logout();
@@ -33,6 +57,7 @@ export default function Layout({ children }: LayoutProps) {
   const navItems: MenuItem[] = [
     { label: '仪表板', href: '/', closable: false },
     {
+      id: 'domain',
       label: '域名管理',
       children: [
         { label: '域名列表', href: '/domain/list', closable: true },
@@ -42,6 +67,7 @@ export default function Layout({ children }: LayoutProps) {
       ],
     },
     {
+      id: 'website',
       label: '网站管理',
       children: [
         { label: '网站列表', href: '/website/list', closable: true },
@@ -54,6 +80,7 @@ export default function Layout({ children }: LayoutProps) {
       ],
     },
     {
+      id: 'system',
       label: '系统设置',
       children: [
         { label: '用户管理', href: '/users', closable: true },
@@ -63,11 +90,11 @@ export default function Layout({ children }: LayoutProps) {
     },
   ];
 
-  const toggleMenu = (label: string) => {
+  const toggleMenu = (id: string) => {
     setExpandedMenus(prev =>
-      prev.includes(label)
-        ? prev.filter(item => item !== label)
-        : [...prev, label]
+      prev.includes(id)
+        ? prev.filter(item => item !== id)
+        : [...prev, id]
     );
   };
 
@@ -78,9 +105,7 @@ export default function Layout({ children }: LayoutProps) {
     }
   };
 
-  const getMenuId = (label: string) => {
-    return label.toLowerCase().replace(/\s+/g, '-');
-  };
+
 
   return (
     <div className="flex h-screen bg-gray-50 overflow-hidden">
@@ -121,22 +146,22 @@ export default function Layout({ children }: LayoutProps) {
                 // 有子菜单的项
                 <div>
                   <button
-                    onClick={() => !sidebarCollapsed && toggleMenu(getMenuId(item.label))}
+                    onClick={() => !sidebarCollapsed && item.id && toggleMenu(item.id)}
                     className="w-full flex items-center justify-between px-4 py-2 rounded-lg hover:bg-blue-500 transition-colors"
                     title={item.label}
                   >
                     <span className="truncate">
                       {sidebarCollapsed ? item.label.charAt(0) : item.label}
                     </span>
-                    {!sidebarCollapsed && (
-                      expandedMenus.includes(getMenuId(item.label)) ? (
+                    {!sidebarCollapsed && item.id && (
+                      expandedMenus.includes(item.id) ? (
                         <ChevronUp className="w-4 h-4 flex-shrink-0" />
                       ) : (
                         <ChevronDown className="w-4 h-4 flex-shrink-0" />
                       )
                     )}
                   </button>
-                  {!sidebarCollapsed && expandedMenus.includes(getMenuId(item.label)) && (
+                  {!sidebarCollapsed && item.id && expandedMenus.includes(item.id) && (
                     <div className="ml-4 mt-1 space-y-1">
                       {item.children.map((child) => (
                         <a
