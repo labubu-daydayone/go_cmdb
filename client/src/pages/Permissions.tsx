@@ -419,7 +419,7 @@ export default function Permissions() {
 
         {/* 概览标签页 */}
         <TabsContent value="overview" className="space-y-4">
-          <div className="grid gap-4 md:grid-cols-3">
+          <div className="grid gap-4 grid-cols-3">
             <Card>
               <CardHeader>
                 <CardTitle>角色统计</CardTitle>
@@ -555,7 +555,7 @@ export default function Permissions() {
             </Drawer>
           </div>
 
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4">
+          <div className="grid gap-4" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(min(250px, 100%), 310px))' }}>
             {roles.map((role) => (
               <Card key={role.id}>
                 <CardHeader>
@@ -752,7 +752,7 @@ export default function Permissions() {
             </Drawer>
           </div>
 
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4">
+          <div className="grid gap-4" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(min(250px, 100%), 310px))' }}>
             {permissions.map((perm) => (
               <Card key={perm.id}>
                 <CardHeader>
@@ -831,7 +831,7 @@ export default function Permissions() {
             </Drawer>
           </div>
 
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4">
+          <div className="grid gap-4" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(min(250px, 100%), 310px))' }}>
             {groups.map((group) => (
               <Card key={group.id}>
                 <CardHeader>

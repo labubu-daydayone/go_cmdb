@@ -13,7 +13,7 @@ export default function Dashboard() {
         <p className="text-gray-600">CMDB运维管理系统</p>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-4 gap-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">用户管理</CardTitle>

@@ -35,7 +35,7 @@ export default function NotFound() {
 
           <div
             id="not-found-button-group"
-            className="flex flex-col sm:flex-row gap-3 justify-center"
+            className="flex flex-row gap-3 justify-center"
           >
             <Button
               onClick={handleGoHome}
