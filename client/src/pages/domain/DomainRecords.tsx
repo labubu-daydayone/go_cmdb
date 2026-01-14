@@ -32,7 +32,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-import { Plus, Trash2, ArrowLeft, RefreshCw, Save, X, Upload, Check } from 'lucide-react';
+import { Plus, Trash2, ArrowLeft, RefreshCw, Save, X, Upload, Check, Copy, CheckCheck } from 'lucide-react';
 import { toast } from 'sonner';
 import { useLocation } from 'wouter';
 
@@ -52,58 +52,30 @@ interface DnsRecord {
   updatedAt: string;
 }
 
-// Mock数据
-const mockRecords: DnsRecord[] = [
-  {
-    id: 1,
-    type: 'A',
-    name: '@',
-    value: '192.0.2.1',
-    ttl: 3600,
-    proxied: true,
-    createdAt: '2024-01-01',
-    updatedAt: '2024-01-01',
-  },
-  {
-    id: 2,
-    type: 'A',
-    name: 'www',
-    value: '192.0.2.1',
-    ttl: 3600,
-    proxied: true,
-    createdAt: '2024-01-01',
-    updatedAt: '2024-01-01',
-  },
-  {
-    id: 3,
-    type: 'CNAME',
-    name: 'blog',
-    value: 'example.com',
-    ttl: 3600,
-    proxied: false,
-    createdAt: '2024-01-05',
-    updatedAt: '2024-01-05',
-  },
-  {
-    id: 4,
-    type: 'MX',
-    name: '@',
-    value: 'mail.example.com',
-    ttl: 3600,
-    priority: 10,
-    createdAt: '2024-01-01',
-    updatedAt: '2024-01-01',
-  },
-  {
-    id: 5,
-    type: 'TXT',
-    name: '@',
-    value: 'v=spf1 include:_spf.example.com ~all',
-    ttl: 3600,
-    createdAt: '2024-01-01',
-    updatedAt: '2024-01-01',
-  },
-];
+// Mock数据 - 生成更多数据用于测试分页
+const generateMockRecords = (): DnsRecord[] => {
+  const records: DnsRecord[] = [];
+  const types: DnsRecord['type'][] = ['A', 'AAAA', 'CNAME', 'MX', 'TXT', 'NS'];
+  const names = ['@', 'www', 'blog', 'mail', 'api', 'cdn', 'ftp', 'admin', 'shop', 'forum'];
+  
+  for (let i = 1; i <= 25; i++) {
+    const type = types[Math.floor(Math.random() * types.length)];
+    records.push({
+      id: i,
+      type,
+      name: names[Math.floor(Math.random() * names.length)],
+      value: type === 'A' ? `192.0.2.${i}` : type === 'CNAME' ? 'example.com' : `mail${i}.example.com`,
+      ttl: [60, 300, 600, 1800, 3600][Math.floor(Math.random() * 5)],
+      priority: type === 'MX' ? 10 : undefined,
+      proxied: type === 'A' || type === 'AAAA' ? Math.random() > 0.5 : undefined,
+      createdAt: '2024-01-01',
+      updatedAt: '2024-01-01',
+    });
+  }
+  return records;
+};
+
+const mockRecords = generateMockRecords();
 
 const recordTypeColors = {
   A: 'bg-blue-100 text-blue-800',
@@ -114,6 +86,17 @@ const recordTypeColors = {
   NS: 'bg-yellow-100 text-yellow-800',
   SRV: 'bg-pink-100 text-pink-800',
 };
+
+// TTL固定选项
+const TTL_OPTIONS = [
+  { value: 60, label: '1分钟' },
+  { value: 300, label: '5分钟' },
+  { value: 600, label: '10分钟' },
+  { value: 1800, label: '30分钟' },
+  { value: 3600, label: '1小时' },
+  { value: 7200, label: '2小时' },
+  { value: 86400, label: '1天' },
+];
 
 export default function DomainRecords() {
   const [, setLocation] = useLocation();
@@ -131,6 +114,16 @@ export default function DomainRecords() {
     priority: 10,
     proxied: false,
   });
+  const [copiedId, setCopiedId] = useState<number | null>(null);
+
+  // 分页状态
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(20);
+  const totalPages = Math.ceil(records.length / pageSize);
+  const paginatedRecords = records.slice(
+    (currentPage - 1) * pageSize,
+    currentPage * pageSize
+  );
 
   /**
    * WebSocket实时更新
@@ -175,7 +168,7 @@ export default function DomainRecords() {
 
   /**
    * TODO: 对接Go API
-   * GET /api/v1/domains/:domain/records - 获取解析记录列表
+   * GET /api/v1/domains/:domain/records?page=1&pageSize=20 - 获取解析记录列表（分页）
    * POST /api/v1/domains/:domain/records - 创建解析记录
    * PUT /api/v1/domains/:domain/records/:id - 更新解析记录
    * DELETE /api/v1/domains/:domain/records/:id - 删除解析记录
@@ -194,7 +187,7 @@ export default function DomainRecords() {
     });
   };
 
-  const handleSaveNew = () => {
+  const handleSaveNew = (continueAdding: boolean = false) => {
     if (!newRecord.type || !newRecord.name || !newRecord.value) {
       toast.error('请填写必填项');
       return;
@@ -219,8 +212,22 @@ export default function DomainRecords() {
     };
 
     setRecords([record, ...records]);
-    setIsAdding(false);
-    toast.success('解析记录已添加');
+    
+    if (continueAdding) {
+      // 连续添加：保留类型和TTL，清空其他字段
+      setNewRecord({
+        type: newRecord.type,
+        name: '',
+        value: '',
+        ttl: newRecord.ttl,
+        priority: newRecord.type === 'MX' ? 10 : undefined,
+        proxied: newRecord.proxied,
+      });
+      toast.success('解析记录已添加，继续添加下一条');
+    } else {
+      setIsAdding(false);
+      toast.success('解析记录已添加');
+    }
   };
 
   const handleCancelAdd = () => {
@@ -270,9 +277,20 @@ export default function DomainRecords() {
 
   const handleRefresh = () => {
     // TODO: 调用Go API刷新解析记录
-    // await fetch(`/api/v1/domains/${domainName}/records`, { method: 'GET' });
+    // await fetch(`/api/v1/domains/${domainName}/records?page=${currentPage}&pageSize=${pageSize}`, { method: 'GET' });
     
     toast.success('正在刷新解析记录...');
+  };
+
+  const handleCopyValue = async (value: string, id: number) => {
+    try {
+      await navigator.clipboard.writeText(value);
+      setCopiedId(id);
+      setTimeout(() => setCopiedId(null), 2000);
+      toast.success('已复制到剪贴板');
+    } catch (error) {
+      toast.error('复制失败');
+    }
   };
 
   const handleBatchImport = () => {
@@ -304,17 +322,35 @@ export default function DomainRecords() {
     if (!isEditing) {
       if (field === 'value') {
         return (
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <span className="font-mono text-sm max-w-md truncate block cursor-help">
-                {value}
-              </span>
-            </TooltipTrigger>
-            <TooltipContent>
-              <p className="max-w-xs break-all">{value}</p>
-            </TooltipContent>
-          </Tooltip>
+          <div className="flex items-center gap-2">
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <span className="font-mono text-sm max-w-md truncate block cursor-help">
+                  {value}
+                </span>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p className="max-w-xs break-all">{value}</p>
+              </TooltipContent>
+            </Tooltip>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-6 w-6"
+              onClick={() => handleCopyValue(value, record.id)}
+            >
+              {copiedId === record.id ? (
+                <CheckCheck className="w-3 h-3 text-green-600" />
+              ) : (
+                <Copy className="w-3 h-3" />
+              )}
+            </Button>
+          </div>
         );
+      }
+      if (field === 'ttl') {
+        const ttlOption = TTL_OPTIONS.find(opt => opt.value === value);
+        return <span className="font-mono">{ttlOption?.label || `${value}s`}</span>;
       }
       return <span className="font-mono">{value || '-'}</span>;
     }
@@ -338,13 +374,30 @@ export default function DomainRecords() {
       );
     }
 
-    if (field === 'ttl' || field === 'priority') {
+    if (field === 'ttl') {
+      return (
+        <Select value={value.toString()} onValueChange={(v) => onChange(parseInt(v))}>
+          <SelectTrigger className="h-8 w-28">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            {TTL_OPTIONS.map(opt => (
+              <SelectItem key={opt.value} value={opt.value.toString()}>
+                {opt.label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      );
+    }
+
+    if (field === 'priority') {
       return (
         <Input
           type="number"
           value={value}
           onChange={(e) => onChange(parseInt(e.target.value))}
-          className="h-8 w-24"
+          className="h-8 w-20"
         />
       );
     }
@@ -466,12 +519,21 @@ export default function DomainRecords() {
                     />
                   </TableCell>
                   <TableCell>
-                    <Input
-                      type="number"
-                      value={newRecord.ttl}
-                      onChange={(e) => setNewRecord({ ...newRecord, ttl: parseInt(e.target.value) })}
-                      className="h-8 w-24"
-                    />
+                    <Select
+                      value={newRecord.ttl?.toString()}
+                      onValueChange={(value) => setNewRecord({ ...newRecord, ttl: parseInt(value) })}
+                    >
+                      <SelectTrigger className="h-8 w-28">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {TTL_OPTIONS.map(opt => (
+                          <SelectItem key={opt.value} value={opt.value.toString()}>
+                            {opt.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </TableCell>
                   <TableCell>
                     {newRecord.type === 'MX' && (
@@ -495,9 +557,22 @@ export default function DomainRecords() {
                   </TableCell>
                   <TableCell className="text-right">
                     <div className="flex justify-end gap-2">
-                      <Button variant="ghost" size="icon" onClick={handleSaveNew}>
-                        <Check className="w-4 h-4 text-green-600" />
-                      </Button>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button variant="ghost" size="icon" onClick={() => handleSaveNew(true)}>
+                            <Plus className="w-4 h-4 text-blue-600" />
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>保存并继续添加</TooltipContent>
+                      </Tooltip>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button variant="ghost" size="icon" onClick={() => handleSaveNew(false)}>
+                            <Check className="w-4 h-4 text-green-600" />
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>保存</TooltipContent>
+                      </Tooltip>
                       <Button variant="ghost" size="icon" onClick={handleCancelAdd}>
                         <X className="w-4 h-4 text-red-600" />
                       </Button>
@@ -507,7 +582,7 @@ export default function DomainRecords() {
               )}
 
               {/* 记录列表 */}
-              {records.map((record) => {
+              {paginatedRecords.map((record) => {
                 const isEditing = editingId === record.id;
                 const currentData = isEditing ? editForm : record;
 
@@ -543,7 +618,6 @@ export default function DomainRecords() {
                       {renderEditableCell(record, 'ttl', isEditing, currentData.ttl, (value) =>
                         setEditForm({ ...editForm, ttl: value })
                       )}
-                      {!isEditing && 's'}
                     </TableCell>
                     <TableCell>
                       {record.type === 'MX' ? (
@@ -595,6 +669,69 @@ export default function DomainRecords() {
               })}
             </TableBody>
           </Table>
+
+          {/* 分页控件 */}
+          <div className="flex items-center justify-between px-4 py-3 border-t">
+            <div className="flex items-center gap-2">
+              <span className="text-sm text-muted-foreground">每页显示</span>
+              <Select
+                value={pageSize.toString()}
+                onValueChange={(value) => {
+                  setPageSize(parseInt(value));
+                  setCurrentPage(1);
+                }}
+              >
+                <SelectTrigger className="h-8 w-20">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="10">10</SelectItem>
+                  <SelectItem value="20">20</SelectItem>
+                  <SelectItem value="50">50</SelectItem>
+                </SelectContent>
+              </Select>
+              <span className="text-sm text-muted-foreground">
+                共 {records.length} 条记录
+              </span>
+            </div>
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setCurrentPage(1)}
+                disabled={currentPage === 1}
+              >
+                首页
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setCurrentPage(currentPage - 1)}
+                disabled={currentPage === 1}
+              >
+                上一页
+              </Button>
+              <span className="text-sm">
+                第 {currentPage} / {totalPages} 页
+              </span>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setCurrentPage(currentPage + 1)}
+                disabled={currentPage === totalPages}
+              >
+                下一页
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setCurrentPage(totalPages)}
+                disabled={currentPage === totalPages}
+              >
+                末页
+              </Button>
+            </div>
+          </div>
         </CardContent>
       </Card>
 
