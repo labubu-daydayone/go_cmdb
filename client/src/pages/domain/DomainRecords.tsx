@@ -100,7 +100,8 @@ const TTL_OPTIONS = [
 
 export default function DomainRecords() {
   const [, setLocation] = useLocation();
-  const [records, setRecords] = useState<DnsRecord[]>(mockRecords);
+  const [loading, setLoading] = useState(true);
+  const [records, setRecords] = useState<DnsRecord[]>([]);
   const [editingId, setEditingId] = useState<number | null>(null);
   const [isBatchImportOpen, setIsBatchImportOpen] = useState(false);
   const [uploadFile, setUploadFile] = useState<File | null>(null);
@@ -108,6 +109,9 @@ export default function DomainRecords() {
   // 修改为数组，支持同时添加多条记录
   const [newRecords, setNewRecords] = useState<Array<Partial<DnsRecord> & { tempId: number }>>([]);
   const [copiedId, setCopiedId] = useState<number | null>(null);
+  // 删除确认对话框
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
+  const [deleteTargetId, setDeleteTargetId] = useState<number | null>(null);
 
   // 分页状态
   const [currentPage, setCurrentPage] = useState(1);
@@ -130,6 +134,23 @@ export default function DomainRecords() {
    * }
    */
   useEffect(() => {
+    // 模拟加载数据
+    const loadData = async () => {
+      setLoading(true);
+      // TODO: 调用Go API获取解析记录
+      // const response = await fetch(`/api/v1/domains/${domainName}/records?page=1&pageSize=20`);
+      // const data = await response.json();
+      // setRecords(data.records);
+      
+      // 模拟网络延迟
+      await new Promise(resolve => setTimeout(resolve, 300));
+      setRecords(mockRecords);
+      setLoading(false);
+    };
+    
+    loadData();
+    
+    // WebSocket实时更新
     // const ws = new WebSocket(`ws://localhost:8080/api/v1/ws/dns-records/example.com`);
     // 
     // ws.onmessage = (event) => {
@@ -182,13 +203,19 @@ export default function DomainRecords() {
     }]);
   };
 
-  const handleSaveNew = (tempId: number) => {
+  const handleSaveNewRecord = (tempId: number) => {
     const newRecord = newRecords.find(r => r.tempId === tempId);
-    if (!newRecord || !newRecord.type || !newRecord.name || !newRecord.value) {
-      toast.error('请填写必填项');
+    if (!newRecord || !newRecord.type || !newRecord.name || !newRecord.value || !newRecord.ttl) {
+      toast.error('请填写完整的记录信息');
       return;
     }
 
+    // 验证记录值
+    const validation = validateRecordValue(newRecord.type, newRecord.value);
+    if (!validation.valid) {
+      toast.error(validation.error || '记录值格式错误');
+      return;
+    }
     // TODO: 调用Go API创建解析记录
     // const response = await fetch(`/api/v1/domains/${domainName}/records`, {
     //   method: 'POST',
@@ -229,8 +256,15 @@ export default function DomainRecords() {
   };
 
   const handleSaveEdit = () => {
-    if (!editForm.type || !editForm.name || !editForm.value) {
-      toast.error('请填写必填项');
+    if (!editForm.type || !editForm.name || !editForm.value || !editForm.ttl) {
+      toast.error('请填写完整的记录信息');
+      return;
+    }
+
+    // 验证记录值
+    const validation = validateRecordValue(editForm.type, editForm.value);
+    if (!validation.valid) {
+      toast.error(validation.error || '记录值格式错误');
       return;
     }
 
@@ -255,12 +289,26 @@ export default function DomainRecords() {
     setEditForm({});
   };
 
-  const handleDeleteRecord = (id: number) => {
-    // TODO: 调用Go API删除解析记录
-    // await fetch(`/api/v1/domains/${domainName}/records/${id}`, { method: 'DELETE' });
+  const handleDeleteClick = (id: number) => {
+    setDeleteTargetId(id);
+    setDeleteConfirmOpen(true);
+  };
+
+  const handleConfirmDelete = () => {
+    if (deleteTargetId === null) return;
     
-    setRecords(records.filter(r => r.id !== id));
+    // TODO: 调用Go API删除解析记录
+    // await fetch(`/api/v1/domains/${domainName}/records/${deleteTargetId}`, { method: 'DELETE' });
+    
+    setRecords(records.filter(r => r.id !== deleteTargetId));
+    setDeleteConfirmOpen(false);
+    setDeleteTargetId(null);
     toast.success('解析记录已删除');
+  };
+
+  const handleCancelDelete = () => {
+    setDeleteConfirmOpen(false);
+    setDeleteTargetId(null);
   };
 
   const handleRefresh = () => {
@@ -268,6 +316,41 @@ export default function DomainRecords() {
     // await fetch(`/api/v1/domains/${domainName}/records?page=${currentPage}&pageSize=${pageSize}`, { method: 'GET' });
     
     toast.success('正在刷新解析记录...');
+  };
+
+  // 验证记录值是否合法
+  const validateRecordValue = (type: string, value: string): { valid: boolean; error?: string } => {
+    if (!value || value.trim() === '') {
+      return { valid: false, error: '值不能为空' };
+    }
+
+    switch (type) {
+      case 'A':
+        // IPv4地址验证
+        const ipv4Regex = /^((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/;
+        if (!ipv4Regex.test(value)) {
+          return { valid: false, error: 'A记录只能输入IPv4地址，如192.0.2.1' };
+        }
+        break;
+      case 'AAAA':
+        // IPv6地址验证
+        const ipv6Regex = /^(([0-9a-fA-F]{1,4}:){7}[0-9a-fA-F]{1,4}|([0-9a-fA-F]{1,4}:){1,7}:|([0-9a-fA-F]{1,4}:){1,6}:[0-9a-fA-F]{1,4}|([0-9a-fA-F]{1,4}:){1,5}(:[0-9a-fA-F]{1,4}){1,2}|([0-9a-fA-F]{1,4}:){1,4}(:[0-9a-fA-F]{1,4}){1,3}|([0-9a-fA-F]{1,4}:){1,3}(:[0-9a-fA-F]{1,4}){1,4}|([0-9a-fA-F]{1,4}:){1,2}(:[0-9a-fA-F]{1,4}){1,5}|[0-9a-fA-F]{1,4}:((:[0-9a-fA-F]{1,4}){1,6})|:((:[0-9a-fA-F]{1,4}){1,7}|:)|fe80:(:[0-9a-fA-F]{0,4}){0,4}%[0-9a-zA-Z]{1,}|::(ffff(:0{1,4}){0,1}:){0,1}((25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])\.){3}(25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])|([0-9a-fA-F]{1,4}:){1,4}:((25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])\.){3}(25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9]))$/;
+        if (!ipv6Regex.test(value)) {
+          return { valid: false, error: 'AAAA记录只能输入IPv6地址' };
+        }
+        break;
+      case 'CNAME':
+      case 'NS':
+      case 'MX':
+        // 域名验证
+        const domainRegex = /^([a-zA-Z0-9]([a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?\.)+[a-zA-Z]{2,}$/;
+        if (!domainRegex.test(value)) {
+          return { valid: false, error: `${type}记录只能输入域名，如example.com` };
+        }
+        break;
+    }
+
+    return { valid: true };
   };
 
   const handleCopyValue = async (value: string, id: number) => {
@@ -410,6 +493,35 @@ export default function DomainRecords() {
     );
   };
 
+  // 加载中状态
+  if (loading) {
+    return (
+      <div className="p-6 space-y-6">
+        <div className="flex items-center gap-4">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => setLocation('/domain/list')}
+          >
+            <ArrowLeft className="w-4 h-4" />
+          </Button>
+          <div>
+            <h1 className="text-2xl font-bold">解析记录管理</h1>
+            <p className="text-muted-foreground mt-1">example.com - 管理DNS解析记录</p>
+          </div>
+        </div>
+        <Card>
+          <CardContent className="p-6">
+            <div className="flex items-center justify-center py-12">
+              <RefreshCw className="w-6 h-6 animate-spin text-muted-foreground" />
+              <span className="ml-2 text-muted-foreground">加载中...</span>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
   return (
     <div className="p-6 space-y-6">
       {/* 页面标题 */}
@@ -458,20 +570,20 @@ export default function DomainRecords() {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>类型</TableHead>
-                <TableHead>名称</TableHead>
-                <TableHead>值</TableHead>
-                <TableHead>TTL</TableHead>
-                <TableHead>优先级</TableHead>
-                <TableHead>代理状态</TableHead>
-                <TableHead className="text-right">操作</TableHead>
+                <TableHead className="w-[100px]">类型</TableHead>
+                <TableHead className="px-6">名称</TableHead>
+                <TableHead className="px-6">值</TableHead>
+                <TableHead className="w-[120px]">TTL</TableHead>
+                <TableHead className="w-[100px]">优先级</TableHead>
+                <TableHead className="w-[100px]">代理状态</TableHead>
+                <TableHead className="text-right w-[120px]">操作</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {/* 新增记录行 - 支持多条同时添加 */}
               {newRecords.map((newRecord) => (
                 <TableRow key={newRecord.tempId} className="bg-blue-50">
-                  <TableCell>
+                  <TableCell className="w-[100px]">
                     <Select
                       value={newRecord.type}
                       onValueChange={(value) => handleUpdateNewRecord(newRecord.tempId, { type: value as DnsRecord['type'] })}
@@ -490,7 +602,7 @@ export default function DomainRecords() {
                       </SelectContent>
                     </Select>
                   </TableCell>
-                  <TableCell>
+                  <TableCell className="px-6">
                     <Input
                       placeholder="@ 或 www"
                       value={newRecord.name}
@@ -498,7 +610,7 @@ export default function DomainRecords() {
                       className="h-8"
                     />
                   </TableCell>
-                  <TableCell>
+                  <TableCell className="px-6">
                     <Input
                       placeholder="192.0.2.1"
                       value={newRecord.value}
@@ -547,7 +659,7 @@ export default function DomainRecords() {
                     <div className="flex justify-end gap-2">
                       <Tooltip>
                         <TooltipTrigger asChild>
-                          <Button variant="ghost" size="icon" onClick={() => handleSaveNew(newRecord.tempId)}>
+                          <Button variant="ghost" size="icon" onClick={() => handleSaveNewRecord(newRecord.tempId)}>
                             <Check className="w-4 h-4 text-green-600" />
                           </Button>
                         </TooltipTrigger>
@@ -637,7 +749,7 @@ export default function DomainRecords() {
                             variant="ghost"
                             size="icon"
                             className="text-red-600 hover:text-red-700 hover:bg-red-50"
-                            onClick={() => handleDeleteRecord(record.id)}
+                            onClick={() => handleDeleteClick(record.id)}
                           >
                             <Trash2 className="w-4 h-4" />
                           </Button>
@@ -750,6 +862,26 @@ export default function DomainRecords() {
               取消
             </Button>
             <Button onClick={handleBatchImport}>开始导入</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* 删除确认对话框 */}
+      <Dialog open={deleteConfirmOpen} onOpenChange={setDeleteConfirmOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>确认删除</DialogTitle>
+            <DialogDescription>
+              确定要删除这条解析记录吗？此操作不可恢复。
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={handleCancelDelete}>
+              取消
+            </Button>
+            <Button variant="destructive" onClick={handleConfirmDelete}>
+              确认删除
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
