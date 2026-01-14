@@ -135,3 +135,8 @@
 
 ## 仪表盘链接修复
 - [x] 修复多标签页点击仪表盘标签后404问题（使用wouter的setLocation替代window.history.pushState）
+
+## 标签页增强功能
+- [x] 限制标签页数量为10个
+- [x] 实现标签状态持久化（localStorage）
+- [x] 实现标签拖拽排序功能（使用dnd-kit）
