@@ -182,24 +182,28 @@ const SortableTab: React.FC<SortableTabProps> = ({ tab, isActive, onRemove, onAc
     <div
       ref={setNodeRef}
       style={style}
-      {...attributes}
-      {...listeners}
       className={`
-        flex items-center gap-2 px-3 py-1.5 rounded-t-md cursor-pointer
+        flex items-center gap-2 px-3 py-1.5 rounded-t-md
         transition-colors min-w-[100px] max-w-[200px]
         ${isActive 
           ? 'bg-primary text-primary-foreground' 
           : 'bg-muted hover:bg-muted/80'
         }
       `}
-      onClick={() => onActivate(tab.id)}
     >
-      <span className="text-sm truncate flex-1">{tab.title}</span>
+      <span 
+        {...attributes}
+        {...listeners}
+        className="text-sm truncate flex-1 cursor-move"
+        onClick={() => onActivate(tab.id)}
+      >
+        {tab.title}
+      </span>
       {tab.closable && (
         <Button
           variant="ghost"
           size="sm"
-          className="h-4 w-4 p-0 hover:bg-transparent"
+          className="h-4 w-4 p-0 hover:bg-transparent cursor-pointer"
           onClick={(e) => {
             e.stopPropagation();
             onRemove(tab.id);
