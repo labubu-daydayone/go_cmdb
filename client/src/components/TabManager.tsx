@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, ReactNode } from 'react';
+import { useLocation } from 'wouter';
 import { X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
@@ -32,8 +33,9 @@ interface TabProviderProps {
 }
 
 export const TabProvider: React.FC<TabProviderProps> = ({ children }) => {
+  const [, setLocation] = useLocation();
   const [tabs, setTabs] = useState<Tab[]>([
-    { id: 'dashboard', title: '仪表板', path: '/dashboard', closable: false }
+    { id: 'dashboard', title: '仪表板', path: '/', closable: false }
   ]);
   const [activeTabId, setActiveTabId] = useState('dashboard');
 
@@ -60,7 +62,7 @@ export const TabProvider: React.FC<TabProviderProps> = ({ children }) => {
     if (activeTabId === id) {
       const newActiveTab = newTabs[Math.max(0, index - 1)];
       setActiveTabId(newActiveTab.id);
-      window.history.pushState({}, '', newActiveTab.path);
+      setLocation(newActiveTab.path);
     }
   };
 
@@ -68,7 +70,7 @@ export const TabProvider: React.FC<TabProviderProps> = ({ children }) => {
     const tab = tabs.find(t => t.id === id);
     if (tab) {
       setActiveTabId(id);
-      window.history.pushState({}, '', tab.path);
+      setLocation(tab.path);
     }
   };
 
