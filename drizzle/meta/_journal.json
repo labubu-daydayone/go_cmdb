@@ -15,6 +15,20 @@
       "when": 1768317452963,
       "tag": "0001_milky_blue_shield",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "5",
+      "when": 1768427553954,
+      "tag": "0002_luxuriant_sentinels",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "5",
+      "when": 1768427865225,
+      "tag": "0003_silent_steel_serpent",
+      "breakpoints": true
     }
   ]
 }

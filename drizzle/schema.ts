@@ -79,7 +79,7 @@ export const userRoles = mysqlTable("user_roles", {
   roleId: int("roleId").notNull(),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
 }, (table) => ({
-  uniqueUserRole: unique().on(table.userId, table.roleId),
+  uniqUserRole: unique("ur_uid_rid").on(table.userId, table.roleId),
 }));
 
 export type UserRole = typeof userRoles.$inferSelect;
@@ -94,7 +94,7 @@ export const rolePermissions = mysqlTable("role_permissions", {
   permissionId: int("permissionId").notNull(),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
 }, (table) => ({
-  uniqueRolePermission: unique().on(table.roleId, table.permissionId),
+  uniqRolePerm: unique("rp_rid_pid").on(table.roleId, table.permissionId),
 }));
 
 export type RolePermission = typeof rolePermissions.$inferSelect;
@@ -109,7 +109,7 @@ export const userPermissionGroups = mysqlTable("user_permission_groups", {
   groupId: int("groupId").notNull(),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
 }, (table) => ({
-  uniqueUserGroup: unique().on(table.userId, table.groupId),
+  uniqUserGrp: unique("upg_uid_gid").on(table.userId, table.groupId),
 }));
 
 export type UserPermissionGroup = typeof userPermissionGroups.$inferSelect;
@@ -125,7 +125,7 @@ export const permissionGroupResources = mysqlTable("permission_group_resources",
   resourceId: int("resourceId").notNull(), // ID of the actual resource
   createdAt: timestamp("createdAt").defaultNow().notNull(),
 }, (table) => ({
-  uniqueGroupResource: unique().on(table.groupId, table.resourceType, table.resourceId),
+  uniqGrpRes: unique("pgr_gid_rtype_rid").on(table.groupId, table.resourceType, table.resourceId),
 }));
 
 export type PermissionGroupResource = typeof permissionGroupResources.$inferSelect;
@@ -141,7 +141,7 @@ export const resourceOwnership = mysqlTable("resource_ownership", {
   resourceId: int("resourceId").notNull(), // ID of the actual resource
   createdAt: timestamp("createdAt").defaultNow().notNull(),
 }, (table) => ({
-  uniqueOwnership: unique().on(table.userId, table.resourceType, table.resourceId),
+  uniqOwner: unique("ro_uid_rtype_rid").on(table.userId, table.resourceType, table.resourceId),
 }));
 
 export type ResourceOwnership = typeof resourceOwnership.$inferSelect;
@@ -211,6 +211,74 @@ export const permissionGroupResourcesRelations = relations(permissionGroupResour
 export const resourceOwnershipRelations = relations(resourceOwnership, ({ one }) => ({
   user: one(users, {
     fields: [resourceOwnership.userId],
+    references: [users.id],
+  }),
+}));
+
+/**
+ * DNS Provider Accounts table - stores API credentials for DNS providers
+ */
+export const dnsProviderAccounts = mysqlTable("dns_provider_accounts", {
+  id: int("id").autoincrement().primaryKey(),
+  name: varchar("name", { length: 100 }).notNull(), // Account nickname
+  provider: mysqlEnum("provider", ["cloudflare", "godaddy", "namecheap", "aliyun", "dnspod"]).notNull(),
+  apiKey: text("apiKey").notNull(), // Encrypted API key
+  apiSecret: text("apiSecret"), // Encrypted API secret (if needed)
+  email: varchar("email", { length: 320 }), // Account email (for Cloudflare)
+  status: mysqlEnum("status", ["active", "inactive", "error"]).default("active").notNull(),
+  lastSyncAt: timestamp("lastSyncAt"),
+  createdBy: int("createdBy").notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type DnsProviderAccount = typeof dnsProviderAccounts.$inferSelect;
+export type InsertDnsProviderAccount = typeof dnsProviderAccounts.$inferInsert;
+
+/**
+ * Domains table - stores domain assets
+ */
+export const domains = mysqlTable("domains", {
+  id: int("id").autoincrement().primaryKey(),
+  domainName: varchar("domainName", { length: 255 }).notNull().unique(),
+  registrarAccountId: int("registrarAccountId"), // Reference to registrar account (if auto-synced)
+  dnsAccountId: int("dnsAccountId"), // Reference to DNS provider account
+  source: mysqlEnum("source", ["auto_sync", "manual"]).notNull(), // How domain was added
+  zoneId: varchar("zoneId", { length: 100 }), // External zone ID (e.g., Cloudflare zone ID)
+  nsRecords: text("nsRecords"), // JSON array of NS records
+  nsStatus: mysqlEnum("nsStatus", ["pending", "active", "failed", "unknown"]).default("unknown").notNull(),
+  lastNsCheckAt: timestamp("lastNsCheckAt"),
+  expireDate: timestamp("expireDate"),
+  autoRenew: mysqlEnum("autoRenew", ["yes", "no", "unknown"]).default("unknown"),
+  createdBy: int("createdBy").notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type Domain = typeof domains.$inferSelect;
+export type InsertDomain = typeof domains.$inferInsert;
+
+// Relations for DNS provider accounts
+export const dnsProviderAccountsRelations = relations(dnsProviderAccounts, ({ one, many }) => ({
+  creator: one(users, {
+    fields: [dnsProviderAccounts.createdBy],
+    references: [users.id],
+  }),
+  domains: many(domains),
+}));
+
+// Relations for domains
+export const domainsRelations = relations(domains, ({ one }) => ({
+  dnsAccount: one(dnsProviderAccounts, {
+    fields: [domains.dnsAccountId],
+    references: [dnsProviderAccounts.id],
+  }),
+  registrarAccount: one(dnsProviderAccounts, {
+    fields: [domains.registrarAccountId],
+    references: [dnsProviderAccounts.id],
+  }),
+  creator: one(users, {
+    fields: [domains.createdBy],
     references: [users.id],
   }),
 }));
