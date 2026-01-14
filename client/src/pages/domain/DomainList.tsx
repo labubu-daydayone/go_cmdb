@@ -27,7 +27,13 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { Plus, Trash2, RefreshCw, CheckCircle2, XCircle, AlertCircle, Copy } from 'lucide-react';
+import { Plus, Trash2, RefreshCw, CheckCircle2, XCircle, AlertCircle, Copy, Upload, ChevronDown, Settings, Edit2 } from 'lucide-react';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { toast } from 'sonner';
 
 /**
@@ -92,7 +98,9 @@ const nsStatusConfig = {
 export default function DomainList() {
   const [domains, setDomains] = useState<Domain[]>(mockDomains);
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
+  const [isBatchImportDialogOpen, setIsBatchImportDialogOpen] = useState(false);
   const [isNsDialogOpen, setIsNsDialogOpen] = useState(false);
+  const [uploadFile, setUploadFile] = useState<File | null>(null);
   const [selectedDomain, setSelectedDomain] = useState<Domain | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [formData, setFormData] = useState({
@@ -154,11 +162,31 @@ export default function DomainList() {
     toast.success('域名已删除');
   };
 
-  const handleSyncAll = () => {
-    // TODO: 调用Go API同步所有域名
-    // await fetch('/api/v1/domains/sync', { method: 'POST' });
+  const handleSyncAccount = (accountId: number, accountName: string) => {
+    // TODO: 调用Go API同步指定账号的域名
+    // await fetch(`/api/v1/dns-accounts/${accountId}/sync`, { method: 'POST' });
     
-    toast.success('正在同步所有账号的域名...');
+    toast.success(`正在同步 ${accountName} 的域名...`);
+  };
+
+  const handleBatchImport = () => {
+    if (!uploadFile || !formData.dnsAccountId) {
+      toast.error('请选择文件和DNS服务商');
+      return;
+    }
+
+    // TODO: 调用Go API批量导入域名
+    // const formData = new FormData();
+    // formData.append('file', uploadFile);
+    // formData.append('dnsAccountId', formData.dnsAccountId);
+    // await fetch('/api/v1/domains/batch-import', {
+    //   method: 'POST',
+    //   body: formData,
+    // });
+
+    toast.success(`正在批量导入域名...`);
+    setIsBatchImportDialogOpen(false);
+    setUploadFile(null);
   };
 
   const handleCheckNs = (domain: Domain) => {
@@ -166,6 +194,33 @@ export default function DomainList() {
     // await fetch(`/api/v1/domains/${domain.id}/check-ns`, { method: 'POST' });
     
     toast.success(`正在检查 ${domain.domainName} 的NS状态...`);
+  };
+
+  const handleManageRecords = (domain: Domain) => {
+    // 访问控制：只有NS已生效的域名才能管理解析
+    if (domain.nsStatus !== 'active') {
+      toast.error('请先配置DNS服务商，等待NS记录生效后才能管理解析');
+      return;
+    }
+    
+    // 跳转到解析管理页面
+    window.location.href = `/domain/${domain.domainName}/records`;
+  };
+
+  const handleUpdateNs = (domain: Domain) => {
+    // TODO: 调用Go API修改注册商NS记录
+    // 前提：域名必须在注册商账号下（source === 'auto_sync' && registrar_account_id != null）
+    // await fetch(`/api/v1/domains/${domain.id}/update-ns`, {
+    //   method: 'POST',
+    //   body: JSON.stringify({ nsRecords: domain.nsRecords }),
+    // });
+    
+    if (domain.source !== 'auto_sync') {
+      toast.error('只有自动同步的域名才能修改注册商NS记录');
+      return;
+    }
+    
+    toast.success(`正在修改 ${domain.domainName} 的NS记录...`);
   };
 
   const handleShowNs = (domain: Domain) => {
@@ -193,9 +248,28 @@ export default function DomainList() {
           </p>
         </div>
         <div className="flex gap-2">
-          <Button variant="outline" onClick={handleSyncAll}>
-            <RefreshCw className="w-4 h-4 mr-2" />
-            同步域名
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline">
+                <RefreshCw className="w-4 h-4 mr-2" />
+                同步域名
+                <ChevronDown className="w-4 h-4 ml-2" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              {mockDnsAccounts.map((account) => (
+                <DropdownMenuItem
+                  key={account.id}
+                  onClick={() => handleSyncAccount(account.id, account.name)}
+                >
+                  {account.name}
+                </DropdownMenuItem>
+              ))}
+            </DropdownMenuContent>
+          </DropdownMenu>
+          <Button variant="outline" onClick={() => setIsBatchImportDialogOpen(true)}>
+            <Upload className="w-4 h-4 mr-2" />
+            批量导入
           </Button>
           <Button onClick={() => setIsAddDialogOpen(true)}>
             <Plus className="w-4 h-4 mr-2" />
@@ -258,6 +332,16 @@ export default function DomainList() {
                       <TableCell>{domain.createdAt}</TableCell>
                       <TableCell className="text-right">
                         <div className="flex justify-end gap-2">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleManageRecords(domain)}
+                            disabled={domain.nsStatus !== 'active'}
+                            title={domain.nsStatus !== 'active' ? 'NS记录未生效，无法管理解析' : '管理DNS解析记录'}
+                          >
+                            <Edit2 className="w-4 h-4 mr-1" />
+                            管理解析
+                          </Button>
                           {domain.nsRecords && (
                             <Button
                               variant="ghost"
@@ -265,6 +349,16 @@ export default function DomainList() {
                               onClick={() => handleShowNs(domain)}
                             >
                               查看NS
+                            </Button>
+                          )}
+                          {domain.source === 'auto_sync' && domain.nsStatus !== 'active' && (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleUpdateNs(domain)}
+                              title="自动修改注册商NS记录"
+                            >
+                              修改NS
                             </Button>
                           )}
                           {domain.nsStatus !== 'active' && (
@@ -338,6 +432,66 @@ export default function DomainList() {
               取消
             </Button>
             <Button onClick={handleAddDomain}>确认添加</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* 批量导入弹窗 */}
+      <Dialog open={isBatchImportDialogOpen} onOpenChange={setIsBatchImportDialogOpen}>
+        <DialogContent className="sm:max-w-[500px]">
+          <DialogHeader>
+            <DialogTitle>批量导入域名</DialogTitle>
+            <DialogDescription>
+              支持CSV/Excel文件，文件格式：每行一个域名
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="dnsAccountBatch">DNS服务商 *</Label>
+              <Select
+                value={formData.dnsAccountId}
+                onValueChange={(value) => setFormData({ ...formData, dnsAccountId: value })}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="选择DNS服务商账号" />
+                </SelectTrigger>
+                <SelectContent>
+                  {mockDnsAccounts.map((account) => (
+                    <SelectItem key={account.id} value={account.id.toString()}>
+                      {account.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="uploadFile">上传文件 *</Label>
+              <Input
+                id="uploadFile"
+                type="file"
+                accept=".csv,.xlsx,.xls"
+                onChange={(e) => setUploadFile(e.target.files?.[0] || null)}
+              />
+              {uploadFile && (
+                <p className="text-sm text-muted-foreground">
+                  已选择: {uploadFile.name}
+                </p>
+              )}
+            </div>
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 space-y-2">
+              <h4 className="font-medium text-blue-900">文件格式说明：</h4>
+              <ul className="list-disc list-inside space-y-1 text-sm text-blue-800">
+                <li>CSV文件：每行一个域名，例如：example.com</li>
+                <li>Excel文件：第一列为域名，忽略表头</li>
+                <li>最大支持1000个域名</li>
+              </ul>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsBatchImportDialogOpen(false)}>
+              取消
+            </Button>
+            <Button onClick={handleBatchImport}>开始导入</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

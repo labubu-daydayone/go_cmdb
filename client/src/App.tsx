@@ -14,6 +14,7 @@ import Layout from "./components/Layout";
 
 // 域名管理模块
 import DomainList from "./pages/domain/DomainList";
+import DomainRecords from "./pages/domain/DomainRecords";
 import ParseTemplate from "./pages/domain/ParseTemplate";
 import AccountGroup from "./pages/domain/AccountGroup";
 import CertManagement from "./pages/domain/CertManagement";
@@ -47,6 +48,7 @@ function Router() {
           
           {/* 域名管理 */}
           <Route path="/domain/list" component={() => <Layout><DomainList /></Layout>} />
+          <Route path="/domain/:domainName/records" component={() => <Layout><DomainRecords /></Layout>} />
           <Route path="/domain/template" component={() => <Layout><ParseTemplate /></Layout>} />
           <Route path="/domain/group" component={() => <Layout><AccountGroup /></Layout>} />
           <Route path="/domain/cert" component={() => <Layout><CertManagement /></Layout>} />
