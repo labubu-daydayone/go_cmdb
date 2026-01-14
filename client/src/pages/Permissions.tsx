@@ -511,7 +511,7 @@ export default function Permissions() {
 
         {/* 角色标签页 */}
         <TabsContent value="roles" className="space-y-4">
-          <div className="flex justify-between items-center">
+          <div className="flex items-center justify-between">
             <h2 className="text-xl font-semibold">角色列表</h2>
             <Drawer open={createRoleOpen} onOpenChange={setCreateRoleOpen}>
               <DrawerTrigger asChild>
@@ -555,7 +555,7 @@ export default function Permissions() {
             </Drawer>
           </div>
 
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+          <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
             {roles.map((role) => (
               <Card key={role.id}>
                 <CardHeader>
@@ -752,7 +752,7 @@ export default function Permissions() {
             </Drawer>
           </div>
 
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+          <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
             {permissions.map((perm) => (
               <Card key={perm.id}>
                 <CardHeader>
