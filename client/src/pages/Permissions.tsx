@@ -6,6 +6,12 @@ import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
+import {
   Drawer,
   DrawerClose,
   DrawerContent,
@@ -849,28 +855,35 @@ export default function Permissions() {
                     </div>
                     <div className="flex items-center justify-between text-sm">
                       <span className="text-muted-foreground">资源数</span>
-                      <Badge 
-                        variant="outline" 
-                        className="cursor-help"
-                        title={(() => {
-                          if (!group.resources || group.resources.length === 0) return '暂无资源';
-                          const resourceTypes: { [key: string]: number } = {};
-                          group.resources.forEach(resourceId => {
-                            const type = resourceId.split('-')[0];
-                            resourceTypes[type] = (resourceTypes[type] || 0) + 1;
-                          });
-                          const typeNames: { [key: string]: string } = {
-                            'domain': '域名',
-                            'nginx': 'Nginx配置',
-                            'script': '脚本'
-                          };
-                          return Object.entries(resourceTypes)
-                            .map(([type, count]) => `${count}个${typeNames[type] || type}`)
-                            .join(', ');
-                        })()}
-                      >
-                        {group.resources?.length || 0}
-                      </Badge>
+                      <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Badge variant="outline" className="cursor-help">
+                              {group.resources?.length || 0}
+                            </Badge>
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            <p>
+                              {(() => {
+                                if (!group.resources || group.resources.length === 0) return '暂无资源';
+                                const resourceTypes: { [key: string]: number } = {};
+                                group.resources.forEach(resourceId => {
+                                  const type = resourceId.split('-')[0];
+                                  resourceTypes[type] = (resourceTypes[type] || 0) + 1;
+                                });
+                                const typeNames: { [key: string]: string } = {
+                                  'domain': '域名',
+                                  'nginx': 'Nginx配置',
+                                  'script': '脚本'
+                                };
+                                return Object.entries(resourceTypes)
+                                  .map(([type, count]) => `${count}个${typeNames[type] || type}`)
+                                  .join(', ');
+                              })()}
+                            </p>
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
                     </div>
 
                     <div className="space-y-2 pt-2">
