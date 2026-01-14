@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -27,7 +27,12 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { Plus, Trash2, Edit, ArrowLeft, RefreshCw } from 'lucide-react';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
+import { Plus, Trash2, ArrowLeft, RefreshCw, Save, X, Upload, Check } from 'lucide-react';
 import { toast } from 'sonner';
 import { useLocation } from 'wouter';
 
@@ -113,11 +118,13 @@ const recordTypeColors = {
 export default function DomainRecords() {
   const [, setLocation] = useLocation();
   const [records, setRecords] = useState<DnsRecord[]>(mockRecords);
-  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
-  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
-  const [selectedRecord, setSelectedRecord] = useState<DnsRecord | null>(null);
-  const [formData, setFormData] = useState({
-    type: '' as DnsRecord['type'] | '',
+  const [editingId, setEditingId] = useState<number | null>(null);
+  const [isAdding, setIsAdding] = useState(false);
+  const [isBatchImportOpen, setIsBatchImportOpen] = useState(false);
+  const [uploadFile, setUploadFile] = useState<File | null>(null);
+  const [editForm, setEditForm] = useState<Partial<DnsRecord>>({});
+  const [newRecord, setNewRecord] = useState<Partial<DnsRecord>>({
+    type: 'A',
     name: '',
     value: '',
     ttl: 3600,
@@ -126,17 +133,69 @@ export default function DomainRecords() {
   });
 
   /**
+   * WebSocket实时更新
+   * TODO: 对接Go WebSocket服务
+   * ws://localhost:8080/api/v1/ws/dns-records/:domainName
+   * 
+   * 消息格式：
+   * {
+   *   type: 'record_added' | 'record_updated' | 'record_deleted' | 'domain_status_changed',
+   *   data: DnsRecord | { domainName: string, nsStatus: string }
+   * }
+   */
+  useEffect(() => {
+    // const ws = new WebSocket(`ws://localhost:8080/api/v1/ws/dns-records/example.com`);
+    // 
+    // ws.onmessage = (event) => {
+    //   const message = JSON.parse(event.data);
+    //   
+    //   switch (message.type) {
+    //     case 'record_added':
+    //       setRecords(prev => [...prev, message.data]);
+    //       toast.success('新增解析记录');
+    //       break;
+    //     case 'record_updated':
+    //       setRecords(prev => prev.map(r => r.id === message.data.id ? message.data : r));
+    //       toast.info('解析记录已更新');
+    //       break;
+    //     case 'record_deleted':
+    //       setRecords(prev => prev.filter(r => r.id !== message.data.id));
+    //       toast.info('解析记录已删除');
+    //       break;
+    //     case 'domain_status_changed':
+    //       toast.info(`域名状态变更: ${message.data.nsStatus}`);
+    //       break;
+    //   }
+    // };
+    // 
+    // ws.onerror = () => toast.error('WebSocket连接失败');
+    // 
+    // return () => ws.close();
+  }, []);
+
+  /**
    * TODO: 对接Go API
    * GET /api/v1/domains/:domain/records - 获取解析记录列表
    * POST /api/v1/domains/:domain/records - 创建解析记录
    * PUT /api/v1/domains/:domain/records/:id - 更新解析记录
    * DELETE /api/v1/domains/:domain/records/:id - 删除解析记录
-   * 
-   * 注意：需要调用DNS服务商API（Cloudflare/GoDaddy等）
+   * POST /api/v1/domains/:domain/records/batch - 批量导入解析记录
    */
 
-  const handleAddRecord = () => {
-    if (!formData.type || !formData.name || !formData.value) {
+  const handleStartAdd = () => {
+    setIsAdding(true);
+    setNewRecord({
+      type: 'A',
+      name: '',
+      value: '',
+      ttl: 3600,
+      priority: 10,
+      proxied: false,
+    });
+  };
+
+  const handleSaveNew = () => {
+    if (!newRecord.type || !newRecord.name || !newRecord.value) {
       toast.error('请填写必填项');
       return;
     }
@@ -144,47 +203,61 @@ export default function DomainRecords() {
     // TODO: 调用Go API创建解析记录
     // const response = await fetch(`/api/v1/domains/${domainName}/records`, {
     //   method: 'POST',
-    //   body: JSON.stringify(formData),
+    //   body: JSON.stringify(newRecord),
     // });
 
-    const newRecord: DnsRecord = {
+    const record: DnsRecord = {
       id: Date.now(),
-      type: formData.type as DnsRecord['type'],
-      name: formData.name,
-      value: formData.value,
-      ttl: formData.ttl,
-      priority: formData.type === 'MX' ? formData.priority : undefined,
-      proxied: formData.proxied,
+      type: newRecord.type as DnsRecord['type'],
+      name: newRecord.name,
+      value: newRecord.value,
+      ttl: newRecord.ttl || 3600,
+      priority: newRecord.type === 'MX' ? newRecord.priority : undefined,
+      proxied: newRecord.proxied,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
     };
 
-    setRecords([...records, newRecord]);
-    setIsAddDialogOpen(false);
-    setFormData({ type: '', name: '', value: '', ttl: 3600, priority: 10, proxied: false });
+    setRecords([record, ...records]);
+    setIsAdding(false);
     toast.success('解析记录已添加');
   };
 
-  const handleEditRecord = () => {
-    if (!selectedRecord || !formData.type || !formData.name || !formData.value) {
+  const handleCancelAdd = () => {
+    setIsAdding(false);
+    setNewRecord({});
+  };
+
+  const handleStartEdit = (record: DnsRecord) => {
+    setEditingId(record.id);
+    setEditForm(record);
+  };
+
+  const handleSaveEdit = () => {
+    if (!editForm.type || !editForm.name || !editForm.value) {
       toast.error('请填写必填项');
       return;
     }
 
     // TODO: 调用Go API更新解析记录
-    // await fetch(`/api/v1/domains/${domainName}/records/${selectedRecord.id}`, {
+    // await fetch(`/api/v1/domains/${domainName}/records/${editingId}`, {
     //   method: 'PUT',
-    //   body: JSON.stringify(formData),
+    //   body: JSON.stringify(editForm),
     // });
 
     setRecords(records.map(r => 
-      r.id === selectedRecord.id
-        ? { ...r, ...formData, type: formData.type as DnsRecord['type'], updatedAt: new Date().toISOString() }
+      r.id === editingId
+        ? { ...r, ...editForm, updatedAt: new Date().toISOString() }
         : r
     ));
-    setIsEditDialogOpen(false);
-    setSelectedRecord(null);
+    setEditingId(null);
+    setEditForm({});
     toast.success('解析记录已更新');
+  };
+
+  const handleCancelEdit = () => {
+    setEditingId(null);
+    setEditForm({});
   };
 
   const handleDeleteRecord = (id: number) => {
@@ -202,17 +275,98 @@ export default function DomainRecords() {
     toast.success('正在刷新解析记录...');
   };
 
-  const openEditDialog = (record: DnsRecord) => {
-    setSelectedRecord(record);
-    setFormData({
-      type: record.type,
-      name: record.name,
-      value: record.value,
-      ttl: record.ttl,
-      priority: record.priority || 10,
-      proxied: record.proxied || false,
-    });
-    setIsEditDialogOpen(true);
+  const handleBatchImport = () => {
+    if (!uploadFile) {
+      toast.error('请选择文件');
+      return;
+    }
+
+    // TODO: 调用Go API批量导入解析记录
+    // const formData = new FormData();
+    // formData.append('file', uploadFile);
+    // await fetch(`/api/v1/domains/${domainName}/records/batch`, {
+    //   method: 'POST',
+    //   body: formData,
+    // });
+
+    toast.success(`正在导入 ${uploadFile.name}...`);
+    setIsBatchImportOpen(false);
+    setUploadFile(null);
+  };
+
+  const renderEditableCell = (
+    record: DnsRecord,
+    field: keyof DnsRecord,
+    isEditing: boolean,
+    value: any,
+    onChange: (value: any) => void
+  ) => {
+    if (!isEditing) {
+      if (field === 'value') {
+        return (
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <span className="font-mono text-sm max-w-md truncate block cursor-help">
+                {value}
+              </span>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p className="max-w-xs break-all">{value}</p>
+            </TooltipContent>
+          </Tooltip>
+        );
+      }
+      return <span className="font-mono">{value || '-'}</span>;
+    }
+
+    if (field === 'type') {
+      return (
+        <Select value={value} onValueChange={onChange}>
+          <SelectTrigger className="h-8">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="A">A</SelectItem>
+            <SelectItem value="AAAA">AAAA</SelectItem>
+            <SelectItem value="CNAME">CNAME</SelectItem>
+            <SelectItem value="MX">MX</SelectItem>
+            <SelectItem value="TXT">TXT</SelectItem>
+            <SelectItem value="NS">NS</SelectItem>
+            <SelectItem value="SRV">SRV</SelectItem>
+          </SelectContent>
+        </Select>
+      );
+    }
+
+    if (field === 'ttl' || field === 'priority') {
+      return (
+        <Input
+          type="number"
+          value={value}
+          onChange={(e) => onChange(parseInt(e.target.value))}
+          className="h-8 w-24"
+        />
+      );
+    }
+
+    if (field === 'proxied') {
+      return (
+        <input
+          type="checkbox"
+          checked={value}
+          onChange={(e) => onChange(e.target.checked)}
+          className="w-4 h-4"
+        />
+      );
+    }
+
+    return (
+      <Input
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        className="h-8"
+      />
+    );
   };
 
   return (
@@ -229,17 +383,28 @@ export default function DomainRecords() {
           </Button>
           <div>
             <h1 className="text-2xl font-bold">解析记录管理</h1>
-            <p className="text-muted-foreground mt-1">
-              example.com - 管理DNS解析记录
-            </p>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <p className="text-muted-foreground mt-1 max-w-md truncate cursor-help">
+                  example.com - 管理DNS解析记录
+                </p>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>example.com - 管理DNS解析记录</p>
+              </TooltipContent>
+            </Tooltip>
           </div>
         </div>
         <div className="flex gap-2">
+          <Button variant="outline" onClick={() => setIsBatchImportOpen(true)}>
+            <Upload className="w-4 h-4 mr-2" />
+            批量导入
+          </Button>
           <Button variant="outline" onClick={handleRefresh}>
             <RefreshCw className="w-4 h-4 mr-2" />
             刷新
           </Button>
-          <Button onClick={() => setIsAddDialogOpen(true)}>
+          <Button onClick={handleStartAdd} disabled={isAdding}>
             <Plus className="w-4 h-4 mr-2" />
             添加记录
           </Button>
@@ -262,236 +427,212 @@ export default function DomainRecords() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {records.map((record) => (
-                <TableRow key={record.id}>
+              {/* 新增记录行 */}
+              {isAdding && (
+                <TableRow className="bg-blue-50">
                   <TableCell>
-                    <Badge className={recordTypeColors[record.type]}>
-                      {record.type}
-                    </Badge>
+                    <Select
+                      value={newRecord.type}
+                      onValueChange={(value) => setNewRecord({ ...newRecord, type: value as DnsRecord['type'] })}
+                    >
+                      <SelectTrigger className="h-8">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="A">A</SelectItem>
+                        <SelectItem value="AAAA">AAAA</SelectItem>
+                        <SelectItem value="CNAME">CNAME</SelectItem>
+                        <SelectItem value="MX">MX</SelectItem>
+                        <SelectItem value="TXT">TXT</SelectItem>
+                        <SelectItem value="NS">NS</SelectItem>
+                        <SelectItem value="SRV">SRV</SelectItem>
+                      </SelectContent>
+                    </Select>
                   </TableCell>
-                  <TableCell className="font-mono">{record.name}</TableCell>
-                  <TableCell className="font-mono text-sm max-w-md truncate">
-                    {record.value}
-                  </TableCell>
-                  <TableCell>{record.ttl}s</TableCell>
-                  <TableCell>{record.priority || '-'}</TableCell>
                   <TableCell>
-                    {record.proxied !== undefined && (
-                      <Badge variant={record.proxied ? 'default' : 'outline'}>
-                        {record.proxied ? '已代理' : '仅DNS'}
-                      </Badge>
+                    <Input
+                      placeholder="@ 或 www"
+                      value={newRecord.name}
+                      onChange={(e) => setNewRecord({ ...newRecord, name: e.target.value })}
+                      className="h-8"
+                    />
+                  </TableCell>
+                  <TableCell>
+                    <Input
+                      placeholder="192.0.2.1"
+                      value={newRecord.value}
+                      onChange={(e) => setNewRecord({ ...newRecord, value: e.target.value })}
+                      className="h-8"
+                    />
+                  </TableCell>
+                  <TableCell>
+                    <Input
+                      type="number"
+                      value={newRecord.ttl}
+                      onChange={(e) => setNewRecord({ ...newRecord, ttl: parseInt(e.target.value) })}
+                      className="h-8 w-24"
+                    />
+                  </TableCell>
+                  <TableCell>
+                    {newRecord.type === 'MX' && (
+                      <Input
+                        type="number"
+                        value={newRecord.priority}
+                        onChange={(e) => setNewRecord({ ...newRecord, priority: parseInt(e.target.value) })}
+                        className="h-8 w-20"
+                      />
+                    )}
+                  </TableCell>
+                  <TableCell>
+                    {(newRecord.type === 'A' || newRecord.type === 'AAAA' || newRecord.type === 'CNAME') && (
+                      <input
+                        type="checkbox"
+                        checked={newRecord.proxied}
+                        onChange={(e) => setNewRecord({ ...newRecord, proxied: e.target.checked })}
+                        className="w-4 h-4"
+                      />
                     )}
                   </TableCell>
                   <TableCell className="text-right">
                     <div className="flex justify-end gap-2">
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => openEditDialog(record)}
-                      >
-                        <Edit className="w-4 h-4" />
+                      <Button variant="ghost" size="icon" onClick={handleSaveNew}>
+                        <Check className="w-4 h-4 text-green-600" />
                       </Button>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="text-red-600 hover:text-red-700 hover:bg-red-50"
-                        onClick={() => handleDeleteRecord(record.id)}
-                      >
-                        <Trash2 className="w-4 h-4" />
+                      <Button variant="ghost" size="icon" onClick={handleCancelAdd}>
+                        <X className="w-4 h-4 text-red-600" />
                       </Button>
                     </div>
                   </TableCell>
                 </TableRow>
-              ))}
+              )}
+
+              {/* 记录列表 */}
+              {records.map((record) => {
+                const isEditing = editingId === record.id;
+                const currentData = isEditing ? editForm : record;
+
+                return (
+                  <TableRow
+                    key={record.id}
+                    onDoubleClick={() => !isEditing && handleStartEdit(record)}
+                    className={isEditing ? 'bg-yellow-50' : 'cursor-pointer hover:bg-gray-50'}
+                    title={isEditing ? '' : '双击编辑'}
+                  >
+                    <TableCell>
+                      {isEditing ? (
+                        renderEditableCell(record, 'type', true, currentData.type, (value) =>
+                          setEditForm({ ...editForm, type: value })
+                        )
+                      ) : (
+                        <Badge className={recordTypeColors[record.type]}>
+                          {record.type}
+                        </Badge>
+                      )}
+                    </TableCell>
+                    <TableCell>
+                      {renderEditableCell(record, 'name', isEditing, currentData.name, (value) =>
+                        setEditForm({ ...editForm, name: value })
+                      )}
+                    </TableCell>
+                    <TableCell>
+                      {renderEditableCell(record, 'value', isEditing, currentData.value, (value) =>
+                        setEditForm({ ...editForm, value: value })
+                      )}
+                    </TableCell>
+                    <TableCell>
+                      {renderEditableCell(record, 'ttl', isEditing, currentData.ttl, (value) =>
+                        setEditForm({ ...editForm, ttl: value })
+                      )}
+                      {!isEditing && 's'}
+                    </TableCell>
+                    <TableCell>
+                      {record.type === 'MX' ? (
+                        renderEditableCell(record, 'priority', isEditing, currentData.priority, (value) =>
+                          setEditForm({ ...editForm, priority: value })
+                        )
+                      ) : (
+                        '-'
+                      )}
+                    </TableCell>
+                    <TableCell>
+                      {record.proxied !== undefined && (
+                        isEditing ? (
+                          renderEditableCell(record, 'proxied', true, currentData.proxied, (value) =>
+                            setEditForm({ ...editForm, proxied: value })
+                          )
+                        ) : (
+                          <Badge variant={record.proxied ? 'default' : 'outline'}>
+                            {record.proxied ? '已代理' : '仅DNS'}
+                          </Badge>
+                        )
+                      )}
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <div className="flex justify-end gap-2">
+                        {isEditing ? (
+                          <>
+                            <Button variant="ghost" size="icon" onClick={handleSaveEdit}>
+                              <Save className="w-4 h-4 text-green-600" />
+                            </Button>
+                            <Button variant="ghost" size="icon" onClick={handleCancelEdit}>
+                              <X className="w-4 h-4 text-red-600" />
+                            </Button>
+                          </>
+                        ) : (
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                            onClick={() => handleDeleteRecord(record.id)}
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
+                        )}
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                );
+              })}
             </TableBody>
           </Table>
         </CardContent>
       </Card>
 
-      {/* 添加记录弹窗 */}
-      <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
-        <DialogContent className="sm:max-w-[500px]">
+      {/* 批量导入弹窗 */}
+      <Dialog open={isBatchImportOpen} onOpenChange={setIsBatchImportOpen}>
+        <DialogContent>
           <DialogHeader>
-            <DialogTitle>添加解析记录</DialogTitle>
+            <DialogTitle>批量导入解析记录</DialogTitle>
             <DialogDescription>
-              为域名添加新的DNS解析记录
+              上传CSV或Excel文件批量添加DNS解析记录
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-4">
             <div className="space-y-2">
-              <Label htmlFor="recordType">记录类型 *</Label>
-              <Select
-                value={formData.type}
-                onValueChange={(value) => setFormData({ ...formData, type: value as DnsRecord['type'] })}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="选择记录类型" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="A">A - IPv4地址</SelectItem>
-                  <SelectItem value="AAAA">AAAA - IPv6地址</SelectItem>
-                  <SelectItem value="CNAME">CNAME - 别名</SelectItem>
-                  <SelectItem value="MX">MX - 邮件服务器</SelectItem>
-                  <SelectItem value="TXT">TXT - 文本记录</SelectItem>
-                  <SelectItem value="NS">NS - 域名服务器</SelectItem>
-                  <SelectItem value="SRV">SRV - 服务记录</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="recordName">名称 *</Label>
+              <Label>选择文件</Label>
               <Input
-                id="recordName"
-                placeholder="@ 或 www 或 subdomain"
-                value={formData.name}
-                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                type="file"
+                accept=".csv,.xlsx,.xls"
+                onChange={(e) => setUploadFile(e.target.files?.[0] || null)}
               />
+              <p className="text-sm text-muted-foreground">
+                支持CSV、Excel格式，文件格式：类型,名称,值,TTL,优先级,代理状态
+              </p>
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="recordValue">值 *</Label>
-              <Input
-                id="recordValue"
-                placeholder={formData.type === 'A' ? '192.0.2.1' : 'example.com'}
-                value={formData.value}
-                onChange={(e) => setFormData({ ...formData, value: e.target.value })}
-              />
+            <div className="bg-muted p-3 rounded text-sm">
+              <p className="font-medium mb-2">示例格式：</p>
+              <pre className="text-xs">
+                A,www,192.0.2.1,3600,,true{'\n'}
+                CNAME,blog,example.com,3600,,false{'\n'}
+                MX,@,mail.example.com,3600,10,
+              </pre>
             </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="recordTtl">TTL (秒)</Label>
-                <Input
-                  id="recordTtl"
-                  type="number"
-                  value={formData.ttl}
-                  onChange={(e) => setFormData({ ...formData, ttl: parseInt(e.target.value) })}
-                />
-              </div>
-              {formData.type === 'MX' && (
-                <div className="space-y-2">
-                  <Label htmlFor="recordPriority">优先级</Label>
-                  <Input
-                    id="recordPriority"
-                    type="number"
-                    value={formData.priority}
-                    onChange={(e) => setFormData({ ...formData, priority: parseInt(e.target.value) })}
-                  />
-                </div>
-              )}
-            </div>
-            {(formData.type === 'A' || formData.type === 'AAAA' || formData.type === 'CNAME') && (
-              <div className="flex items-center gap-2">
-                <input
-                  type="checkbox"
-                  id="recordProxied"
-                  checked={formData.proxied}
-                  onChange={(e) => setFormData({ ...formData, proxied: e.target.checked })}
-                  className="w-4 h-4"
-                />
-                <Label htmlFor="recordProxied" className="cursor-pointer">
-                  启用CDN代理（Cloudflare）
-                </Label>
-              </div>
-            )}
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setIsAddDialogOpen(false)}>
+            <Button variant="outline" onClick={() => setIsBatchImportOpen(false)}>
               取消
             </Button>
-            <Button onClick={handleAddRecord}>确认添加</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      {/* 编辑记录弹窗 */}
-      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-        <DialogContent className="sm:max-w-[500px]">
-          <DialogHeader>
-            <DialogTitle>编辑解析记录</DialogTitle>
-            <DialogDescription>
-              修改DNS解析记录信息
-            </DialogDescription>
-          </DialogHeader>
-          <div className="space-y-4 py-4">
-            <div className="space-y-2">
-              <Label htmlFor="editRecordType">记录类型 *</Label>
-              <Select
-                value={formData.type}
-                onValueChange={(value) => setFormData({ ...formData, type: value as DnsRecord['type'] })}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="选择记录类型" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="A">A - IPv4地址</SelectItem>
-                  <SelectItem value="AAAA">AAAA - IPv6地址</SelectItem>
-                  <SelectItem value="CNAME">CNAME - 别名</SelectItem>
-                  <SelectItem value="MX">MX - 邮件服务器</SelectItem>
-                  <SelectItem value="TXT">TXT - 文本记录</SelectItem>
-                  <SelectItem value="NS">NS - 域名服务器</SelectItem>
-                  <SelectItem value="SRV">SRV - 服务记录</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="editRecordName">名称 *</Label>
-              <Input
-                id="editRecordName"
-                placeholder="@ 或 www 或 subdomain"
-                value={formData.name}
-                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="editRecordValue">值 *</Label>
-              <Input
-                id="editRecordValue"
-                placeholder={formData.type === 'A' ? '192.0.2.1' : 'example.com'}
-                value={formData.value}
-                onChange={(e) => setFormData({ ...formData, value: e.target.value })}
-              />
-            </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="editRecordTtl">TTL (秒)</Label>
-                <Input
-                  id="editRecordTtl"
-                  type="number"
-                  value={formData.ttl}
-                  onChange={(e) => setFormData({ ...formData, ttl: parseInt(e.target.value) })}
-                />
-              </div>
-              {formData.type === 'MX' && (
-                <div className="space-y-2">
-                  <Label htmlFor="editRecordPriority">优先级</Label>
-                  <Input
-                    id="editRecordPriority"
-                    type="number"
-                    value={formData.priority}
-                    onChange={(e) => setFormData({ ...formData, priority: parseInt(e.target.value) })}
-                  />
-                </div>
-              )}
-            </div>
-            {(formData.type === 'A' || formData.type === 'AAAA' || formData.type === 'CNAME') && (
-              <div className="flex items-center gap-2">
-                <input
-                  type="checkbox"
-                  id="editRecordProxied"
-                  checked={formData.proxied}
-                  onChange={(e) => setFormData({ ...formData, proxied: e.target.checked })}
-                  className="w-4 h-4"
-                />
-                <Label htmlFor="editRecordProxied" className="cursor-pointer">
-                  启用CDN代理（Cloudflare）
-                </Label>
-              </div>
-            )}
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setIsEditDialogOpen(false)}>
-              取消
-            </Button>
-            <Button onClick={handleEditRecord}>保存修改</Button>
+            <Button onClick={handleBatchImport}>开始导入</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
