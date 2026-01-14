@@ -869,7 +869,7 @@ export default function Permissions() {
                             .join(', ');
                         })()}
                       >
-                        {group.resources?.length || 0}个
+                        {group.resources?.length || 0}
                       </Badge>
                     </div>
 
@@ -990,7 +990,49 @@ export default function Permissions() {
                                       <tr>
                                         <th className="text-left p-3 text-sm font-medium">资源名称</th>
                                         <th className="text-left p-3 text-sm font-medium">详细信息</th>
-                                        <th className="text-center p-3 text-sm font-medium w-24">操作</th>
+                                        <th className="text-center p-3 text-sm font-medium w-24">
+                                          <input
+                                            type="checkbox"
+                                            checked={(() => {
+                                              let resources: any[] = getMockResources(selectedResourceType);
+                                              if (resourceSearchTerm) {
+                                                resources = resources.filter(r => 
+                                                  r.name?.toLowerCase().includes(resourceSearchTerm.toLowerCase()) ||
+                                                  r.description?.toLowerCase().includes(resourceSearchTerm.toLowerCase()) ||
+                                                  r.path?.toLowerCase().includes(resourceSearchTerm.toLowerCase())
+                                                );
+                                              }
+                                              const start = (resourcePage - 1) * resourcePageSize;
+                                              const end = start + resourcePageSize;
+                                              const paginatedResources = resources.slice(start, end);
+                                              return paginatedResources.length > 0 && paginatedResources.every(r => selectedResourceIds.includes(r.id));
+                                            })()}
+                                            onChange={(e) => {
+                                              let resources: any[] = getMockResources(selectedResourceType);
+                                              if (resourceSearchTerm) {
+                                                resources = resources.filter(r => 
+                                                  r.name?.toLowerCase().includes(resourceSearchTerm.toLowerCase()) ||
+                                                  r.description?.toLowerCase().includes(resourceSearchTerm.toLowerCase()) ||
+                                                  r.path?.toLowerCase().includes(resourceSearchTerm.toLowerCase())
+                                                );
+                                              }
+                                              const start = (resourcePage - 1) * resourcePageSize;
+                                              const end = start + resourcePageSize;
+                                              const paginatedResources = resources.slice(start, end);
+                                              
+                                              if (e.target.checked) {
+                                                // 全选：添加当前页所有资源
+                                                const newIds = paginatedResources.map(r => r.id).filter(id => !selectedResourceIds.includes(id));
+                                                setSelectedResourceIds([...selectedResourceIds, ...newIds]);
+                                              } else {
+                                                // 取消全选：移除当前页所有资源
+                                                const pageIds = paginatedResources.map(r => r.id);
+                                                setSelectedResourceIds(selectedResourceIds.filter(id => !pageIds.includes(id)));
+                                              }
+                                            }}
+                                            className="w-4 h-4 cursor-pointer"
+                                          />
+                                        </th>
                                       </tr>
                                     </thead>
                                     <tbody>
