@@ -5,6 +5,7 @@ import { Route, Switch, useLocation } from "wouter";
 import ErrorBoundary from "./components/ErrorBoundary";
 import { ThemeProvider } from "./contexts/ThemeContext";
 import { AuthProvider, useAuth } from "./contexts/AuthContext";
+import { TabProvider } from "./components/TabManager";
 import Login from "./pages/Login";
 import Dashboard from "./pages/Dashboard";
 import Users from "./pages/Users";
@@ -64,8 +65,10 @@ function App() {
       <ThemeProvider defaultTheme="light">
         <TooltipProvider>
           <AuthProvider>
-            <Toaster />
-            <Router />
+            <TabProvider>
+              <Toaster />
+              <Router />
+            </TabProvider>
           </AuthProvider>
         </TooltipProvider>
       </ThemeProvider>

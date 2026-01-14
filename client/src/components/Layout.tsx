@@ -4,6 +4,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { LogOut, Menu, X } from 'lucide-react';
 import { useState } from 'react';
+import { TabBar, useTabManager } from './TabManager';
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -19,10 +20,12 @@ export default function Layout({ children }: LayoutProps) {
     setLocation('/login');
   };
 
+  const { addTab } = useTabManager();
+
   const navItems = [
-    { label: '仪表板', href: '/' },
-    { label: '用户管理', href: '/users' },
-    { label: '权限管理', href: '/permissions' },
+    { label: '仪表板', href: '/', closable: false },
+    { label: '用户管理', href: '/users', closable: true },
+    { label: '权限管理', href: '/permissions', closable: true },
   ];
 
   return (
@@ -66,6 +69,7 @@ export default function Layout({ children }: LayoutProps) {
               href={item.href}
               onClick={(e) => {
                 e.preventDefault();
+                addTab({ title: item.label, path: item.href, closable: item.closable });
                 setLocation(item.href);
                 setSidebarOpen(false); // 移动端点击后关闭侧边栏
               }}
@@ -109,6 +113,9 @@ export default function Layout({ children }: LayoutProps) {
             </div>
           </div>
         </header>
+
+        {/* 标签栏 */}
+        <TabBar />
 
         {/* 页面内容 */}
         <main className="flex-1 overflow-auto">
