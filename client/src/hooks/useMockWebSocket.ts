@@ -53,37 +53,37 @@ export const useMockWebSocket = (token: string | null, options: UseWebSocketOpti
     onDisconnect?.();
   }, [onDisconnect]);
 
-  // 模拟定期发送消息
-  useEffect(() => {
-    if (!isConnected || subscriptions.size === 0) return;
+  // 模拟定期发送消息（已禁用，避免不必要的通知）
+  // useEffect(() => {
+  //   if (!isConnected || subscriptions.size === 0) return;
 
-    // 每5秒发送一次模拟消息
-    intervalRef.current = setInterval(() => {
-      subscriptions.forEach((channel) => {
-        const mockMessage: WebSocketMessage = {
-          type: 'list_update',
-          action: 'update',
-          resource: channel.split(':')[0] || 'unknown',
-          resource_id: String(Math.floor(Math.random() * 100)),
-          data: {
-            message: `Mock update for ${channel}`,
-            timestamp: new Date().toISOString(),
-          },
-          timestamp: Date.now(),
-          user_id: '1',
-        };
+  //   // 每5秒发送一次模拟消息
+  //   intervalRef.current = setInterval(() => {
+  //     subscriptions.forEach((channel) => {
+  //       const mockMessage: WebSocketMessage = {
+  //         type: 'list_update',
+  //         action: 'update',
+  //         resource: channel.split(':')[0] || 'unknown',
+  //         resource_id: String(Math.floor(Math.random() * 100)),
+  //         data: {
+  //           message: `Mock update for ${channel}`,
+  //           timestamp: new Date().toISOString(),
+  //         },
+  //         timestamp: Date.now(),
+  //         user_id: '1',
+  //       };
 
-        console.log('[Mock WebSocket] Sending message:', mockMessage);
-        onMessage?.(mockMessage);
-      });
-    }, 5000);
+  //       console.log('[Mock WebSocket] Sending message:', mockMessage);
+  //       onMessage?.(mockMessage);
+  //     });
+  //   }, 5000);
 
-    return () => {
-      if (intervalRef.current) {
-        clearInterval(intervalRef.current);
-      }
-    };
-  }, [isConnected, subscriptions, onMessage]);
+  //   return () => {
+  //     if (intervalRef.current) {
+  //       clearInterval(intervalRef.current);
+  //     }
+  //   };
+  // }, [isConnected, subscriptions, onMessage]);
 
   useEffect(() => {
     if (token) {
