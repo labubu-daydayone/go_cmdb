@@ -102,18 +102,11 @@ export default function DomainRecords() {
   const [, setLocation] = useLocation();
   const [records, setRecords] = useState<DnsRecord[]>(mockRecords);
   const [editingId, setEditingId] = useState<number | null>(null);
-  const [isAdding, setIsAdding] = useState(false);
   const [isBatchImportOpen, setIsBatchImportOpen] = useState(false);
   const [uploadFile, setUploadFile] = useState<File | null>(null);
   const [editForm, setEditForm] = useState<Partial<DnsRecord>>({});
-  const [newRecord, setNewRecord] = useState<Partial<DnsRecord>>({
-    type: 'A',
-    name: '',
-    value: '',
-    ttl: 3600,
-    priority: 10,
-    proxied: false,
-  });
+  // 修改为数组，支持同时添加多条记录
+  const [newRecords, setNewRecords] = useState<Array<Partial<DnsRecord> & { tempId: number }>>([]);
   const [copiedId, setCopiedId] = useState<number | null>(null);
 
   // 分页状态
@@ -176,19 +169,22 @@ export default function DomainRecords() {
    */
 
   const handleStartAdd = () => {
-    setIsAdding(true);
-    setNewRecord({
+    // 每次点击添加一条新的空记录
+    const tempId = Date.now() + Math.random();
+    setNewRecords([...newRecords, {
+      tempId,
       type: 'A',
       name: '',
       value: '',
       ttl: 3600,
       priority: 10,
       proxied: false,
-    });
+    }]);
   };
 
-  const handleSaveNew = (continueAdding: boolean = false) => {
-    if (!newRecord.type || !newRecord.name || !newRecord.value) {
+  const handleSaveNew = (tempId: number) => {
+    const newRecord = newRecords.find(r => r.tempId === tempId);
+    if (!newRecord || !newRecord.type || !newRecord.name || !newRecord.value) {
       toast.error('请填写必填项');
       return;
     }
@@ -212,27 +208,19 @@ export default function DomainRecords() {
     };
 
     setRecords([record, ...records]);
-    
-    if (continueAdding) {
-      // 连续添加：保留类型和TTL，清空其他字段
-      setNewRecord({
-        type: newRecord.type,
-        name: '',
-        value: '',
-        ttl: newRecord.ttl,
-        priority: newRecord.type === 'MX' ? 10 : undefined,
-        proxied: newRecord.proxied,
-      });
-      toast.success('解析记录已添加，继续添加下一条');
-    } else {
-      setIsAdding(false);
-      toast.success('解析记录已添加');
-    }
+    // 移除已保存的新记录
+    setNewRecords(newRecords.filter(r => r.tempId !== tempId));
+    toast.success('解析记录已添加');
   };
 
-  const handleCancelAdd = () => {
-    setIsAdding(false);
-    setNewRecord({});
+  const handleCancelAdd = (tempId: number) => {
+    setNewRecords(newRecords.filter(r => r.tempId !== tempId));
+  };
+
+  const handleUpdateNewRecord = (tempId: number, updates: Partial<DnsRecord>) => {
+    setNewRecords(newRecords.map(r => 
+      r.tempId === tempId ? { ...r, ...updates } : r
+    ));
   };
 
   const handleStartEdit = (record: DnsRecord) => {
@@ -457,7 +445,7 @@ export default function DomainRecords() {
             <RefreshCw className="w-4 h-4 mr-2" />
             刷新
           </Button>
-          <Button onClick={handleStartAdd} disabled={isAdding}>
+          <Button onClick={handleStartAdd}>
             <Plus className="w-4 h-4 mr-2" />
             添加记录
           </Button>
@@ -480,13 +468,13 @@ export default function DomainRecords() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {/* 新增记录行 */}
-              {isAdding && (
-                <TableRow className="bg-blue-50">
+              {/* 新增记录行 - 支持多条同时添加 */}
+              {newRecords.map((newRecord) => (
+                <TableRow key={newRecord.tempId} className="bg-blue-50">
                   <TableCell>
                     <Select
                       value={newRecord.type}
-                      onValueChange={(value) => setNewRecord({ ...newRecord, type: value as DnsRecord['type'] })}
+                      onValueChange={(value) => handleUpdateNewRecord(newRecord.tempId, { type: value as DnsRecord['type'] })}
                     >
                       <SelectTrigger className="h-8">
                         <SelectValue />
@@ -506,7 +494,7 @@ export default function DomainRecords() {
                     <Input
                       placeholder="@ 或 www"
                       value={newRecord.name}
-                      onChange={(e) => setNewRecord({ ...newRecord, name: e.target.value })}
+                      onChange={(e) => handleUpdateNewRecord(newRecord.tempId, { name: e.target.value })}
                       className="h-8"
                     />
                   </TableCell>
@@ -514,14 +502,14 @@ export default function DomainRecords() {
                     <Input
                       placeholder="192.0.2.1"
                       value={newRecord.value}
-                      onChange={(e) => setNewRecord({ ...newRecord, value: e.target.value })}
+                      onChange={(e) => handleUpdateNewRecord(newRecord.tempId, { value: e.target.value })}
                       className="h-8"
                     />
                   </TableCell>
                   <TableCell>
                     <Select
                       value={newRecord.ttl?.toString()}
-                      onValueChange={(value) => setNewRecord({ ...newRecord, ttl: parseInt(value) })}
+                      onValueChange={(value) => handleUpdateNewRecord(newRecord.tempId, { ttl: parseInt(value) })}
                     >
                       <SelectTrigger className="h-8 w-28">
                         <SelectValue />
@@ -540,7 +528,7 @@ export default function DomainRecords() {
                       <Input
                         type="number"
                         value={newRecord.priority}
-                        onChange={(e) => setNewRecord({ ...newRecord, priority: parseInt(e.target.value) })}
+                        onChange={(e) => handleUpdateNewRecord(newRecord.tempId, { priority: parseInt(e.target.value) })}
                         className="h-8 w-20"
                       />
                     )}
@@ -550,7 +538,7 @@ export default function DomainRecords() {
                       <input
                         type="checkbox"
                         checked={newRecord.proxied}
-                        onChange={(e) => setNewRecord({ ...newRecord, proxied: e.target.checked })}
+                        onChange={(e) => handleUpdateNewRecord(newRecord.tempId, { proxied: e.target.checked })}
                         className="w-4 h-4"
                       />
                     )}
@@ -559,27 +547,19 @@ export default function DomainRecords() {
                     <div className="flex justify-end gap-2">
                       <Tooltip>
                         <TooltipTrigger asChild>
-                          <Button variant="ghost" size="icon" onClick={() => handleSaveNew(true)}>
-                            <Plus className="w-4 h-4 text-blue-600" />
-                          </Button>
-                        </TooltipTrigger>
-                        <TooltipContent>保存并继续添加</TooltipContent>
-                      </Tooltip>
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <Button variant="ghost" size="icon" onClick={() => handleSaveNew(false)}>
+                          <Button variant="ghost" size="icon" onClick={() => handleSaveNew(newRecord.tempId)}>
                             <Check className="w-4 h-4 text-green-600" />
                           </Button>
                         </TooltipTrigger>
                         <TooltipContent>保存</TooltipContent>
                       </Tooltip>
-                      <Button variant="ghost" size="icon" onClick={handleCancelAdd}>
+                      <Button variant="ghost" size="icon" onClick={() => handleCancelAdd(newRecord.tempId)}>
                         <X className="w-4 h-4 text-red-600" />
                       </Button>
                     </div>
                   </TableCell>
                 </TableRow>
-              )}
+              ))}
 
               {/* 记录列表 */}
               {paginatedRecords.map((record) => {
