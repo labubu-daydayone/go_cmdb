@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -27,7 +27,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { Plus, Trash2, RefreshCw, CheckCircle2, XCircle, AlertCircle, Copy, Upload, ChevronDown, Settings, Edit2 } from 'lucide-react';
+import { Plus, Trash2, RefreshCw, CheckCircle2, XCircle, AlertCircle, Copy, Upload, ChevronDown, Settings, Edit2, ChevronRight } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -49,6 +49,7 @@ interface Domain {
   nsRecords?: string[];
   expireDate?: string;
   createdAt: string;
+  cloudflareStatus?: 'active' | 'paused' | 'pending' | 'unknown';
 }
 
 // Mock数据
@@ -62,6 +63,7 @@ const mockDomains: Domain[] = [
     nsRecords: ['ns1.cloudflare.com', 'ns2.cloudflare.com'],
     expireDate: '2025-06-15',
     createdAt: '2024-01-01',
+    cloudflareStatus: 'active',
   },
   {
     id: 2,
@@ -71,6 +73,7 @@ const mockDomains: Domain[] = [
     nsStatus: 'pending',
     nsRecords: ['ns1.cloudflare.com', 'ns2.cloudflare.com'],
     createdAt: '2024-01-10',
+    cloudflareStatus: 'paused',
   },
   {
     id: 3,
@@ -95,6 +98,14 @@ const nsStatusConfig = {
   unknown: { label: '未知', icon: AlertCircle, color: 'bg-gray-100 text-gray-800' },
 };
 
+// Cloudflare状态配置
+const cloudflareStatusConfig = {
+  active: { label: '活跃', color: 'bg-green-100 text-green-800' },
+  paused: { label: '暂停', color: 'bg-yellow-100 text-yellow-800' },
+  pending: { label: '待激活', color: 'bg-blue-100 text-blue-800' },
+  unknown: { label: '未知', color: 'bg-gray-100 text-gray-800' },
+};
+
 export default function DomainList() {
   const [domains, setDomains] = useState<Domain[]>(mockDomains);
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
@@ -103,6 +114,7 @@ export default function DomainList() {
   const [uploadFile, setUploadFile] = useState<File | null>(null);
   const [selectedDomain, setSelectedDomain] = useState<Domain | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
+  const [expandedDomainId, setExpandedDomainId] = useState<number | null>(null);
   const [formData, setFormData] = useState({
     domainName: '',
     dnsAccountId: '',
@@ -294,11 +306,11 @@ export default function DomainList() {
           <Table>
             <TableHeader>
               <TableRow>
+                <TableHead className="w-[50px]"></TableHead>
                 <TableHead>域名</TableHead>
                 <TableHead>DNS服务商</TableHead>
                 <TableHead>来源</TableHead>
-                <TableHead>NS状态</TableHead>
-                <TableHead>过期时间</TableHead>
+                <TableHead>状态</TableHead>
                 <TableHead>添加时间</TableHead>
                 <TableHead className="text-right">操作</TableHead>
               </TableRow>
@@ -311,25 +323,39 @@ export default function DomainList() {
                   </TableCell>
                 </TableRow>
               ) : (
-                filteredDomains.map((domain) => {
-                  const StatusIcon = nsStatusConfig[domain.nsStatus].icon;
+                <>
+                {filteredDomains.map((domain) => {
+                  const isExpanded = expandedDomainId === domain.id;
                   return (
-                    <TableRow key={domain.id}>
-                      <TableCell className="font-medium">{domain.domainName}</TableCell>
-                      <TableCell>{domain.dnsProvider}</TableCell>
-                      <TableCell>
-                        <Badge variant={domain.source === 'auto_sync' ? 'default' : 'secondary'}>
-                          {domain.source === 'auto_sync' ? '自动同步' : '手动添加'}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>
-                        <Badge variant="outline" className={nsStatusConfig[domain.nsStatus].color}>
-                          <StatusIcon className="w-3 h-3 mr-1" />
-                          {nsStatusConfig[domain.nsStatus].label}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>{domain.expireDate || '-'}</TableCell>
-                      <TableCell>{domain.createdAt}</TableCell>
+                    <React.Fragment key={domain.id}>
+                      <TableRow>
+                        <TableCell>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-6 w-6 p-0"
+                            onClick={() => setExpandedDomainId(isExpanded ? null : domain.id)}
+                          >
+                            <ChevronRight className={`w-4 h-4 transition-transform ${isExpanded ? 'rotate-90' : ''}`} />
+                          </Button>
+                        </TableCell>
+                        <TableCell className="font-medium">{domain.domainName}</TableCell>
+                        <TableCell>{domain.dnsProvider}</TableCell>
+                        <TableCell>
+                          <Badge variant={domain.source === 'auto_sync' ? 'default' : 'secondary'}>
+                            {domain.source === 'auto_sync' ? '自动同步' : '手动添加'}
+                          </Badge>
+                        </TableCell>
+                        <TableCell>
+                          {domain.cloudflareStatus ? (
+                            <Badge variant="outline" className={cloudflareStatusConfig[domain.cloudflareStatus].color}>
+                              {cloudflareStatusConfig[domain.cloudflareStatus].label}
+                            </Badge>
+                          ) : (
+                            <span className="text-muted-foreground">-</span>
+                          )}
+                        </TableCell>
+                        <TableCell>{domain.createdAt}</TableCell>
                       <TableCell className="text-right">
                         <div className="flex justify-end gap-2">
                           <Button
@@ -342,15 +368,6 @@ export default function DomainList() {
                             <Edit2 className="w-4 h-4 mr-1" />
                             管理解析
                           </Button>
-                          {domain.nsRecords && (
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => handleShowNs(domain)}
-                            >
-                              查看NS
-                            </Button>
-                          )}
                           {domain.source === 'auto_sync' && domain.nsStatus !== 'active' && (
                             <Button
                               variant="ghost"
@@ -379,10 +396,48 @@ export default function DomainList() {
                             <Trash2 className="w-4 h-4" />
                           </Button>
                         </div>
-                      </TableCell>
-                    </TableRow>
+                        </TableCell>
+                      </TableRow>
+                      {isExpanded && (
+                        <TableRow className="bg-muted/50">
+                          <TableCell colSpan={7} className="py-4">
+                            <div className="grid grid-cols-2 gap-4 px-4">
+                              <div>
+                                <div className="text-sm font-medium text-muted-foreground mb-1">NS状态</div>
+                                <div className="flex items-center gap-2">
+                                  {(() => {
+                                    const StatusIcon = nsStatusConfig[domain.nsStatus].icon;
+                                    return (
+                                      <Badge variant="outline" className={nsStatusConfig[domain.nsStatus].color}>
+                                        <StatusIcon className="w-3 h-3 mr-1" />
+                                        {nsStatusConfig[domain.nsStatus].label}
+                                      </Badge>
+                                    );
+                                  })()}
+                                </div>
+                              </div>
+                              <div>
+                                <div className="text-sm font-medium text-muted-foreground mb-1">过期时间</div>
+                                <div className="text-sm">{domain.expireDate || '未设置'}</div>
+                              </div>
+                              {domain.nsRecords && domain.nsRecords.length > 0 && (
+                                <div className="col-span-2">
+                                  <div className="text-sm font-medium text-muted-foreground mb-1">NS记录</div>
+                                  <div className="flex flex-wrap gap-2">
+                                    {domain.nsRecords.map((ns, idx) => (
+                                      <Badge key={idx} variant="secondary">{ns}</Badge>
+                                    ))}
+                                  </div>
+                                </div>
+                              )}
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      )}
+                    </React.Fragment>
                   );
-                })
+                })}
+                </>
               )}
             </TableBody>
           </Table>
