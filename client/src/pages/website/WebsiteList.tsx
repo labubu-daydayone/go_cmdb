@@ -436,7 +436,7 @@ export default function WebsiteList() {
                               删除
                             </Button>
                           </PopoverTrigger>
-                          <PopoverContent className="w-auto">
+                          <PopoverContent className="w-auto" side="top" align="center">
                             <div className="flex flex-col gap-3 p-2">
                               <div className="flex items-center gap-3">
                                 <div className="flex-shrink-0">
