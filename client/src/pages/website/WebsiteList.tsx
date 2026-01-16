@@ -179,7 +179,8 @@ export default function WebsiteList() {
   const [websites, setWebsites] = useState<Website[]>(mockWebsites);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedWebsite, setSelectedWebsite] = useState<Website | null>(null);
-  const [selectedIds, setSelectedIds] = useState<number[]>([]); // 多选的网站ID列表
+  const [selectedIds, setSelectedIds] = useState<number[]>([]);
+  const [deletingId, setDeletingId] = useState<number | null>(null); // 正在删除的网站ID // 多选的网站ID列表
 
   /**
    * TODO: 对接Go API
@@ -217,6 +218,16 @@ export default function WebsiteList() {
     setLocation(`/website/${websiteId}/edit`);
   };
 
+  // 复制CNAME到剪贴板
+  const handleCopyCname = async (cname: string) => {
+    try {
+      await navigator.clipboard.writeText(cname);
+      toast.success('已复制CNAME到剪贴板');
+    } catch (error) {
+      toast.error('复制失败，请手动复制');
+    }
+  };
+
   // 多选框相关函数
   const handleSelectAll = (checked: boolean) => {
     if (checked) {
@@ -237,17 +248,24 @@ export default function WebsiteList() {
   const isAllSelected = filteredWebsites.length > 0 && selectedIds.length === filteredWebsites.length;
   const isSomeSelected = selectedIds.length > 0 && selectedIds.length < filteredWebsites.length;
 
-  // 删除功能（使用confirm）
-  const handleDelete = (website: Website) => {
-    if (confirm(`确定要删除网站 "${website.domains[0]}" 吗？此操作无法撤销。`)) {
-      // TODO: 调用Go API删除网站
-      // await fetch(`/api/v1/websites/${website.id}`, {
-      //   method: 'DELETE',
-      // });
+  // 删除功能（内联确认）
+  const handleDeleteClick = (websiteId: number) => {
+    setDeletingId(websiteId);
+  };
 
-      setWebsites(websites.filter(w => w.id !== website.id));
-      toast.success('网站删除成功');
-    }
+  const handleDeleteConfirm = (website: Website) => {
+    // TODO: 调用Go API删除网站
+    // await fetch(`/api/v1/websites/${website.id}`, {
+    //   method: 'DELETE',
+    // });
+
+    setWebsites(websites.filter(w => w.id !== website.id));
+    toast.success('网站删除成功');
+    setDeletingId(null);
+  };
+
+  const handleDeleteCancel = () => {
+    setDeletingId(null);
   };
 
   // 缓存清理功能（使用confirm）
@@ -310,12 +328,11 @@ export default function WebsiteList() {
                 </TableHead>
                 <TableHead className="w-[240px]">域名</TableHead>
                 <TableHead className="w-[90px]">状态</TableHead>
-                <TableHead className="w-[180px]">CNAME</TableHead>
+                <TableHead className="w-[200px]">CNAME</TableHead>
                 <TableHead className="w-[120px]">回源地址</TableHead>
                 <TableHead className="w-[80px]">SSL状态</TableHead>
                 <TableHead>线路组</TableHead>
-                <TableHead>权限组</TableHead>
-                <TableHead className="text-right w-[180px]">操作</TableHead>
+                <TableHead className="text-right w-[160px]">操作</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -402,39 +419,57 @@ export default function WebsiteList() {
                     <TableCell>
                       <Badge variant="outline">{website.routeGroupName}</Badge>
                     </TableCell>
-                    <TableCell>
-                      <Badge variant="outline">{website.permissionGroupName}</Badge>
-                    </TableCell>
-                    <TableCell className="text-right w-[200px]">
-                      <div className="flex justify-end gap-1">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="h-8 px-2"
-                          onClick={() => handleEdit(website.id)}
-                        >
-                          <Edit2 className="w-3 h-3 mr-1" />
-                          编辑
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="h-8 px-2"
-                          onClick={() => handleClearCache(website)}
-                        >
-                          <RefreshCw className="w-3 h-3 mr-1" />
-                          缓存
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="h-8 px-2"
-                          onClick={() => handleDelete(website)}
-                        >
-                          <Trash2 className="w-3 h-3 mr-1" />
-                          删除
-                        </Button>
-                      </div>
+                    <TableCell className="text-right w-[160px]">
+                      {deletingId === website.id ? (
+                        <div className="flex justify-end gap-0.5">
+                          <Button
+                            variant="destructive"
+                            size="sm"
+                            className="h-7 px-1.5 text-xs"
+                            onClick={() => handleDeleteConfirm(website)}
+                          >
+                            确认删除
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="h-7 px-1.5 text-xs"
+                            onClick={handleDeleteCancel}
+                          >
+                            取消
+                          </Button>
+                        </div>
+                      ) : (
+                        <div className="flex justify-end gap-0.5">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-7 px-1.5 text-xs"
+                            onClick={() => handleEdit(website.id)}
+                          >
+                            <Edit2 className="w-3 h-3 mr-0.5" />
+                            编辑
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-7 px-1.5 text-xs text-destructive hover:text-destructive"
+                            onClick={() => handleDeleteClick(website.id)}
+                          >
+                            <Trash2 className="w-3 h-3 mr-0.5" />
+                            删除
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-7 px-1.5 text-xs"
+                            onClick={() => handleClearCache(website)}
+                          >
+                            <RefreshCw className="w-3 h-3 mr-0.5" />
+                            缓存
+                          </Button>
+                        </div>
+                      )}
                     </TableCell>
                   </TableRow>
                 ))
