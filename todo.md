@@ -303,3 +303,9 @@
 - [x] 修改NS按钮根据registrar是否存在来判断是否disabled
 - [x] 修改NS按钮不再依赖nsRecords是否存在，始终显示
 - [x] 调整折叠区域布局：第一行NS状态/来源/过期时间，第二行注册商+修改NS按钮，第三行NS记录（如果有）
+
+## 添加canModifyNS字段优化显示逻辑
+- [x] 添加canModifyNS字段（boolean），由后端判断是否可以修改NS
+- [x] 当canModifyNS=true时，显示注册商和修改NS按钮（第三行）
+- [x] 当canModifyNS=false时，不显示注册商和修改NS按钮
+- [x] 调整折叠区域布局顺序：第一行NS状态/来源/过期时间，第二行NS记录（如果有），第三行注册商+修改NS按钮（仅canModifyNS=true时显示）

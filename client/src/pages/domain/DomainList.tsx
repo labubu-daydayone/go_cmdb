@@ -43,7 +43,8 @@ import { toast } from 'sonner';
 interface Domain {
   id: number;
   domainName: string;
-  registrar?: string; // 域名注册商（如GoDaddy、阿里云域名）
+  canModifyNS: boolean; // 是否可以修改NS（由后端判断）
+  registrar?: string; // 域名注册商（仅当canModifyNS=true时有值）
   dnsProvider: string; // DNS服务商（如Cloudflare、阿里云DNS）
   source: 'auto_sync' | 'manual';
   nsStatus: 'pending' | 'active' | 'failed' | 'unknown';
@@ -58,6 +59,7 @@ const mockDomains: Domain[] = [
   {
     id: 1,
     domainName: 'example.com',
+    canModifyNS: true, // 有注册商权限，可以修改NS
     registrar: 'GoDaddy主账号', // 域名注册商
     dnsProvider: 'Cloudflare主账号', // DNS服务商
     source: 'auto_sync',
@@ -70,7 +72,7 @@ const mockDomains: Domain[] = [
   {
     id: 2,
     domainName: 'test.net',
-    registrar: '阿里云域名', // 域名注册商
+    canModifyNS: false, // 没有注册商权限，不能修改NS
     dnsProvider: 'Cloudflare主账号', // DNS服务商
     source: 'manual',
     nsStatus: 'pending',
@@ -81,6 +83,7 @@ const mockDomains: Domain[] = [
   {
     id: 3,
     domainName: 'demo.org',
+    canModifyNS: true, // 有注册商权限，可以修改NS
     registrar: 'GoDaddy备用账号', // 域名注册商
     dnsProvider: '阿里云DNS', // DNS服务商
     source: 'auto_sync',
@@ -154,6 +157,7 @@ export default function DomainList() {
     const newDomain: Domain = {
       id: Date.now(),
       domainName: formData.domainName,
+      canModifyNS: false, // 默认新添加的域名没有注册商权限
       dnsProvider: selectedAccount?.name || '',
       source: 'manual',
       nsStatus: 'pending',
@@ -467,27 +471,7 @@ export default function DomainList() {
                                 </div>
                               </div>
                               
-                              {/* 第二行：注册商 + 修改NS按钮 */}
-                              <div className="flex items-center gap-4 text-sm">
-                                <div className="flex items-center gap-2">
-                                  <span className="text-muted-foreground whitespace-nowrap">注册商:</span>
-                                  <span>{domain.registrar || '未设置'}</span>
-                                </div>
-                                <Button
-                                  variant="outline"
-                                  size="sm"
-                                  disabled={!domain.registrar}
-                                  onClick={() => {
-                                    toast.info('修改NS功能开发中...');
-                                  }}
-                                  title={domain.registrar ? `在${domain.registrar}修改NS记录` : '无注册商权限，无法修改NS记录'}
-                                >
-                                  <Edit2 className="w-3 h-3 mr-1" />
-                                  修改NS
-                                </Button>
-                              </div>
-                              
-                              {/* 第三行：NS记录（如果有） */}
+                              {/* 第二行：NS记录（如果有） */}
                               {domain.nsRecords && domain.nsRecords.length > 0 && (
                                 <div className="flex items-start gap-2 text-sm">
                                   <span className="text-muted-foreground whitespace-nowrap">NS记录:</span>
@@ -516,6 +500,27 @@ export default function DomainList() {
                                       );
                                     })}
                                   </div>
+                                </div>
+                              )}
+                              
+                              {/* 第三行：注册商 + 修改NS按钮（仅当canModifyNS=true时显示） */}
+                              {domain.canModifyNS && (
+                                <div className="flex items-center gap-4 text-sm">
+                                  <div className="flex items-center gap-2">
+                                    <span className="text-muted-foreground whitespace-nowrap">注册商:</span>
+                                    <span>{domain.registrar || '未设置'}</span>
+                                  </div>
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => {
+                                      toast.info('修改NS功能开发中...');
+                                    }}
+                                    title={`在${domain.registrar}修改NS记录`}
+                                  >
+                                    <Edit2 className="w-3 h-3 mr-1" />
+                                    修改NS
+                                  </Button>
                                 </div>
                               )}
                             </div>
