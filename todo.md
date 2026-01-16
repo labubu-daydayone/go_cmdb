@@ -244,3 +244,8 @@
 - [x] 移除所有页面容器的左右内边距（paddingLeft和paddingRight设置为0px）
 - [x] 保持上下内边距以维持合理的垂直间距
 - [x] 已修改页面：DomainList、DomainRecords、AccountGroup（其他页面使用space-y-6布局无需修改）
+
+## 域名列表展开区域布局优化
+- [x] 将标签和值在同一行显示（来源和过期时间在同一行，使用gap-6分隔）
+- [x] 将NS状态和NS记录整合在NS信息区域，垂直排列
+- [x] 优化展开区域的信息层次（减少padding，调整间距，统一Badge尺寸）
