@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import {
   Select,
   SelectContent,
@@ -22,7 +23,8 @@ import { useLocation } from 'wouter';
 interface Website {
   id: number;
   domains: string[];
-  cname: string;
+  originType: 'ip' | 'origin_list'; // 回源类型：IP或回源列表
+  originValue: string; // 回源地址IP或回源列表ID
   sslStatus: 'valid' | 'expired' | 'none';
   routeGroupId: number;
   routeGroupName: string;
@@ -47,12 +49,20 @@ const mockPermissionGroups = [
   { id: 3, name: '电商组' },
 ];
 
+// Mock回源列表数据
+const mockOriginLists = [
+  { id: 1, name: '主服务器组' },
+  { id: 2, name: '备用服务器组' },
+  { id: 3, name: 'API服务器组' },
+];
+
 // Mock数据 - 用于编辑时获取网站信息
 const mockWebsites: Website[] = [
   {
     id: 1,
     domains: ['www.example.com', 'example.com'],
-    cname: 'cdn.example.com.cdn.cloudflare.net',
+    originType: 'ip',
+    originValue: '192.168.1.100',
     sslStatus: 'valid',
     routeGroupId: 1,
     routeGroupName: '国内线路组',
@@ -65,7 +75,8 @@ const mockWebsites: Website[] = [
   {
     id: 2,
     domains: ['api.example.com'],
-    cname: 'api-lb.example.com.cdn.cloudflare.net',
+    originType: 'origin_list',
+    originValue: '3',
     sslStatus: 'valid',
     routeGroupId: 2,
     routeGroupName: '海外线路组',
@@ -81,7 +92,8 @@ export default function WebsiteEdit() {
   const [location, setLocation] = useLocation();
   const [loading, setLoading] = useState(true);
   const [domainsText, setDomainsText] = useState(''); // 域名文本（每行一个）
-  const [cname, setCname] = useState('');
+  const [originType, setOriginType] = useState<'ip' | 'origin_list'>('ip'); // 回源类型
+  const [originValue, setOriginValue] = useState(''); // 回源地址IP或回源列表ID
   const [routeGroupId, setRouteGroupId] = useState<number>(1);
   const [permissionGroupId, setPermissionGroupId] = useState<number>(1);
   const [status, setStatus] = useState<Website['status']>('active');
@@ -96,6 +108,7 @@ export default function WebsiteEdit() {
    * GET /api/v1/websites/:id - 获取网站详情
    * POST /api/v1/websites - 创建网站
    * PUT /api/v1/websites/:id - 更新网站
+   * GET /api/v1/origin-lists - 获取回源列表
    */
 
   useEffect(() => {
@@ -113,7 +126,8 @@ export default function WebsiteEdit() {
         const website = mockWebsites.find(w => w.id === websiteId);
         if (website) {
           setDomainsText(website.domains.join('\n'));
-          setCname(website.cname);
+          setOriginType(website.originType);
+          setOriginValue(website.originValue);
           setRouteGroupId(website.routeGroupId);
           setPermissionGroupId(website.permissionGroupId);
           setStatus(website.status);
@@ -145,15 +159,25 @@ export default function WebsiteEdit() {
       return;
     }
 
-    // 验证CNAME
-    if (!cname.trim()) {
-      toast.error('请输入CNAME');
+    // 验证回源地址
+    if (!originValue.trim()) {
+      toast.error(originType === 'ip' ? '请输入回源IP地址' : '请选择回源列表');
       return;
+    }
+
+    // IP地址格式验证
+    if (originType === 'ip') {
+      const ipRegex = /^(\d{1,3}\.){3}\d{1,3}$/;
+      if (!ipRegex.test(originValue.trim())) {
+        toast.error('IP地址格式不正确');
+        return;
+      }
     }
 
     const data = {
       domains,
-      cname: cname.trim(),
+      originType,
+      originValue: originValue.trim(),
       routeGroupId,
       permissionGroupId,
       status,
@@ -227,14 +251,45 @@ export default function WebsiteEdit() {
             />
           </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="cname">CNAME *</Label>
-            <Input
-              id="cname"
-              placeholder="例如：cdn.example.com.cdn.cloudflare.net"
-              value={cname}
-              onChange={(e) => setCname(e.target.value)}
-            />
+          <div className="space-y-4">
+            <Label>回源地址 *</Label>
+            <RadioGroup value={originType} onValueChange={(value) => {
+              setOriginType(value as 'ip' | 'origin_list');
+              setOriginValue(''); // 切换类型时清空值
+            }}>
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="ip" id="origin-ip" />
+                <Label htmlFor="origin-ip" className="font-normal cursor-pointer">手动输入IP地址</Label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="origin_list" id="origin-list" />
+                <Label htmlFor="origin-list" className="font-normal cursor-pointer">选择回源列表</Label>
+              </div>
+            </RadioGroup>
+
+            {originType === 'ip' ? (
+              <Input
+                placeholder="例如：192.168.1.100"
+                value={originValue}
+                onChange={(e) => setOriginValue(e.target.value)}
+              />
+            ) : (
+              <Select
+                value={originValue}
+                onValueChange={setOriginValue}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="选择回源列表" />
+                </SelectTrigger>
+                <SelectContent>
+                  {mockOriginLists.map((list) => (
+                    <SelectItem key={list.id} value={list.id.toString()}>
+                      {list.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
           </div>
 
           <div className="grid grid-cols-2 gap-4">

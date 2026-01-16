@@ -32,6 +32,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Plus, Edit2, Trash2, RefreshCw, Search } from 'lucide-react';
 import { toast } from 'sonner';
 import { useLocation } from 'wouter';
@@ -43,8 +44,9 @@ import { useLocation } from 'wouter';
 interface Website {
   id: number;
   domains: string[]; // 支持多个域名
-  cname: string;
-  sslStatus: 'valid' | 'expired' | 'none'; // SSL证书状态
+  originType: 'ip' | 'origin_list'; // 回源类型：IP或回源列表
+  originValue: string; // 回源地址IP或回源列表ID
+  sslStatus: 'valid' | 'expired' | 'none';
   routeGroupId: number;
   routeGroupName: string;
   permissionGroupId: number;
@@ -59,7 +61,8 @@ const mockWebsites: Website[] = [
   {
     id: 1,
     domains: ['www.example.com', 'example.com'],
-    cname: 'cdn.example.com.cdn.cloudflare.net',
+    originType: 'ip',
+    originValue: '192.168.1.100',
     sslStatus: 'valid',
     routeGroupId: 1,
     routeGroupName: '国内线路组',
@@ -72,7 +75,8 @@ const mockWebsites: Website[] = [
   {
     id: 2,
     domains: ['api.example.com'],
-    cname: 'api-lb.example.com.cdn.cloudflare.net',
+    originType: 'origin_list',
+    originValue: '3',
     sslStatus: 'valid',
     routeGroupId: 2,
     routeGroupName: '海外线路组',
@@ -84,40 +88,43 @@ const mockWebsites: Website[] = [
   },
   {
     id: 3,
-    domains: ['blog.example.com', 'www.blog.example.com'],
-    cname: 'blog.example.com.cdn.cloudflare.net',
+    domains: ['shop.example.com', 'm.shop.example.com'],
+    originType: 'ip',
+    originValue: '192.168.1.200',
     sslStatus: 'expired',
-    routeGroupId: 1,
-    routeGroupName: '国内线路组',
-    permissionGroupId: 1,
-    permissionGroupName: '运维组',
-    status: 'maintenance',
-    createdAt: '2024-01-03',
-    updatedAt: '2024-01-17',
-  },
-  {
-    id: 4,
-    domains: ['shop.example.com', 'm.shop.example.com', 'mobile.shop.example.com'],
-    cname: 'shop.example.com.cdn.cloudflare.net',
-    sslStatus: 'valid',
     routeGroupId: 3,
     routeGroupName: '全球线路组',
     permissionGroupId: 3,
     permissionGroupName: '电商组',
     status: 'active',
-    createdAt: '2024-01-04',
-    updatedAt: '2024-01-18',
+    createdAt: '2024-01-03',
+    updatedAt: '2024-01-17',
   },
   {
-    id: 5,
-    domains: ['admin.example.com'],
-    cname: 'admin.example.com.cdn.cloudflare.net',
+    id: 4,
+    domains: ['blog.example.com'],
+    originType: 'origin_list',
+    originValue: '1',
     sslStatus: 'none',
     routeGroupId: 1,
     routeGroupName: '国内线路组',
     permissionGroupId: 1,
     permissionGroupName: '运维组',
     status: 'inactive',
+    createdAt: '2024-01-04',
+    updatedAt: '2024-01-18',
+  },
+  {
+    id: 5,
+    domains: ['test.example.com'],
+    originType: 'ip',
+    originValue: '192.168.1.50',
+    sslStatus: 'valid',
+    routeGroupId: 2,
+    routeGroupName: '海外线路组',
+    permissionGroupId: 2,
+    permissionGroupName: '开发组',
+    status: 'maintenance',
     createdAt: '2024-01-05',
     updatedAt: '2024-01-19',
   },
@@ -165,9 +172,8 @@ export default function WebsiteList() {
   const [, setLocation] = useLocation();
   const [websites, setWebsites] = useState<Website[]>(mockWebsites);
   const [searchTerm, setSearchTerm] = useState('');
-  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
-  const [isClearCacheDialogOpen, setIsClearCacheDialogOpen] = useState(false);
   const [selectedWebsite, setSelectedWebsite] = useState<Website | null>(null);
+  const [selectedIds, setSelectedIds] = useState<number[]>([]); // 多选的网站ID列表
 
   /**
    * TODO: 对接Go API
@@ -189,7 +195,7 @@ export default function WebsiteList() {
   // 搜索过滤
   const filteredWebsites = websites.filter(website =>
     website.domains.some(d => d.toLowerCase().includes(searchTerm.toLowerCase())) ||
-    website.cname.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    website.originValue.toLowerCase().includes(searchTerm.toLowerCase()) ||
     website.routeGroupName.toLowerCase().includes(searchTerm.toLowerCase()) ||
     website.permissionGroupName.toLowerCase().includes(searchTerm.toLowerCase())
   );
@@ -204,36 +210,49 @@ export default function WebsiteList() {
     setLocation(`/website/${websiteId}/edit`);
   };
 
-  const handleDeleteConfirm = () => {
-    if (!selectedWebsite) return;
-
-    // TODO: 调用Go API删除网站
-    // await fetch(`/api/v1/websites/${selectedWebsite.id}`, {
-    //   method: 'DELETE',
-    // });
-
-    setWebsites(websites.filter(w => w.id !== selectedWebsite.id));
-    toast.success('网站删除成功');
-    setIsDeleteDialogOpen(false);
-    setSelectedWebsite(null);
+  // 多选框相关函数
+  const handleSelectAll = (checked: boolean) => {
+    if (checked) {
+      setSelectedIds(filteredWebsites.map(w => w.id));
+    } else {
+      setSelectedIds([]);
+    }
   };
 
+  const handleSelectOne = (id: number, checked: boolean) => {
+    if (checked) {
+      setSelectedIds([...selectedIds, id]);
+    } else {
+      setSelectedIds(selectedIds.filter(selectedId => selectedId !== id));
+    }
+  };
+
+  const isAllSelected = filteredWebsites.length > 0 && selectedIds.length === filteredWebsites.length;
+  const isSomeSelected = selectedIds.length > 0 && selectedIds.length < filteredWebsites.length;
+
+  // 删除功能（使用confirm）
+  const handleDelete = (website: Website) => {
+    if (confirm(`确定要删除网站 "${website.domains[0]}" 吗？此操作无法撤销。`)) {
+      // TODO: 调用Go API删除网站
+      // await fetch(`/api/v1/websites/${website.id}`, {
+      //   method: 'DELETE',
+      // });
+
+      setWebsites(websites.filter(w => w.id !== website.id));
+      toast.success('网站删除成功');
+    }
+  };
+
+  // 缓存清理功能（使用confirm）
   const handleClearCache = (website: Website) => {
-    setSelectedWebsite(website);
-    setIsClearCacheDialogOpen(true);
-  };
+    if (confirm(`确定要清理网站 "${website.domains[0]}" 的缓存吗？此操作将清除CDN节点上的所有缓存文件。`)) {
+      // TODO: 调用Go API清理缓存
+      // await fetch(`/api/v1/websites/${website.id}/clear-cache`, {
+      //   method: 'POST',
+      // });
 
-  const handleClearCacheConfirm = () => {
-    if (!selectedWebsite) return;
-
-    // TODO: 调用Go API清理缓存
-    // await fetch(`/api/v1/websites/${selectedWebsite.id}/clear-cache`, {
-    //   method: 'POST',
-    // });
-
-    toast.success(`正在清理 ${selectedWebsite.domains[0]} 的缓存...`);
-    setIsClearCacheDialogOpen(false);
-    setSelectedWebsite(null);
+      toast.success(`正在清理 ${website.domains[0]} 的缓存...`);
+    }
   };
 
   return (
@@ -264,13 +283,27 @@ export default function WebsiteList() {
             </div>
           </div>
 
+          {/* 已选择数量显示 */}
+          {selectedIds.length > 0 && (
+            <div className="mb-4 flex items-center gap-2 text-sm text-muted-foreground">
+              <span>已选择 {selectedIds.length} 个网站</span>
+            </div>
+          )}
+
           {/* 网站列表表格 */}
           <Table>
             <TableHeader>
               <TableRow>
+                <TableHead className="w-[50px]">
+                  <Checkbox
+                    checked={isAllSelected}
+                    onCheckedChange={handleSelectAll}
+                    aria-label="全选"
+                  />
+                </TableHead>
                 <TableHead className="w-[280px]">域名</TableHead>
                 <TableHead className="w-[100px]">状态</TableHead>
-                <TableHead className="w-[200px]">CNAME</TableHead>
+                <TableHead className="w-[200px]">回源地址</TableHead>
                 <TableHead className="w-[90px]">SSL状态</TableHead>
                 <TableHead>线路组</TableHead>
                 <TableHead>权限组</TableHead>
@@ -280,13 +313,22 @@ export default function WebsiteList() {
             <TableBody>
               {filteredWebsites.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={7} className="text-center text-muted-foreground py-8">
+                  <TableCell colSpan={8} className="text-center text-muted-foreground py-8">
                     {searchTerm ? '未找到匹配的网站' : '暂无网站数据'}
                   </TableCell>
                 </TableRow>
               ) : (
                 filteredWebsites.map((website) => (
                   <TableRow key={website.id}>
+                    {/* 多选框列 */}
+                    <TableCell className="w-[50px]">
+                      <Checkbox
+                        checked={selectedIds.includes(website.id)}
+                        onCheckedChange={(checked) => handleSelectOne(website.id, checked as boolean)}
+                        aria-label={`选择 ${website.domains[0]}`}
+                      />
+                    </TableCell>
+                    
                     {/* 域名列 - 定宽，支持多个域名显示，鼠标悬停显示完整内容 */}
                     <TableCell className="w-[280px]">
                       <Tooltip>
@@ -312,16 +354,18 @@ export default function WebsiteList() {
                       </Badge>
                     </TableCell>
                     
-                    {/* CNAME列 - 定宽，鼠标悬停显示完整内容 */}
+                    {/* 回源地址列 - 定宽，鼠标悬停显示完整内容 */}
                     <TableCell className="w-[200px]">
                       <Tooltip>
                         <TooltipTrigger asChild>
                           <div className="font-mono text-xs max-w-[180px] truncate cursor-help">
-                            {website.cname}
+                            {website.originType === 'ip' ? website.originValue : `回源列表 #${website.originValue}`}
                           </div>
                         </TooltipTrigger>
                         <TooltipContent>
-                          <p className="max-w-xs break-all">{website.cname}</p>
+                          <p className="max-w-xs break-all">
+                            {website.originType === 'ip' ? `IP: ${website.originValue}` : `回源列表 ID: ${website.originValue}`}
+                          </p>
                         </TooltipContent>
                       </Tooltip>
                     </TableCell>
@@ -363,10 +407,7 @@ export default function WebsiteList() {
                           variant="ghost"
                           size="sm"
                           className="h-8 px-2"
-                          onClick={() => {
-                            setSelectedWebsite(website);
-                            setIsDeleteDialogOpen(true);
-                          }}
+                          onClick={() => handleDelete(website)}
                         >
                           <Trash2 className="w-3 h-3 mr-1" />
                           删除
@@ -381,47 +422,7 @@ export default function WebsiteList() {
         </CardContent>
       </Card>
 
-      {/* 删除确认对话框 */}
-      <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>确认删除</DialogTitle>
-            <DialogDescription>
-              确定要删除网站 <span className="font-semibold">{selectedWebsite?.domains[0]}</span> 吗？此操作无法撤销。
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setIsDeleteDialogOpen(false)}>
-              取消
-            </Button>
-            <Button variant="destructive" onClick={handleDeleteConfirm}>
-              删除
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
 
-      {/* 缓存清理确认对话框 */}
-      <Dialog open={isClearCacheDialogOpen} onOpenChange={setIsClearCacheDialogOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>确认清理缓存</DialogTitle>
-            <DialogDescription>
-              确定要清理网站 <span className="font-semibold">{selectedWebsite?.domains[0]}</span> 的缓存吗？
-              <br />
-              此操作将清除CDN节点上的所有缓存文件。
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setIsClearCacheDialogOpen(false)}>
-              取消
-            </Button>
-            <Button onClick={handleClearCacheConfirm}>
-              确认清理
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 }
