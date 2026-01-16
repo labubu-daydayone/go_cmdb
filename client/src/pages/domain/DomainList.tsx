@@ -43,7 +43,8 @@ import { toast } from 'sonner';
 interface Domain {
   id: number;
   domainName: string;
-  dnsProvider: string;
+  registrar?: string; // 域名注册商（如GoDaddy、阿里云域名）
+  dnsProvider: string; // DNS服务商（如Cloudflare、阿里云DNS）
   source: 'auto_sync' | 'manual';
   nsStatus: 'pending' | 'active' | 'failed' | 'unknown';
   nsRecords?: string[];
@@ -57,7 +58,8 @@ const mockDomains: Domain[] = [
   {
     id: 1,
     domainName: 'example.com',
-    dnsProvider: 'Cloudflare主账号',
+    registrar: 'GoDaddy主账号', // 域名注册商
+    dnsProvider: 'Cloudflare主账号', // DNS服务商
     source: 'auto_sync',
     nsStatus: 'active',
     nsRecords: ['ns1.cloudflare.com', 'ns2.cloudflare.com'],
@@ -68,7 +70,8 @@ const mockDomains: Domain[] = [
   {
     id: 2,
     domainName: 'test.net',
-    dnsProvider: 'Cloudflare主账号',
+    registrar: '阿里云域名', // 域名注册商
+    dnsProvider: 'Cloudflare主账号', // DNS服务商
     source: 'manual',
     nsStatus: 'pending',
     nsRecords: ['ns1.cloudflare.com', 'ns2.cloudflare.com'],
@@ -78,7 +81,8 @@ const mockDomains: Domain[] = [
   {
     id: 3,
     domainName: 'demo.org',
-    dnsProvider: 'GoDaddy备用账号',
+    registrar: 'GoDaddy备用账号', // 域名注册商
+    dnsProvider: '阿里云DNS', // DNS服务商
     source: 'auto_sync',
     nsStatus: 'failed',
     createdAt: '2024-01-05',
@@ -463,7 +467,27 @@ export default function DomainList() {
                                 </div>
                               </div>
                               
-                              {/* 第二行：NS记录占满整行 + 修改NS按钮 */}
+                              {/* 第二行：注册商 + 修改NS按钮 */}
+                              <div className="flex items-center gap-4 text-sm">
+                                <div className="flex items-center gap-2">
+                                  <span className="text-muted-foreground whitespace-nowrap">注册商:</span>
+                                  <span>{domain.registrar || '未设置'}</span>
+                                </div>
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  disabled={!domain.registrar}
+                                  onClick={() => {
+                                    toast.info('修改NS功能开发中...');
+                                  }}
+                                  title={domain.registrar ? `在${domain.registrar}修改NS记录` : '无注册商权限，无法修改NS记录'}
+                                >
+                                  <Edit2 className="w-3 h-3 mr-1" />
+                                  修改NS
+                                </Button>
+                              </div>
+                              
+                              {/* 第三行：NS记录（如果有） */}
                               {domain.nsRecords && domain.nsRecords.length > 0 && (
                                 <div className="flex items-start gap-2 text-sm">
                                   <span className="text-muted-foreground whitespace-nowrap">NS记录:</span>
@@ -492,18 +516,6 @@ export default function DomainList() {
                                       );
                                     })}
                                   </div>
-                                  <Button
-                                    variant="outline"
-                                    size="sm"
-                                    disabled={domain.dnsProvider === 'Cloudflare'}
-                                    onClick={() => {
-                                      toast.info('修改NS功能开发中...');
-                                    }}
-                                    title={domain.dnsProvider === 'Cloudflare' ? 'Cloudflare为DNS服务商，无法修改NS记录' : '修改注册商NS记录'}
-                                  >
-                                    <Edit2 className="w-3 h-3 mr-1" />
-                                    修改NS
-                                  </Button>
                                 </div>
                               )}
                             </div>

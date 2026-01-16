@@ -296,3 +296,10 @@
 - [x] 修改NS按钮根据DNS服务商判断是否可用（disabled={domain.dnsProvider === 'Cloudflare'}）
 - [x] Cloudflare等DNS服务商禁用修改NS按钮，显示提示“Cloudflare为DNS服务商，无法修改NS记录”
 - [x] 只有注册商（如GoDaddy）才启用修改NS按钮，显示提示“修改注册商NS记录”
+
+## 区分域名注册商和DNS服务商
+- [x] 添加registrar字段表示域名注册商（如GoDaddy、阿里云域名）
+- [x] dnsProvider字段表示DNS服务商（如Cloudflare、阿里云DNS）
+- [x] 修改NS按钮根据registrar是否存在来判断是否disabled
+- [x] 修改NS按钮不再依赖nsRecords是否存在，始终显示
+- [x] 调整折叠区域布局：第一行NS状态/来源/过期时间，第二行注册商+修改NS按钮，第三行NS记录（如果有）
