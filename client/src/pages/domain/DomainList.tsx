@@ -222,13 +222,8 @@ export default function DomainList() {
   const [, setLocation] = useLocation();
 
   const handleManageRecords = (domain: Domain) => {
-    // 访问控制：只有NS已生效的域名才能管理解析
-    if (domain.nsStatus !== 'active') {
-      toast.error('请先配置DNS服务商，等待NS记录生效后才能管理解析');
-      return;
-    }
-    
     // 跳转到解析管理页面（使用SPA路由，避免页面刷新）
+    // 移除NS状态限制，允许查看历史解析记录
     setLocation(`/domain/${domain.domainName}/records`);
   };
 
@@ -419,8 +414,7 @@ export default function DomainList() {
                             variant="ghost"
                             size="sm"
                             onClick={() => handleManageRecords(domain)}
-                            disabled={domain.nsStatus !== 'active'}
-                            title={domain.nsStatus !== 'active' ? 'NS记录未生效，无法管理解析' : '管理DNS解析记录'}
+                            title="管理DNS解析记录"
                           >
                             <Edit2 className="w-4 h-4 mr-1" />
                             管理解析

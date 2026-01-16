@@ -99,7 +99,9 @@ const TTL_OPTIONS = [
 ];
 
 export default function DomainRecords() {
-  const [, setLocation] = useLocation();
+  const [location, setLocation] = useLocation();
+  // 从路由参数中获取域名
+  const domainName = location.split('/')[2] || 'example.com';
   const [loading, setLoading] = useState(true);
   const [records, setRecords] = useState<DnsRecord[]>([]);
   const [editingId, setEditingId] = useState<number | null>(null);
@@ -151,7 +153,7 @@ export default function DomainRecords() {
     loadData();
     
     // WebSocket实时更新
-    // const ws = new WebSocket(`ws://localhost:8080/api/v1/ws/dns-records/example.com`);
+    // const ws = new WebSocket(`ws://localhost:8080/api/v1/ws/dns-records/${domainName}`);
     // 
     // ws.onmessage = (event) => {
     //   const message = JSON.parse(event.data);
@@ -178,7 +180,7 @@ export default function DomainRecords() {
     // ws.onerror = () => toast.error('WebSocket连接失败');
     // 
     // return () => ws.close();
-  }, []);
+  }, [domainName]);
 
   /**
    * TODO: 对接Go API
@@ -507,7 +509,7 @@ export default function DomainRecords() {
           </Button>
           <div>
             <h1 className="text-2xl font-bold">解析记录管理</h1>
-            <p className="text-muted-foreground mt-1">example.com - 管理DNS解析记录</p>
+            <p className="text-muted-foreground mt-1">{domainName} - 管理DNS解析记录</p>
           </div>
         </div>
         <Card>
@@ -539,11 +541,11 @@ export default function DomainRecords() {
             <Tooltip>
               <TooltipTrigger asChild>
                 <p className="text-muted-foreground mt-1 max-w-md truncate cursor-help">
-                  example.com - 管理DNS解析记录
+                  {domainName} - 管理DNS解析记录
                 </p>
               </TooltipTrigger>
               <TooltipContent>
-                <p>example.com - 管理DNS解析记录</p>
+                <p>{domainName} - 管理DNS解析记录</p>
               </TooltipContent>
             </Tooltip>
           </div>
