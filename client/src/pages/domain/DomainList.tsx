@@ -388,8 +388,9 @@ export default function DomainList() {
                         <TableRow className="bg-muted/50">
                           <TableCell colSpan={6} className="py-4">
                             <div className="px-6 space-y-3">
-                              {/* 第一行：NS状态和NS记录 */}
-                              <div className="flex items-start gap-6 text-sm">
+                              {/* 第一行：三等分布局 */}
+                              <div className="grid grid-cols-3 gap-6 text-sm">
+                                {/* NS状态 */}
                                 <div className="flex items-center gap-2">
                                   <span className="text-muted-foreground whitespace-nowrap">NS状态:</span>
                                   {(() => {
@@ -403,63 +404,63 @@ export default function DomainList() {
                                   })()}
                                 </div>
                                 
-                                {domain.nsRecords && domain.nsRecords.length > 0 && (
-                                  <div className="flex items-center gap-2">
-                                    <span className="text-muted-foreground whitespace-nowrap">NS记录:</span>
-                                    <div className="flex flex-wrap gap-2">
-                                      {domain.nsRecords.map((ns, idx) => {
-                                        const isCopied = copiedNsRecord === ns;
-                                        return (
-                                          <Badge
-                                            key={idx}
-                                            variant="outline"
-                                            className="text-xs cursor-pointer hover:bg-muted/50 transition-colors flex items-center gap-1"
-                                            onClick={() => {
-                                              navigator.clipboard.writeText(ns);
-                                              setCopiedNsRecord(ns);
-                                              toast.success(`已复制: ${ns}`);
-                                              setTimeout(() => setCopiedNsRecord(null), 2000);
-                                            }}
-                                          >
-                                            {ns}
-                                            {isCopied ? (
-                                              <Check className="w-3 h-3 text-green-600" />
-                                            ) : (
-                                              <Copy className="w-3 h-3" />
-                                            )}
-                                          </Badge>
-                                        );
-                                      })}
-                                    </div>
-                                  </div>
-                                )}
+                                {/* 来源 */}
+                                <div className="flex items-center gap-2">
+                                  <span className="text-muted-foreground whitespace-nowrap">来源:</span>
+                                  <Badge variant={domain.source === 'auto_sync' ? 'default' : 'secondary'} className="text-xs">
+                                    {domain.source === 'auto_sync' ? '自动同步' : '手动添加'}
+                                  </Badge>
+                                </div>
+                                
+                                {/* 过期时间 */}
+                                <div className="flex items-center gap-2">
+                                  <span className="text-muted-foreground whitespace-nowrap">过期时间:</span>
+                                  <span>{domain.expireDate || '未设置'}</span>
+                                </div>
                               </div>
                               
-                              {/* 第二行：来源和过期时间 */}
-                              <div className="flex items-center justify-between">
-                                <div className="flex items-center gap-6 text-sm">
-                                  <div className="flex items-center gap-2">
-                                    <span className="text-muted-foreground">来源:</span>
-                                    <Badge variant={domain.source === 'auto_sync' ? 'default' : 'secondary'} className="text-xs">
-                                      {domain.source === 'auto_sync' ? '自动同步' : '手动添加'}
-                                    </Badge>
+                              {/* 第二行：NS记录占满整行 */}
+                              {domain.nsRecords && domain.nsRecords.length > 0 && (
+                                <div className="flex items-start gap-2 text-sm">
+                                  <span className="text-muted-foreground whitespace-nowrap">NS记录:</span>
+                                  <div className="flex flex-wrap gap-2 flex-1">
+                                    {domain.nsRecords.map((ns, idx) => {
+                                      const isCopied = copiedNsRecord === ns;
+                                      return (
+                                        <Badge
+                                          key={idx}
+                                          variant="outline"
+                                          className="text-xs cursor-pointer hover:bg-muted/50 transition-colors flex items-center gap-1"
+                                          onClick={() => {
+                                            navigator.clipboard.writeText(ns);
+                                            setCopiedNsRecord(ns);
+                                            toast.success(`已复制: ${ns}`);
+                                            setTimeout(() => setCopiedNsRecord(null), 2000);
+                                          }}
+                                        >
+                                          {ns}
+                                          {isCopied ? (
+                                            <Check className="w-3 h-3 text-green-600" />
+                                          ) : (
+                                            <Copy className="w-3 h-3" />
+                                          )}
+                                        </Badge>
+                                      );
+                                    })}
                                   </div>
-                                  <div className="flex items-center gap-2">
-                                    <span className="text-muted-foreground">过期时间:</span>
-                                    <span>{domain.expireDate || '未设置'}</span>
-                                  </div>
+                                  {domain.nsStatus !== 'active' && (
+                                    <Button
+                                      variant="outline"
+                                      size="sm"
+                                      onClick={() => handleCheckNs(domain)}
+                                      className="ml-auto"
+                                    >
+                                      <RefreshCw className="w-3 h-3 mr-1" />
+                                      检测NS
+                                    </Button>
+                                  )}
                                 </div>
-                                {domain.nsStatus !== 'active' && (
-                                  <Button
-                                    variant="outline"
-                                    size="sm"
-                                    onClick={() => handleCheckNs(domain)}
-                                  >
-                                    <RefreshCw className="w-3 h-3 mr-1" />
-                                    检测NS
-                                  </Button>
-                                )}
-                              </div>
+                              )}
                             </div>
                           </TableCell>
                         </TableRow>
