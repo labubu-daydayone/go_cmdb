@@ -307,9 +307,8 @@ export default function DomainList() {
             <TableHeader>
               <TableRow>
                 <TableHead className="w-[50px]"></TableHead>
-                <TableHead>域名</TableHead>
+                <TableHead className="w-[280px]">域名</TableHead>
                 <TableHead>DNS服务商</TableHead>
-                <TableHead>来源</TableHead>
                 <TableHead>状态</TableHead>
                 <TableHead>添加时间</TableHead>
                 <TableHead className="text-right">操作</TableHead>
@@ -318,7 +317,7 @@ export default function DomainList() {
             <TableBody>
               {filteredDomains.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={7} className="text-center text-muted-foreground py-8">
+                  <TableCell colSpan={6} className="text-center text-muted-foreground py-8">
                     暂无域名数据
                   </TableCell>
                 </TableRow>
@@ -341,11 +340,6 @@ export default function DomainList() {
                         </TableCell>
                         <TableCell className="font-medium">{domain.domainName}</TableCell>
                         <TableCell>{domain.dnsProvider}</TableCell>
-                        <TableCell>
-                          <Badge variant={domain.source === 'auto_sync' ? 'default' : 'secondary'}>
-                            {domain.source === 'auto_sync' ? '自动同步' : '手动添加'}
-                          </Badge>
-                        </TableCell>
                         <TableCell>
                           {domain.cloudflareStatus ? (
                             <Badge variant="outline" className={cloudflareStatusConfig[domain.cloudflareStatus].color}>
@@ -400,8 +394,14 @@ export default function DomainList() {
                       </TableRow>
                       {isExpanded && (
                         <TableRow className="bg-muted/50">
-                          <TableCell colSpan={7} className="py-4">
+                          <TableCell colSpan={6} className="py-4">
                             <div className="grid grid-cols-2 gap-4 px-4">
+                              <div>
+                                <div className="text-sm font-medium text-muted-foreground mb-1">来源</div>
+                                <Badge variant={domain.source === 'auto_sync' ? 'default' : 'secondary'}>
+                                  {domain.source === 'auto_sync' ? '自动同步' : '手动添加'}
+                                </Badge>
+                              </div>
                               <div>
                                 <div className="text-sm font-medium text-muted-foreground mb-1">NS状态</div>
                                 <div className="flex items-center gap-2">
