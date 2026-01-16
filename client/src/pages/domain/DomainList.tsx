@@ -417,16 +417,6 @@ export default function DomainList() {
                             <Edit2 className="w-4 h-4 mr-1" />
                             管理解析
                           </Button>
-                          {domain.source === 'auto_sync' && domain.nsStatus !== 'active' && (
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => handleUpdateNs(domain)}
-                              title="自动修改注册商NS记录"
-                            >
-                              修改NS
-                            </Button>
-                          )}
                           <Button
                             variant="ghost"
                             size="sm"
