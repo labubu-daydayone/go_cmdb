@@ -269,12 +269,12 @@ export default function WebsiteList() {
             <TableHeader>
               <TableRow>
                 <TableHead className="w-[280px]">域名</TableHead>
-                <TableHead className="w-[300px]">CNAME</TableHead>
-                <TableHead className="w-[100px]">SSL状态</TableHead>
+                <TableHead className="w-[100px]">状态</TableHead>
+                <TableHead className="w-[200px]">CNAME</TableHead>
+                <TableHead className="w-[90px]">SSL状态</TableHead>
                 <TableHead>线路组</TableHead>
                 <TableHead>权限组</TableHead>
-                <TableHead>状态</TableHead>
-                <TableHead className="text-right">操作</TableHead>
+                <TableHead className="text-right w-[200px]">操作</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -305,11 +305,18 @@ export default function WebsiteList() {
                       </Tooltip>
                     </TableCell>
                     
+                    {/* 状态列 */}
+                    <TableCell className="w-[100px]">
+                      <Badge className={statusColors[website.status]}>
+                        {statusLabels[website.status]}
+                      </Badge>
+                    </TableCell>
+                    
                     {/* CNAME列 - 定宽，鼠标悬停显示完整内容 */}
-                    <TableCell className="w-[300px]">
+                    <TableCell className="w-[200px]">
                       <Tooltip>
                         <TooltipTrigger asChild>
-                          <div className="font-mono text-sm max-w-[280px] truncate cursor-help">
+                          <div className="font-mono text-xs max-w-[180px] truncate cursor-help">
                             {website.cname}
                           </div>
                         </TooltipTrigger>
@@ -320,7 +327,7 @@ export default function WebsiteList() {
                     </TableCell>
                     
                     {/* SSL状态列 */}
-                    <TableCell className="w-[100px]">
+                    <TableCell className="w-[90px]">
                       <Badge className={sslStatusColors[website.sslStatus]}>
                         {sslStatusLabels[website.sslStatus]}
                       </Badge>
@@ -332,38 +339,36 @@ export default function WebsiteList() {
                     <TableCell>
                       <Badge variant="outline">{website.permissionGroupName}</Badge>
                     </TableCell>
-                    <TableCell>
-                      <Badge className={statusColors[website.status]}>
-                        {statusLabels[website.status]}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <div className="flex justify-end gap-2">
+                    <TableCell className="text-right w-[200px]">
+                      <div className="flex justify-end gap-1">
                         <Button
                           variant="ghost"
                           size="sm"
+                          className="h-8 px-2"
                           onClick={() => handleEdit(website.id)}
                         >
-                          <Edit2 className="w-4 h-4 mr-1" />
+                          <Edit2 className="w-3 h-3 mr-1" />
                           编辑
                         </Button>
                         <Button
                           variant="ghost"
                           size="sm"
+                          className="h-8 px-2"
                           onClick={() => handleClearCache(website)}
                         >
-                          <RefreshCw className="w-4 h-4 mr-1" />
-                          缓存清理
+                          <RefreshCw className="w-3 h-3 mr-1" />
+                          缓存
                         </Button>
                         <Button
                           variant="ghost"
                           size="sm"
+                          className="h-8 px-2"
                           onClick={() => {
                             setSelectedWebsite(website);
                             setIsDeleteDialogOpen(true);
                           }}
                         >
-                          <Trash2 className="w-4 h-4 mr-1" />
+                          <Trash2 className="w-3 h-3 mr-1" />
                           删除
                         </Button>
                       </div>
