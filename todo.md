@@ -291,3 +291,8 @@
 ## 移除列表操作列的修改NS按钮
 - [x] 从列表操作列移除“修改NS”按钮（移除条件显示的修改NS按钮）
 - [x] 只保留折叠区域的修改NS按钮（已在NS记录行显示）
+
+## 修改NS按钮状态逻辑优化
+- [x] 修改NS按钮根据DNS服务商判断是否可用（disabled={domain.dnsProvider === 'Cloudflare'}）
+- [x] Cloudflare等DNS服务商禁用修改NS按钮，显示提示“Cloudflare为DNS服务商，无法修改NS记录”
+- [x] 只有注册商（如GoDaddy）才启用修改NS按钮，显示提示“修改注册商NS记录”

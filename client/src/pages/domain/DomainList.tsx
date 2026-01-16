@@ -495,9 +495,11 @@ export default function DomainList() {
                                   <Button
                                     variant="outline"
                                     size="sm"
+                                    disabled={domain.dnsProvider === 'Cloudflare'}
                                     onClick={() => {
                                       toast.info('修改NS功能开发中...');
                                     }}
+                                    title={domain.dnsProvider === 'Cloudflare' ? 'Cloudflare为DNS服务商，无法修改NS记录' : '修改注册商NS记录'}
                                   >
                                     <Edit2 className="w-3 h-3 mr-1" />
                                     修改NS
