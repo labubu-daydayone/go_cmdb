@@ -38,7 +38,7 @@ import {
   PopoverTrigger,
 } from '@/components/ui/popover';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Plus, Edit2, Trash2, RefreshCw, Search } from 'lucide-react';
+import { Plus, Edit2, Trash2, RefreshCw, Search, AlertCircle } from 'lucide-react';
 import { toast } from 'sonner';
 import { useLocation } from 'wouter';
 
@@ -436,13 +436,17 @@ export default function WebsiteList() {
                               删除
                             </Button>
                           </PopoverTrigger>
-                          <PopoverContent className="w-80">
-                            <div className="space-y-3">
-                              <div className="space-y-2">
-                                <h4 className="font-medium leading-none">确认删除</h4>
-                                <p className="text-sm text-muted-foreground">
-                                  确定要删除网站 "{website.domains[0]}" 吗？此操作无法撤销。
-                                </p>
+                          <PopoverContent className="w-auto">
+                            <div className="flex flex-col gap-3 p-2">
+                              <div className="flex items-center gap-3">
+                                <div className="flex-shrink-0">
+                                  <div className="w-8 h-8 rounded-full bg-orange-100 flex items-center justify-center">
+                                    <AlertCircle className="w-5 h-5 text-orange-500" />
+                                  </div>
+                                </div>
+                                <div className="font-medium">
+                                  确定删除网站？
+                                </div>
                               </div>
                               <div className="flex justify-end gap-2">
                                 <PopoverTrigger asChild>
@@ -452,11 +456,10 @@ export default function WebsiteList() {
                                 </PopoverTrigger>
                                 <PopoverTrigger asChild>
                                   <Button 
-                                    variant="destructive" 
                                     size="sm"
                                     onClick={() => handleDelete(website)}
                                   >
-                                    确认删除
+                                    OK
                                   </Button>
                                 </PopoverTrigger>
                               </div>
