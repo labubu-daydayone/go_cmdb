@@ -44,6 +44,7 @@ import { useLocation } from 'wouter';
 interface Website {
   id: number;
   domains: string[]; // 支持多个域名
+  cname: string; // CNAME（由系统自动生成）
   originType: 'ip' | 'origin_list'; // 回源类型：IP或回源列表
   originValue: string; // 回源地址IP或回源列表ID
   sslStatus: 'valid' | 'expired' | 'none';
@@ -61,6 +62,7 @@ const mockWebsites: Website[] = [
   {
     id: 1,
     domains: ['www.example.com', 'example.com'],
+    cname: 'cdn-1.example.com.cdn.cloudflare.net',
     originType: 'ip',
     originValue: '192.168.1.100',
     sslStatus: 'valid',
@@ -75,6 +77,7 @@ const mockWebsites: Website[] = [
   {
     id: 2,
     domains: ['api.example.com'],
+    cname: 'api-lb.example.com.cdn.cloudflare.net',
     originType: 'origin_list',
     originValue: '3',
     sslStatus: 'valid',
@@ -89,6 +92,7 @@ const mockWebsites: Website[] = [
   {
     id: 3,
     domains: ['shop.example.com', 'm.shop.example.com'],
+    cname: 'shop.example.com.cdn.cloudflare.net',
     originType: 'ip',
     originValue: '192.168.1.200',
     sslStatus: 'expired',
@@ -103,6 +107,7 @@ const mockWebsites: Website[] = [
   {
     id: 4,
     domains: ['blog.example.com'],
+    cname: 'blog.example.com.cdn.cloudflare.net',
     originType: 'origin_list',
     originValue: '1',
     sslStatus: 'none',
@@ -117,6 +122,7 @@ const mockWebsites: Website[] = [
   {
     id: 5,
     domains: ['test.example.com'],
+    cname: 'test.example.com.cdn.cloudflare.net',
     originType: 'ip',
     originValue: '192.168.1.50',
     sslStatus: 'valid',
@@ -195,6 +201,7 @@ export default function WebsiteList() {
   // 搜索过滤
   const filteredWebsites = websites.filter(website =>
     website.domains.some(d => d.toLowerCase().includes(searchTerm.toLowerCase())) ||
+    website.cname.toLowerCase().includes(searchTerm.toLowerCase()) ||
     website.originValue.toLowerCase().includes(searchTerm.toLowerCase()) ||
     website.routeGroupName.toLowerCase().includes(searchTerm.toLowerCase()) ||
     website.permissionGroupName.toLowerCase().includes(searchTerm.toLowerCase())
@@ -301,19 +308,20 @@ export default function WebsiteList() {
                     aria-label="全选"
                   />
                 </TableHead>
-                <TableHead className="w-[280px]">域名</TableHead>
-                <TableHead className="w-[100px]">状态</TableHead>
-                <TableHead className="w-[200px]">回源地址</TableHead>
-                <TableHead className="w-[90px]">SSL状态</TableHead>
+                <TableHead className="w-[240px]">域名</TableHead>
+                <TableHead className="w-[90px]">状态</TableHead>
+                <TableHead className="w-[180px]">CNAME</TableHead>
+                <TableHead className="w-[120px]">回源地址</TableHead>
+                <TableHead className="w-[80px]">SSL状态</TableHead>
                 <TableHead>线路组</TableHead>
                 <TableHead>权限组</TableHead>
-                <TableHead className="text-right w-[200px]">操作</TableHead>
+                <TableHead className="text-right w-[180px]">操作</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {filteredWebsites.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={8} className="text-center text-muted-foreground py-8">
+                  <TableCell colSpan={9} className="text-center text-muted-foreground py-8">
                     {searchTerm ? '未找到匹配的网站' : '暂无网站数据'}
                   </TableCell>
                 </TableRow>
@@ -330,10 +338,10 @@ export default function WebsiteList() {
                     </TableCell>
                     
                     {/* 域名列 - 定宽，支持多个域名显示，鼠标悬停显示完整内容 */}
-                    <TableCell className="w-[280px]">
+                    <TableCell className="w-[240px]">
                       <Tooltip>
                         <TooltipTrigger asChild>
-                          <div className="font-medium max-w-[260px] truncate cursor-help">
+                          <div className="font-medium max-w-[220px] truncate cursor-help">
                             {website.domains.join(', ')}
                           </div>
                         </TooltipTrigger>
@@ -348,18 +356,32 @@ export default function WebsiteList() {
                     </TableCell>
                     
                     {/* 状态列 */}
-                    <TableCell className="w-[100px]">
+                    <TableCell className="w-[90px]">
                       <Badge className={statusColors[website.status]}>
                         {statusLabels[website.status]}
                       </Badge>
                     </TableCell>
                     
-                    {/* 回源地址列 - 定宽，鼠标悬停显示完整内容 */}
-                    <TableCell className="w-[200px]">
+                    {/* CNAME列 - 定宽，鼠标悬停显示完整内容 */}
+                    <TableCell className="w-[180px]">
                       <Tooltip>
                         <TooltipTrigger asChild>
-                          <div className="font-mono text-xs max-w-[180px] truncate cursor-help">
-                            {website.originType === 'ip' ? website.originValue : `回源列表 #${website.originValue}`}
+                          <div className="font-mono text-xs max-w-[160px] truncate cursor-help">
+                            {website.cname}
+                          </div>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p className="max-w-xs break-all">{website.cname}</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TableCell>
+                    
+                    {/* 回源地址列 - 定宽，鼠标悬停显示完整内容 */}
+                    <TableCell className="w-[120px]">
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <div className="font-mono text-xs max-w-[100px] truncate cursor-help">
+                            {website.originType === 'ip' ? website.originValue : `列表#${website.originValue}`}
                           </div>
                         </TooltipTrigger>
                         <TooltipContent>
@@ -371,7 +393,7 @@ export default function WebsiteList() {
                     </TableCell>
                     
                     {/* SSL状态列 */}
-                    <TableCell className="w-[90px]">
+                    <TableCell className="w-[80px]">
                       <Badge className={sslStatusColors[website.sslStatus]}>
                         {sslStatusLabels[website.sslStatus]}
                       </Badge>
