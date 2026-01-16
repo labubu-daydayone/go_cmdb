@@ -409,3 +409,17 @@
 - [ ] 添加警告图标和按钮样式
 - [ ] 在 WebsiteList 中使用 Popconfirm 替换 Popover
 - [ ] 测试删除确认功能是否正常工作
+
+## 切换到Material-UI（重大重构）
+- [ ] 安装MUI依赖包（@mui/material、@emotion/react、@emotion/styled）
+- [ ] 配置MUI主题（创建theme.ts）
+- [ ] 在main.tsx中添加ThemeProvider
+- [ ] 移除shadcn/ui组件导入，替换为MUI组件
+- [ ] 重写DashboardLayout组件（使用MUI Drawer、AppBar）
+- [ ] 重写域名列表页面（使用MUI Table、Dialog、Button等）
+- [ ] 重写域名解析页面（使用MUI组件）
+- [ ] 重写网站列表页面（使用MUI Table、Popover等）
+- [ ] 重写网站编辑页面（使用MUI Form组件）
+- [ ] 调整全局样式，适配MUI的Material Design风格
+- [ ] 测试所有页面功能
+- [ ] 保存最终checkpoint
