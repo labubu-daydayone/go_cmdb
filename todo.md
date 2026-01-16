@@ -400,3 +400,12 @@
 - [x] 添加side属性，设置气泡弹出位置（side="top"）
 - [x] 添加align属性，设置气泡对齐方式（align="center"）
 - [x] 确保气泡固定在删除按钮上方弹出，不会到处移动
+
+## Popconfirm组件开发（类似Ant Design）
+- [ ] 创建 Popconfirm 组件文件（@/components/ui/popconfirm.tsx）
+- [ ] 基于 Radix UI Popover 封装 Popconfirm 组件
+- [ ] 实现 title、description、onConfirm、onCancel 属性
+- [ ] 实现 open 和 setOpen 状态管理
+- [ ] 添加警告图标和按钮样式
+- [ ] 在 WebsiteList 中使用 Popconfirm 替换 Popover
+- [ ] 测试删除确认功能是否正常工作

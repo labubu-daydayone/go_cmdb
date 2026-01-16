@@ -32,11 +32,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from '@/components/ui/popover';
+import { Popconfirm } from '@/components/ui/popconfirm';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Plus, Edit2, Trash2, RefreshCw, Search, AlertCircle } from 'lucide-react';
 import { toast } from 'sonner';
@@ -425,47 +421,19 @@ export default function WebsiteList() {
                           <Edit2 className="w-3 h-3 mr-0.5" />
                           编辑
                         </Button>
-                        <Popover>
-                          <PopoverTrigger asChild>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              className="h-7 px-1.5 text-xs text-destructive hover:text-destructive"
-                            >
-                              <Trash2 className="w-3 h-3 mr-0.5" />
-                              删除
-                            </Button>
-                          </PopoverTrigger>
-                          <PopoverContent className="w-auto" side="top" align="center">
-                            <div className="flex flex-col gap-3 p-2">
-                              <div className="flex items-center gap-3">
-                                <div className="flex-shrink-0">
-                                  <div className="w-8 h-8 rounded-full bg-orange-100 flex items-center justify-center">
-                                    <AlertCircle className="w-5 h-5 text-orange-500" />
-                                  </div>
-                                </div>
-                                <div className="font-medium">
-                                  确定删除网站？
-                                </div>
-                              </div>
-                              <div className="flex justify-end gap-2">
-                                <PopoverTrigger asChild>
-                                  <Button variant="outline" size="sm">
-                                    取消
-                                  </Button>
-                                </PopoverTrigger>
-                                <PopoverTrigger asChild>
-                                  <Button 
-                                    size="sm"
-                                    onClick={() => handleDelete(website)}
-                                  >
-                                    OK
-                                  </Button>
-                                </PopoverTrigger>
-                              </div>
-                            </div>
-                          </PopoverContent>
-                        </Popover>
+                        <Popconfirm
+                          title="确定删除网站？"
+                          onConfirm={() => handleDelete(website)}
+                        >
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-7 px-1.5 text-xs text-destructive hover:text-destructive"
+                          >
+                            <Trash2 className="w-3 h-3 mr-0.5" />
+                            删除
+                          </Button>
+                        </Popconfirm>
                         <Button
                           variant="ghost"
                           size="sm"
