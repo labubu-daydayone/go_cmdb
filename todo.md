@@ -274,3 +274,8 @@
 - [x] 第一行三等分：NS状态、来源、过期时间（使用grid grid-cols-3 gap-6）
 - [x] 第二行：NS记录单独占满整行，使用flex-1自适应宽度
 - [x] 检测NS按钮放在NS记录行右侧，使用ml-auto对齐
+
+## 折叠区域布局比例调整
+- [x] 第一行改为2:2:4比例（使用grid-cols-8，NS状态col-span-2、来源col-span-2、过期时间col-span-4）
+- [x] 第二行NS记录占5份（col-span-5），检测NS按钮占3份（col-span-3）
+- [x] NS状态为active时，检测NS按钮设置为disabled状态，无法点击

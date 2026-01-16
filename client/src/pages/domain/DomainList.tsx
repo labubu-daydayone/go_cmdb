@@ -388,10 +388,10 @@ export default function DomainList() {
                         <TableRow className="bg-muted/50">
                           <TableCell colSpan={6} className="py-4">
                             <div className="px-6 space-y-3">
-                              {/* 第一行：三等分布局 */}
-                              <div className="grid grid-cols-3 gap-6 text-sm">
-                                {/* NS状态 */}
-                                <div className="flex items-center gap-2">
+                              {/* 第一行：2:2:4比例布局 */}
+                              <div className="grid grid-cols-8 gap-6 text-sm">
+                                {/* NS状态 - 占2份 */}
+                                <div className="col-span-2 flex items-center gap-2">
                                   <span className="text-muted-foreground whitespace-nowrap">NS状态:</span>
                                   {(() => {
                                     const StatusIcon = nsStatusConfig[domain.nsStatus].icon;
@@ -404,61 +404,66 @@ export default function DomainList() {
                                   })()}
                                 </div>
                                 
-                                {/* 来源 */}
-                                <div className="flex items-center gap-2">
+                                {/* 来源 - 占2份 */}
+                                <div className="col-span-2 flex items-center gap-2">
                                   <span className="text-muted-foreground whitespace-nowrap">来源:</span>
                                   <Badge variant={domain.source === 'auto_sync' ? 'default' : 'secondary'} className="text-xs">
                                     {domain.source === 'auto_sync' ? '自动同步' : '手动添加'}
                                   </Badge>
                                 </div>
                                 
-                                {/* 过期时间 */}
-                                <div className="flex items-center gap-2">
+                                {/* 过期时间 - 占4份 */}
+                                <div className="col-span-4 flex items-center gap-2">
                                   <span className="text-muted-foreground whitespace-nowrap">过期时间:</span>
                                   <span>{domain.expireDate || '未设置'}</span>
                                 </div>
                               </div>
                               
-                              {/* 第二行：NS记录占满整行 */}
+                              {/* 第二行：NS记录占5份 + 检测NS按钮 */}
                               {domain.nsRecords && domain.nsRecords.length > 0 && (
-                                <div className="flex items-start gap-2 text-sm">
-                                  <span className="text-muted-foreground whitespace-nowrap">NS记录:</span>
-                                  <div className="flex flex-wrap gap-2 flex-1">
-                                    {domain.nsRecords.map((ns, idx) => {
-                                      const isCopied = copiedNsRecord === ns;
-                                      return (
-                                        <Badge
-                                          key={idx}
-                                          variant="outline"
-                                          className="text-xs cursor-pointer hover:bg-muted/50 transition-colors flex items-center gap-1"
-                                          onClick={() => {
-                                            navigator.clipboard.writeText(ns);
-                                            setCopiedNsRecord(ns);
-                                            toast.success(`已复制: ${ns}`);
-                                            setTimeout(() => setCopiedNsRecord(null), 2000);
-                                          }}
-                                        >
-                                          {ns}
-                                          {isCopied ? (
-                                            <Check className="w-3 h-3 text-green-600" />
-                                          ) : (
-                                            <Copy className="w-3 h-3" />
-                                          )}
-                                        </Badge>
-                                      );
-                                    })}
+                                <div className="grid grid-cols-8 gap-6 text-sm">
+                                  {/* NS记录区域 - 占5份 */}
+                                  <div className="col-span-5 flex items-start gap-2">
+                                    <span className="text-muted-foreground whitespace-nowrap">NS记录:</span>
+                                    <div className="flex flex-wrap gap-2 flex-1">
+                                      {domain.nsRecords.map((ns, idx) => {
+                                        const isCopied = copiedNsRecord === ns;
+                                        return (
+                                          <Badge
+                                            key={idx}
+                                            variant="outline"
+                                            className="text-xs cursor-pointer hover:bg-muted/50 transition-colors flex items-center gap-1"
+                                            onClick={() => {
+                                              navigator.clipboard.writeText(ns);
+                                              setCopiedNsRecord(ns);
+                                              toast.success(`已复制: ${ns}`);
+                                              setTimeout(() => setCopiedNsRecord(null), 2000);
+                                            }}
+                                          >
+                                            {ns}
+                                            {isCopied ? (
+                                              <Check className="w-3 h-3 text-green-600" />
+                                            ) : (
+                                              <Copy className="w-3 h-3" />
+                                            )}
+                                          </Badge>
+                                        );
+                                      })}
+                                    </div>
                                   </div>
-                                  {domain.nsStatus !== 'active' && (
+                                  
+                                  {/* 检测NS按钮 - 占3份 */}
+                                  <div className="col-span-3 flex items-center justify-end">
                                     <Button
                                       variant="outline"
                                       size="sm"
                                       onClick={() => handleCheckNs(domain)}
-                                      className="ml-auto"
+                                      disabled={domain.nsStatus === 'active'}
                                     >
                                       <RefreshCw className="w-3 h-3 mr-1" />
                                       检测NS
                                     </Button>
-                                  )}
+                                  </div>
                                 </div>
                               )}
                             </div>
