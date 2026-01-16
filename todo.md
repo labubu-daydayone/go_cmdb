@@ -309,3 +309,16 @@
 - [x] 当canModifyNS=true时，显示注册商和修改NS按钮（第三行）
 - [x] 当canModifyNS=false时，不显示注册商和修改NS按钮
 - [x] 调整折叠区域布局顺序：第一行NS状态/来源/过期时间，第二行NS记录（如果有），第三行注册商+修改NS按钮（仅canModifyNS=true时显示）
+
+## 修复管理解析页面白屏问题
+- [x] 排查点击“管理解析”按钮后的路由跳转逻辑
+- [x] 将window.location.href改为使用wouter的setLocation进行SPA路由跳转
+- [x] 修复白屏问题，实现平滑跳转
+
+## 合并批量导入和手动添加功能
+- [x] 移除“批量导入”相关状态和函数（isBatchImportDialogOpen、uploadFile、handleBatchImport）
+- [x] 将“手动添加”按钮改名为“添加域名”
+- [x] 修改“添加域名”对话框，将Input改为textarea支持多行输入
+- [x] 添加域名格式验证（正则表达式）
+- [x] 支持批量添加最多1000个域名（每行一个）
+- [x] 添加详细的错误提示（格式不正确、数量超限等）

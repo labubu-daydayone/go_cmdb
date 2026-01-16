@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useLocation } from 'wouter';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -116,9 +117,7 @@ const cloudflareStatusConfig = {
 export default function DomainList() {
   const [domains, setDomains] = useState<Domain[]>(mockDomains);
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
-  const [isBatchImportDialogOpen, setIsBatchImportDialogOpen] = useState(false);
   const [isNsDialogOpen, setIsNsDialogOpen] = useState(false);
-  const [uploadFile, setUploadFile] = useState<File | null>(null);
   const [selectedDomain, setSelectedDomain] = useState<Domain | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [expandedDomainId, setExpandedDomainId] = useState<number | null>(null);
@@ -145,35 +144,57 @@ export default function DomainList() {
       return;
     }
 
-    // TODO: 调用Go API添加域名
-    // const response = await fetch('/api/v1/domains', {
+    // 解析域名（支持多个域名，每行一个）
+    const domainLines = formData.domainName.split('\n')
+      .map(line => line.trim())
+      .filter(line => line.length > 0);
+
+    if (domainLines.length === 0) {
+      toast.error('请至少输入一个域名');
+      return;
+    }
+
+    if (domainLines.length > 1000) {
+      toast.error('最多支持1000个域名');
+      return;
+    }
+
+    // 验证域名格式
+    const domainRegex = /^[a-zA-Z0-9]([a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(\.[a-zA-Z0-9]([a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$/;
+    const invalidDomains = domainLines.filter(domain => !domainRegex.test(domain));
+    if (invalidDomains.length > 0) {
+      toast.error(`以下域名格式不正确：${invalidDomains.slice(0, 3).join(', ')}${invalidDomains.length > 3 ? '...' : ''}`);
+      return;
+    }
+
+    // TODO: 调用Go API批量添加域名
+    // const response = await fetch('/api/v1/domains/batch', {
     //   method: 'POST',
-    //   body: JSON.stringify(formData),
+    //   body: JSON.stringify({ domains: domainLines, dnsAccountId: formData.dnsAccountId }),
     // });
     // const data = await response.json();
-    // 返回的data应包含nsRecords
 
     const selectedAccount = mockDnsAccounts.find(acc => acc.id.toString() === formData.dnsAccountId);
-    const newDomain: Domain = {
-      id: Date.now(),
-      domainName: formData.domainName,
+    const newDomains: Domain[] = domainLines.map((domainName, index) => ({
+      id: Date.now() + index,
+      domainName,
       canModifyNS: false, // 默认新添加的域名没有注册商权限
       dnsProvider: selectedAccount?.name || '',
       source: 'manual',
       nsStatus: 'pending',
       nsRecords: ['ns1.cloudflare.com', 'ns2.cloudflare.com'], // 模拟返回的NS记录
       createdAt: new Date().toISOString().split('T')[0],
-    };
+    }));
 
-    setDomains([newDomain, ...domains]);
+    setDomains([...newDomains, ...domains]);
     setIsAddDialogOpen(false);
     
-    // 显示NS配置指引
-    setSelectedDomain(newDomain);
+    // 显示NS配置指引（只显示第一个域名的NS记录）
+    setSelectedDomain(newDomains[0]);
     setIsNsDialogOpen(true);
     
     setFormData({ domainName: '', dnsAccountId: '' });
-    toast.success('域名添加成功，请配置NS记录');
+    toast.success(`成功添加${domainLines.length}个域名，请配置NS记录`);
   };
 
   const handleDeleteDomain = (id: number) => {
@@ -191,32 +212,14 @@ export default function DomainList() {
     toast.success(`正在同步 ${accountName} 的域名...`);
   };
 
-  const handleBatchImport = () => {
-    if (!uploadFile || !formData.dnsAccountId) {
-      toast.error('请选择文件和DNS服务商');
-      return;
-    }
-
-    // TODO: 调用Go API批量导入域名
-    // const formData = new FormData();
-    // formData.append('file', uploadFile);
-    // formData.append('dnsAccountId', formData.dnsAccountId);
-    // await fetch('/api/v1/domains/batch-import', {
-    //   method: 'POST',
-    //   body: formData,
-    // });
-
-    toast.success(`正在批量导入域名...`);
-    setIsBatchImportDialogOpen(false);
-    setUploadFile(null);
-  };
-
   const handleCheckNs = (domain: Domain) => {
     // TODO: 调用Go API检查NS状态
     // await fetch(`/api/v1/domains/${domain.id}/check-ns`, { method: 'POST' });
     
     toast.success(`正在检查 ${domain.domainName} 的NS状态...`);
   };
+
+  const [, setLocation] = useLocation();
 
   const handleManageRecords = (domain: Domain) => {
     // 访问控制：只有NS已生效的域名才能管理解析
@@ -225,8 +228,8 @@ export default function DomainList() {
       return;
     }
     
-    // 跳转到解析管理页面
-    window.location.href = `/domain/${domain.domainName}/records`;
+    // 跳转到解析管理页面（使用SPA路由，避免页面刷新）
+    setLocation(`/domain/${domain.domainName}/records`);
   };
 
   const handleUpdateNs = (domain: Domain) => {
@@ -289,13 +292,10 @@ export default function DomainList() {
               ))}
             </DropdownMenuContent>
           </DropdownMenu>
-          <Button variant="outline" onClick={() => setIsBatchImportDialogOpen(true)}>
-            <Upload className="w-4 h-4 mr-2" />
-            批量导入
-          </Button>
+
           <Button onClick={() => setIsAddDialogOpen(true)}>
             <Plus className="w-4 h-4 mr-2" />
-            手动添加
+            添加域名
           </Button>
         </div>
       </div>
@@ -541,20 +541,24 @@ export default function DomainList() {
       <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
         <DialogContent className="sm:max-w-[500px]">
           <DialogHeader>
-            <DialogTitle>手动添加域名</DialogTitle>
+            <DialogTitle>添加域名</DialogTitle>
             <DialogDescription>
-              添加域名后，系统将返回NS记录供您配置
+              支持添加单个或多个域名，每行一个域名
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-4">
             <div className="space-y-2">
               <Label htmlFor="domainName">域名 *</Label>
-              <Input
+              <textarea
                 id="domainName"
-                placeholder="example.com"
+                className="w-full min-h-[120px] px-3 py-2 text-sm border border-input rounded-md focus:outline-none focus:ring-2 focus:ring-ring"
+                placeholder="输入域名，每行一个：&#10;example.com&#10;test.com&#10;demo.org"
                 value={formData.domainName}
                 onChange={(e) => setFormData({ ...formData, domainName: e.target.value })}
               />
+              <p className="text-xs text-muted-foreground">
+                每行一个域名，最多支持1000个域名
+              </p>
             </div>
             <div className="space-y-2">
               <Label htmlFor="dnsAccount">DNS服务商 *</Label>
@@ -584,65 +588,7 @@ export default function DomainList() {
         </DialogContent>
       </Dialog>
 
-      {/* 批量导入弹窗 */}
-      <Dialog open={isBatchImportDialogOpen} onOpenChange={setIsBatchImportDialogOpen}>
-        <DialogContent className="sm:max-w-[500px]">
-          <DialogHeader>
-            <DialogTitle>批量导入域名</DialogTitle>
-            <DialogDescription>
-              支持CSV/Excel文件，文件格式：每行一个域名
-            </DialogDescription>
-          </DialogHeader>
-          <div className="space-y-4 py-4">
-            <div className="space-y-2">
-              <Label htmlFor="dnsAccountBatch">DNS服务商 *</Label>
-              <Select
-                value={formData.dnsAccountId}
-                onValueChange={(value) => setFormData({ ...formData, dnsAccountId: value })}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="选择DNS服务商账号" />
-                </SelectTrigger>
-                <SelectContent>
-                  {mockDnsAccounts.map((account) => (
-                    <SelectItem key={account.id} value={account.id.toString()}>
-                      {account.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="uploadFile">上传文件 *</Label>
-              <Input
-                id="uploadFile"
-                type="file"
-                accept=".csv,.xlsx,.xls"
-                onChange={(e) => setUploadFile(e.target.files?.[0] || null)}
-              />
-              {uploadFile && (
-                <p className="text-sm text-muted-foreground">
-                  已选择: {uploadFile.name}
-                </p>
-              )}
-            </div>
-            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 space-y-2">
-              <h4 className="font-medium text-blue-900">文件格式说明：</h4>
-              <ul className="list-disc list-inside space-y-1 text-sm text-blue-800">
-                <li>CSV文件：每行一个域名，例如：example.com</li>
-                <li>Excel文件：第一列为域名，忽略表头</li>
-                <li>最大支持1000个域名</li>
-              </ul>
-            </div>
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setIsBatchImportDialogOpen(false)}>
-              取消
-            </Button>
-            <Button onClick={handleBatchImport}>开始导入</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+
 
       {/* NS配置指引弹窗 */}
       <Dialog open={isNsDialogOpen} onOpenChange={setIsNsDialogOpen}>
