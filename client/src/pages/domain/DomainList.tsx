@@ -372,15 +372,6 @@ export default function DomainList() {
                               修改NS
                             </Button>
                           )}
-                          {domain.nsStatus !== 'active' && (
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => handleCheckNs(domain)}
-                            >
-                              检查NS
-                            </Button>
-                          )}
                           <Button
                             variant="ghost"
                             size="sm"
@@ -394,10 +385,10 @@ export default function DomainList() {
                       </TableRow>
                       {isExpanded && (
                         <TableRow className="bg-muted/50">
-                          <TableCell colSpan={6} className="py-3">
-                            <div className="space-y-2 px-4">
+                          <TableCell colSpan={6} className="py-4">
+                            <div className="space-y-3 px-6">
                               {/* NS信息区域 - 第一行 */}
-                              <div className="flex items-center gap-4 text-sm">
+                              <div className="flex items-center gap-6 text-sm">
                                 <div className="flex items-center gap-2">
                                   <span className="text-muted-foreground">NS状态:</span>
                                   {(() => {
@@ -413,18 +404,19 @@ export default function DomainList() {
                                 {domain.nsRecords && domain.nsRecords.length > 0 && (
                                   <div className="flex items-center gap-2">
                                     <span className="text-muted-foreground">NS记录:</span>
-                                    <div className="flex flex-wrap gap-1.5">
+                                    <div className="flex flex-wrap gap-2">
                                       {domain.nsRecords.map((ns, idx) => (
                                         <Badge 
                                           key={idx} 
                                           variant="secondary" 
-                                          className="text-xs cursor-pointer hover:bg-secondary/80 transition-colors"
+                                          className="text-xs cursor-pointer hover:bg-secondary/80 transition-colors flex items-center gap-1"
                                           onClick={() => {
                                             navigator.clipboard.writeText(ns);
                                             toast.success(`已复制: ${ns}`);
                                           }}
                                         >
                                           {ns}
+                                          <Copy className="w-3 h-3" />
                                         </Badge>
                                       ))}
                                     </div>
@@ -433,17 +425,29 @@ export default function DomainList() {
                               </div>
                               
                               {/* 来源和过期时间 - 第二行 */}
-                              <div className="flex items-center gap-6 text-sm">
-                                <div className="flex items-center gap-2">
-                                  <span className="text-muted-foreground">来源:</span>
-                                  <Badge variant={domain.source === 'auto_sync' ? 'default' : 'secondary'} className="text-xs">
-                                    {domain.source === 'auto_sync' ? '自动同步' : '手动添加'}
-                                  </Badge>
+                              <div className="flex items-center justify-between">
+                                <div className="flex items-center gap-6 text-sm">
+                                  <div className="flex items-center gap-2">
+                                    <span className="text-muted-foreground">来源:</span>
+                                    <Badge variant={domain.source === 'auto_sync' ? 'default' : 'secondary'} className="text-xs">
+                                      {domain.source === 'auto_sync' ? '自动同步' : '手动添加'}
+                                    </Badge>
+                                  </div>
+                                  <div className="flex items-center gap-2">
+                                    <span className="text-muted-foreground">过期时间:</span>
+                                    <span>{domain.expireDate || '未设置'}</span>
+                                  </div>
                                 </div>
-                                <div className="flex items-center gap-2">
-                                  <span className="text-muted-foreground">过期时间:</span>
-                                  <span>{domain.expireDate || '未设置'}</span>
-                                </div>
+                                {domain.nsStatus !== 'active' && (
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => handleCheckNs(domain)}
+                                  >
+                                    <RefreshCw className="w-3 h-3 mr-1" />
+                                    检测NS
+                                  </Button>
+                                )}
                               </div>
                             </div>
                           </TableCell>
