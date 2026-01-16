@@ -116,6 +116,7 @@ export default function DomainList() {
   const [searchTerm, setSearchTerm] = useState('');
   const [expandedDomainId, setExpandedDomainId] = useState<number | null>(null);
   const [copiedNsRecord, setCopiedNsRecord] = useState<string | null>(null);
+  const [selectedDomainIds, setSelectedDomainIds] = useState<number[]>([]);
   const [formData, setFormData] = useState({
     domainName: '',
     dnsAccountId: '',
@@ -291,14 +292,38 @@ export default function DomainList() {
         </div>
       </div>
 
-      {/* 搜索栏 */}
-      <div className="flex gap-4">
+      {/* 搜索栏和已选中显示 */}
+      <div className="flex items-center justify-between gap-4">
         <Input
           placeholder="搜索域名..."
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
           className="max-w-sm"
         />
+        {selectedDomainIds.length > 0 && (
+          <div className="flex items-center gap-4">
+            <span className="text-sm text-muted-foreground">
+              已选中 {selectedDomainIds.length} 个域名
+            </span>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setSelectedDomainIds([])}
+            >
+              取消选择
+            </Button>
+            <Button
+              variant="destructive"
+              size="sm"
+              onClick={() => {
+                toast.info('批量删除功能开发中...');
+              }}
+            >
+              <Trash2 className="w-3 h-3 mr-1" />
+              批量删除
+            </Button>
+          </div>
+        )}
       </div>
 
       {/* 域名表格 */}
@@ -307,6 +332,20 @@ export default function DomainList() {
           <Table>
             <TableHeader>
               <TableRow>
+                <TableHead className="w-[50px]">
+                  <input
+                    type="checkbox"
+                    checked={selectedDomainIds.length === filteredDomains.length && filteredDomains.length > 0}
+                    onChange={(e) => {
+                      if (e.target.checked) {
+                        setSelectedDomainIds(filteredDomains.map(d => d.id));
+                      } else {
+                        setSelectedDomainIds([]);
+                      }
+                    }}
+                    className="cursor-pointer"
+                  />
+                </TableHead>
                 <TableHead className="w-[50px]"></TableHead>
                 <TableHead className="w-[280px]">域名</TableHead>
                 <TableHead>DNS服务商</TableHead>
@@ -318,7 +357,7 @@ export default function DomainList() {
             <TableBody>
               {filteredDomains.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={6} className="text-center text-muted-foreground py-8">
+                  <TableCell colSpan={7} className="text-center text-muted-foreground py-8">
                     暂无域名数据
                   </TableCell>
                 </TableRow>
@@ -326,9 +365,24 @@ export default function DomainList() {
                 <>
                 {filteredDomains.map((domain) => {
                   const isExpanded = expandedDomainId === domain.id;
+                  const isSelected = selectedDomainIds.includes(domain.id);
                   return (
                     <React.Fragment key={domain.id}>
                       <TableRow>
+                        <TableCell>
+                          <input
+                            type="checkbox"
+                            checked={isSelected}
+                            onChange={(e) => {
+                              if (e.target.checked) {
+                                setSelectedDomainIds([...selectedDomainIds, domain.id]);
+                              } else {
+                                setSelectedDomainIds(selectedDomainIds.filter(id => id !== domain.id));
+                              }
+                            }}
+                            className="cursor-pointer"
+                          />
+                        </TableCell>
                         <TableCell>
                           <Button
                             variant="ghost"
@@ -386,7 +440,7 @@ export default function DomainList() {
                       </TableRow>
                       {isExpanded && (
                         <TableRow className="bg-muted/50">
-                          <TableCell colSpan={6} className="py-4">
+                          <TableCell colSpan={7} className="py-4">
                             <div className="px-6 space-y-3">
                               {/* 第一行：2:2:4比例布局 */}
                               <div className="grid grid-cols-8 gap-6 text-sm">
@@ -419,51 +473,45 @@ export default function DomainList() {
                                 </div>
                               </div>
                               
-                              {/* 第二行：NS记录占5份 + 检测NS按钮 */}
+                              {/* 第二行：NS记录占满整行 + 修改NS按钮 */}
                               {domain.nsRecords && domain.nsRecords.length > 0 && (
-                                <div className="grid grid-cols-8 gap-6 text-sm">
-                                  {/* NS记录区域 - 占5份 */}
-                                  <div className="col-span-5 flex items-start gap-2">
-                                    <span className="text-muted-foreground whitespace-nowrap">NS记录:</span>
-                                    <div className="flex flex-wrap gap-2 flex-1">
-                                      {domain.nsRecords.map((ns, idx) => {
-                                        const isCopied = copiedNsRecord === ns;
-                                        return (
-                                          <Badge
-                                            key={idx}
-                                            variant="outline"
-                                            className="text-xs cursor-pointer hover:bg-muted/50 transition-colors flex items-center gap-1"
-                                            onClick={() => {
-                                              navigator.clipboard.writeText(ns);
-                                              setCopiedNsRecord(ns);
-                                              toast.success(`已复制: ${ns}`);
-                                              setTimeout(() => setCopiedNsRecord(null), 2000);
-                                            }}
-                                          >
-                                            {ns}
-                                            {isCopied ? (
-                                              <Check className="w-3 h-3 text-green-600" />
-                                            ) : (
-                                              <Copy className="w-3 h-3" />
-                                            )}
-                                          </Badge>
-                                        );
-                                      })}
-                                    </div>
+                                <div className="flex items-start gap-2 text-sm">
+                                  <span className="text-muted-foreground whitespace-nowrap">NS记录:</span>
+                                  <div className="flex flex-wrap gap-2 flex-1">
+                                    {domain.nsRecords.map((ns, idx) => {
+                                      const isCopied = copiedNsRecord === ns;
+                                      return (
+                                        <Badge
+                                          key={idx}
+                                          variant="outline"
+                                          className="text-xs cursor-pointer hover:bg-muted/50 transition-colors flex items-center gap-1"
+                                          onClick={() => {
+                                            navigator.clipboard.writeText(ns);
+                                            setCopiedNsRecord(ns);
+                                            toast.success(`已复制: ${ns}`);
+                                            setTimeout(() => setCopiedNsRecord(null), 2000);
+                                          }}
+                                        >
+                                          {ns}
+                                          {isCopied ? (
+                                            <Check className="w-3 h-3 text-green-600" />
+                                          ) : (
+                                            <Copy className="w-3 h-3" />
+                                          )}
+                                        </Badge>
+                                      );
+                                    })}
                                   </div>
-                                  
-                                  {/* 检测NS按钮 - 占3份 */}
-                                  <div className="col-span-3 flex items-center justify-end">
-                                    <Button
-                                      variant="outline"
-                                      size="sm"
-                                      onClick={() => handleCheckNs(domain)}
-                                      disabled={domain.nsStatus === 'active'}
-                                    >
-                                      <RefreshCw className="w-3 h-3 mr-1" />
-                                      检测NS
-                                    </Button>
-                                  </div>
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => {
+                                      toast.info('修改NS功能开发中...');
+                                    }}
+                                  >
+                                    <Edit2 className="w-3 h-3 mr-1" />
+                                    修改NS
+                                  </Button>
                                 </div>
                               )}
                             </div>
