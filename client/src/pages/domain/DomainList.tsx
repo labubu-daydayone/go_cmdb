@@ -396,24 +396,10 @@ export default function DomainList() {
                         <TableRow className="bg-muted/50">
                           <TableCell colSpan={6} className="py-3">
                             <div className="space-y-2 px-4">
-                              {/* 来源和过期时间 */}
-                              <div className="flex items-center gap-6 text-sm">
+                              {/* NS信息区域 - 第一行 */}
+                              <div className="flex items-center gap-4 text-sm">
                                 <div className="flex items-center gap-2">
-                                  <span className="text-muted-foreground">来源:</span>
-                                  <Badge variant={domain.source === 'auto_sync' ? 'default' : 'secondary'} className="text-xs">
-                                    {domain.source === 'auto_sync' ? '自动同步' : '手动添加'}
-                                  </Badge>
-                                </div>
-                                <div className="flex items-center gap-2">
-                                  <span className="text-muted-foreground">过期时间:</span>
-                                  <span>{domain.expireDate || '未设置'}</span>
-                                </div>
-                              </div>
-                              
-                              {/* NS信息区域 */}
-                              <div className="space-y-1.5">
-                                <div className="flex items-center gap-2">
-                                  <span className="text-sm text-muted-foreground">NS状态:</span>
+                                  <span className="text-muted-foreground">NS状态:</span>
                                   {(() => {
                                     const StatusIcon = nsStatusConfig[domain.nsStatus].icon;
                                     return (
@@ -425,15 +411,39 @@ export default function DomainList() {
                                   })()}
                                 </div>
                                 {domain.nsRecords && domain.nsRecords.length > 0 && (
-                                  <div className="flex items-start gap-2">
-                                    <span className="text-sm text-muted-foreground whitespace-nowrap">NS记录:</span>
+                                  <div className="flex items-center gap-2">
+                                    <span className="text-muted-foreground">NS记录:</span>
                                     <div className="flex flex-wrap gap-1.5">
                                       {domain.nsRecords.map((ns, idx) => (
-                                        <Badge key={idx} variant="secondary" className="text-xs">{ns}</Badge>
+                                        <Badge 
+                                          key={idx} 
+                                          variant="secondary" 
+                                          className="text-xs cursor-pointer hover:bg-secondary/80 transition-colors"
+                                          onClick={() => {
+                                            navigator.clipboard.writeText(ns);
+                                            toast.success(`已复制: ${ns}`);
+                                          }}
+                                        >
+                                          {ns}
+                                        </Badge>
                                       ))}
                                     </div>
                                   </div>
                                 )}
+                              </div>
+                              
+                              {/* 来源和过期时间 - 第二行 */}
+                              <div className="flex items-center gap-6 text-sm">
+                                <div className="flex items-center gap-2">
+                                  <span className="text-muted-foreground">来源:</span>
+                                  <Badge variant={domain.source === 'auto_sync' ? 'default' : 'secondary'} className="text-xs">
+                                    {domain.source === 'auto_sync' ? '自动同步' : '手动添加'}
+                                  </Badge>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                  <span className="text-muted-foreground">过期时间:</span>
+                                  <span>{domain.expireDate || '未设置'}</span>
+                                </div>
                               </div>
                             </div>
                           </TableCell>
