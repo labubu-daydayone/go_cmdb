@@ -32,6 +32,11 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Plus, Edit2, Trash2, RefreshCw, Search } from 'lucide-react';
 import { toast } from 'sonner';
@@ -179,8 +184,7 @@ export default function WebsiteList() {
   const [websites, setWebsites] = useState<Website[]>(mockWebsites);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedWebsite, setSelectedWebsite] = useState<Website | null>(null);
-  const [selectedIds, setSelectedIds] = useState<number[]>([]);
-  const [deletingId, setDeletingId] = useState<number | null>(null); // 正在删除的网站ID // 多选的网站ID列表
+  const [selectedIds, setSelectedIds] = useState<number[]>([]); // 多选的网站ID列表
 
   /**
    * TODO: 对接Go API
@@ -248,12 +252,8 @@ export default function WebsiteList() {
   const isAllSelected = filteredWebsites.length > 0 && selectedIds.length === filteredWebsites.length;
   const isSomeSelected = selectedIds.length > 0 && selectedIds.length < filteredWebsites.length;
 
-  // 删除功能（内联确认）
-  const handleDeleteClick = (websiteId: number) => {
-    setDeletingId(websiteId);
-  };
-
-  const handleDeleteConfirm = (website: Website) => {
+  // 删除功能（Popover气泡确认）
+  const handleDelete = (website: Website) => {
     // TODO: 调用Go API删除网站
     // await fetch(`/api/v1/websites/${website.id}`, {
     //   method: 'DELETE',
@@ -261,11 +261,6 @@ export default function WebsiteList() {
 
     setWebsites(websites.filter(w => w.id !== website.id));
     toast.success('网站删除成功');
-    setDeletingId(null);
-  };
-
-  const handleDeleteCancel = () => {
-    setDeletingId(null);
   };
 
   // 缓存清理功能（使用confirm）
@@ -420,56 +415,64 @@ export default function WebsiteList() {
                       <Badge variant="outline">{website.routeGroupName}</Badge>
                     </TableCell>
                     <TableCell className="text-right w-[160px]">
-                      {deletingId === website.id ? (
-                        <div className="flex justify-end gap-0.5">
-                          <Button
-                            variant="destructive"
-                            size="sm"
-                            className="h-7 px-1.5 text-xs"
-                            onClick={() => handleDeleteConfirm(website)}
-                          >
-                            确认删除
-                          </Button>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            className="h-7 px-1.5 text-xs"
-                            onClick={handleDeleteCancel}
-                          >
-                            取消
-                          </Button>
-                        </div>
-                      ) : (
-                        <div className="flex justify-end gap-0.5">
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="h-7 px-1.5 text-xs"
-                            onClick={() => handleEdit(website.id)}
-                          >
-                            <Edit2 className="w-3 h-3 mr-0.5" />
-                            编辑
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="h-7 px-1.5 text-xs text-destructive hover:text-destructive"
-                            onClick={() => handleDeleteClick(website.id)}
-                          >
-                            <Trash2 className="w-3 h-3 mr-0.5" />
-                            删除
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="h-7 px-1.5 text-xs"
-                            onClick={() => handleClearCache(website)}
-                          >
-                            <RefreshCw className="w-3 h-3 mr-0.5" />
-                            缓存
-                          </Button>
-                        </div>
-                      )}
+                      <div className="flex justify-end gap-0.5">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-7 px-1.5 text-xs"
+                          onClick={() => handleEdit(website.id)}
+                        >
+                          <Edit2 className="w-3 h-3 mr-0.5" />
+                          编辑
+                        </Button>
+                        <Popover>
+                          <PopoverTrigger asChild>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-7 px-1.5 text-xs text-destructive hover:text-destructive"
+                            >
+                              <Trash2 className="w-3 h-3 mr-0.5" />
+                              删除
+                            </Button>
+                          </PopoverTrigger>
+                          <PopoverContent className="w-80">
+                            <div className="space-y-3">
+                              <div className="space-y-2">
+                                <h4 className="font-medium leading-none">确认删除</h4>
+                                <p className="text-sm text-muted-foreground">
+                                  确定要删除网站 "{website.domains[0]}" 吗？此操作无法撤销。
+                                </p>
+                              </div>
+                              <div className="flex justify-end gap-2">
+                                <PopoverTrigger asChild>
+                                  <Button variant="outline" size="sm">
+                                    取消
+                                  </Button>
+                                </PopoverTrigger>
+                                <PopoverTrigger asChild>
+                                  <Button 
+                                    variant="destructive" 
+                                    size="sm"
+                                    onClick={() => handleDelete(website)}
+                                  >
+                                    确认删除
+                                  </Button>
+                                </PopoverTrigger>
+                              </div>
+                            </div>
+                          </PopoverContent>
+                        </Popover>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-7 px-1.5 text-xs"
+                          onClick={() => handleClearCache(website)}
+                        >
+                          <RefreshCw className="w-3 h-3 mr-0.5" />
+                          缓存
+                        </Button>
+                      </div>
                     </TableCell>
                   </TableRow>
                 ))
