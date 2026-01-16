@@ -496,7 +496,7 @@ export default function DomainRecords() {
   // 加载中状态
   if (loading) {
     return (
-      <div className="p-6 space-y-6">
+      <div className="p-6 space-y-6" style={{paddingRight: '0px', paddingLeft: '0px'}}>
         <div className="flex items-center gap-4">
           <Button
             variant="ghost"
@@ -523,7 +523,7 @@ export default function DomainRecords() {
   }
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="p-6 space-y-6" style={{paddingRight: '0px', paddingLeft: '0px'}}>
       {/* 页面标题 */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">

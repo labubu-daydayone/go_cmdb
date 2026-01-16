@@ -140,7 +140,7 @@ export default function AccountGroup() {
   };
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="p-6 space-y-6" style={{paddingRight: '0px', paddingLeft: '0px'}}>
       {/* 页面标题 */}
       <div className="flex items-center justify-between">
         <div>

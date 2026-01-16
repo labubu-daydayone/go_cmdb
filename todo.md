@@ -239,3 +239,8 @@
 - [x] 将来源字段从表格主列表移到展开区域显示
 - [x] 域名列设置固定宽度280px（增加40px）
 - [x] 调整表格列数为6列，修改colSpan值为6
+
+## 全局页面布局优化
+- [x] 移除所有页面容器的左右内边距（paddingLeft和paddingRight设置为0px）
+- [x] 保持上下内边距以维持合理的垂直间距
+- [x] 已修改页面：DomainList、DomainRecords、AccountGroup（其他页面使用space-y-6布局无需修改）
