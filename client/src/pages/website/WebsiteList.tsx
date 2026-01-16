@@ -27,8 +27,14 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 import { Plus, Edit2, Trash2, RefreshCw, Search } from 'lucide-react';
 import { toast } from 'sonner';
+import { useLocation } from 'wouter';
 
 /**
  * Website type
@@ -36,8 +42,9 @@ import { toast } from 'sonner';
  */
 interface Website {
   id: number;
-  domain: string;
+  domains: string[]; // 支持多个域名
   cname: string;
+  sslStatus: 'valid' | 'expired' | 'none'; // SSL证书状态
   routeGroupId: number;
   routeGroupName: string;
   permissionGroupId: number;
@@ -51,8 +58,9 @@ interface Website {
 const mockWebsites: Website[] = [
   {
     id: 1,
-    domain: 'www.example.com',
+    domains: ['www.example.com', 'example.com'],
     cname: 'cdn.example.com.cdn.cloudflare.net',
+    sslStatus: 'valid',
     routeGroupId: 1,
     routeGroupName: '国内线路组',
     permissionGroupId: 1,
@@ -63,8 +71,9 @@ const mockWebsites: Website[] = [
   },
   {
     id: 2,
-    domain: 'api.example.com',
+    domains: ['api.example.com'],
     cname: 'api-lb.example.com.cdn.cloudflare.net',
+    sslStatus: 'valid',
     routeGroupId: 2,
     routeGroupName: '海外线路组',
     permissionGroupId: 2,
@@ -75,8 +84,9 @@ const mockWebsites: Website[] = [
   },
   {
     id: 3,
-    domain: 'blog.example.com',
+    domains: ['blog.example.com', 'www.blog.example.com'],
     cname: 'blog.example.com.cdn.cloudflare.net',
+    sslStatus: 'expired',
     routeGroupId: 1,
     routeGroupName: '国内线路组',
     permissionGroupId: 1,
@@ -87,8 +97,9 @@ const mockWebsites: Website[] = [
   },
   {
     id: 4,
-    domain: 'shop.example.com',
+    domains: ['shop.example.com', 'm.shop.example.com', 'mobile.shop.example.com'],
     cname: 'shop.example.com.cdn.cloudflare.net',
+    sslStatus: 'valid',
     routeGroupId: 3,
     routeGroupName: '全球线路组',
     permissionGroupId: 3,
@@ -99,8 +110,9 @@ const mockWebsites: Website[] = [
   },
   {
     id: 5,
-    domain: 'admin.example.com',
+    domains: ['admin.example.com'],
     cname: 'admin.example.com.cdn.cloudflare.net',
+    sslStatus: 'none',
     routeGroupId: 1,
     routeGroupName: '国内线路组',
     permissionGroupId: 1,
@@ -137,14 +149,25 @@ const statusLabels = {
   maintenance: '维护中',
 };
 
+const sslStatusColors = {
+  valid: 'bg-green-100 text-green-800',
+  expired: 'bg-red-100 text-red-800',
+  none: 'bg-gray-100 text-gray-800',
+};
+
+const sslStatusLabels = {
+  valid: '有效',
+  expired: '已过期',
+  none: '未配置',
+};
+
 export default function WebsiteList() {
+  const [, setLocation] = useLocation();
   const [websites, setWebsites] = useState<Website[]>(mockWebsites);
   const [searchTerm, setSearchTerm] = useState('');
-  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isClearCacheDialogOpen, setIsClearCacheDialogOpen] = useState(false);
   const [selectedWebsite, setSelectedWebsite] = useState<Website | null>(null);
-  const [editForm, setEditForm] = useState<Partial<Website>>({});
 
   /**
    * TODO: 对接Go API
@@ -165,103 +188,20 @@ export default function WebsiteList() {
 
   // 搜索过滤
   const filteredWebsites = websites.filter(website =>
-    website.domain.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    website.domains.some(d => d.toLowerCase().includes(searchTerm.toLowerCase())) ||
     website.cname.toLowerCase().includes(searchTerm.toLowerCase()) ||
     website.routeGroupName.toLowerCase().includes(searchTerm.toLowerCase()) ||
     website.permissionGroupName.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   const handleAdd = () => {
-    setSelectedWebsite(null);
-    setEditForm({
-      domain: '',
-      cname: '',
-      routeGroupId: 1,
-      permissionGroupId: 1,
-      status: 'active',
-    });
-    setIsEditDialogOpen(true);
+    // 跳转到新增页面
+    setLocation('/website/new');
   };
 
-  const handleEdit = (website: Website) => {
-    setSelectedWebsite(website);
-    setEditForm({
-      domain: website.domain,
-      cname: website.cname,
-      routeGroupId: website.routeGroupId,
-      permissionGroupId: website.permissionGroupId,
-      status: website.status,
-    });
-    setIsEditDialogOpen(true);
-  };
-
-  const handleSave = () => {
-    if (!editForm.domain || !editForm.cname) {
-      toast.error('请填写域名和CNAME');
-      return;
-    }
-
-    // 域名格式验证
-    const domainRegex = /^([a-zA-Z0-9]([a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?\.)+[a-zA-Z]{2,}$/;
-    if (!domainRegex.test(editForm.domain)) {
-      toast.error('域名格式不正确');
-      return;
-    }
-
-    if (selectedWebsite) {
-      // 更新
-      // TODO: 调用Go API更新网站
-      // await fetch(`/api/v1/websites/${selectedWebsite.id}`, {
-      //   method: 'PUT',
-      //   headers: { 'Content-Type': 'application/json' },
-      //   body: JSON.stringify(editForm),
-      // });
-
-      const routeGroup = mockRouteGroups.find(g => g.id === editForm.routeGroupId);
-      const permissionGroup = mockPermissionGroups.find(g => g.id === editForm.permissionGroupId);
-
-      setWebsites(websites.map(w =>
-        w.id === selectedWebsite.id
-          ? {
-              ...w,
-              ...editForm,
-              routeGroupName: routeGroup?.name || w.routeGroupName,
-              permissionGroupName: permissionGroup?.name || w.permissionGroupName,
-              updatedAt: new Date().toISOString().split('T')[0],
-            }
-          : w
-      ));
-      toast.success('网站更新成功');
-    } else {
-      // 新增
-      // TODO: 调用Go API创建网站
-      // const response = await fetch('/api/v1/websites', {
-      //   method: 'POST',
-      //   headers: { 'Content-Type': 'application/json' },
-      //   body: JSON.stringify(editForm),
-      // });
-      // const newWebsite = await response.json();
-
-      const routeGroup = mockRouteGroups.find(g => g.id === editForm.routeGroupId);
-      const permissionGroup = mockPermissionGroups.find(g => g.id === editForm.permissionGroupId);
-
-      const newWebsite: Website = {
-        id: Math.max(...websites.map(w => w.id)) + 1,
-        domain: editForm.domain!,
-        cname: editForm.cname!,
-        routeGroupId: editForm.routeGroupId!,
-        routeGroupName: routeGroup?.name || '未知线路组',
-        permissionGroupId: editForm.permissionGroupId!,
-        permissionGroupName: permissionGroup?.name || '未知权限组',
-        status: editForm.status as Website['status'],
-        createdAt: new Date().toISOString().split('T')[0],
-        updatedAt: new Date().toISOString().split('T')[0],
-      };
-      setWebsites([...websites, newWebsite]);
-      toast.success('网站创建成功');
-    }
-
-    setIsEditDialogOpen(false);
+  const handleEdit = (websiteId: number) => {
+    // 跳转到编辑页面
+    setLocation(`/website/${websiteId}/edit`);
   };
 
   const handleDeleteConfirm = () => {
@@ -291,7 +231,7 @@ export default function WebsiteList() {
     //   method: 'POST',
     // });
 
-    toast.success(`正在清理 ${selectedWebsite.domain} 的缓存...`);
+    toast.success(`正在清理 ${selectedWebsite.domains[0]} 的缓存...`);
     setIsClearCacheDialogOpen(false);
     setSelectedWebsite(null);
   };
@@ -328,8 +268,9 @@ export default function WebsiteList() {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>域名</TableHead>
-                <TableHead>CNAME</TableHead>
+                <TableHead className="w-[280px]">域名</TableHead>
+                <TableHead className="w-[300px]">CNAME</TableHead>
+                <TableHead className="w-[100px]">SSL状态</TableHead>
                 <TableHead>线路组</TableHead>
                 <TableHead>权限组</TableHead>
                 <TableHead>状态</TableHead>
@@ -339,17 +280,52 @@ export default function WebsiteList() {
             <TableBody>
               {filteredWebsites.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={6} className="text-center text-muted-foreground py-8">
+                  <TableCell colSpan={7} className="text-center text-muted-foreground py-8">
                     {searchTerm ? '未找到匹配的网站' : '暂无网站数据'}
                   </TableCell>
                 </TableRow>
               ) : (
                 filteredWebsites.map((website) => (
                   <TableRow key={website.id}>
-                    <TableCell className="font-medium">{website.domain}</TableCell>
-                    <TableCell className="font-mono text-sm max-w-xs truncate" title={website.cname}>
-                      {website.cname}
+                    {/* 域名列 - 定宽，支持多个域名显示，鼠标悬停显示完整内容 */}
+                    <TableCell className="w-[280px]">
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <div className="font-medium max-w-[260px] truncate cursor-help">
+                            {website.domains.join(', ')}
+                          </div>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <div className="max-w-xs">
+                            {website.domains.map((domain, index) => (
+                              <div key={index}>{domain}</div>
+                            ))}
+                          </div>
+                        </TooltipContent>
+                      </Tooltip>
                     </TableCell>
+                    
+                    {/* CNAME列 - 定宽，鼠标悬停显示完整内容 */}
+                    <TableCell className="w-[300px]">
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <div className="font-mono text-sm max-w-[280px] truncate cursor-help">
+                            {website.cname}
+                          </div>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p className="max-w-xs break-all">{website.cname}</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TableCell>
+                    
+                    {/* SSL状态列 */}
+                    <TableCell className="w-[100px]">
+                      <Badge className={sslStatusColors[website.sslStatus]}>
+                        {sslStatusLabels[website.sslStatus]}
+                      </Badge>
+                    </TableCell>
+                    
                     <TableCell>
                       <Badge variant="outline">{website.routeGroupName}</Badge>
                     </TableCell>
@@ -366,7 +342,7 @@ export default function WebsiteList() {
                         <Button
                           variant="ghost"
                           size="sm"
-                          onClick={() => handleEdit(website)}
+                          onClick={() => handleEdit(website.id)}
                         >
                           <Edit2 className="w-4 h-4 mr-1" />
                           编辑
@@ -400,107 +376,13 @@ export default function WebsiteList() {
         </CardContent>
       </Card>
 
-      {/* 编辑/新增对话框 */}
-      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-        <DialogContent className="max-w-2xl">
-          <DialogHeader>
-            <DialogTitle>{selectedWebsite ? '编辑网站' : '添加网站'}</DialogTitle>
-            <DialogDescription>
-              {selectedWebsite ? '修改网站信息' : '创建新的网站配置'}
-            </DialogDescription>
-          </DialogHeader>
-          <div className="space-y-4 py-4">
-            <div className="space-y-2">
-              <Label htmlFor="domain">域名 *</Label>
-              <Input
-                id="domain"
-                placeholder="例如：www.example.com"
-                value={editForm.domain || ''}
-                onChange={(e) => setEditForm({ ...editForm, domain: e.target.value })}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="cname">CNAME *</Label>
-              <Input
-                id="cname"
-                placeholder="例如：cdn.example.com.cdn.cloudflare.net"
-                value={editForm.cname || ''}
-                onChange={(e) => setEditForm({ ...editForm, cname: e.target.value })}
-              />
-            </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="routeGroup">线路组 *</Label>
-                <Select
-                  value={editForm.routeGroupId?.toString()}
-                  onValueChange={(value) => setEditForm({ ...editForm, routeGroupId: parseInt(value) })}
-                >
-                  <SelectTrigger id="routeGroup">
-                    <SelectValue placeholder="选择线路组" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {mockRouteGroups.map((group) => (
-                      <SelectItem key={group.id} value={group.id.toString()}>
-                        {group.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="permissionGroup">权限组 *</Label>
-                <Select
-                  value={editForm.permissionGroupId?.toString()}
-                  onValueChange={(value) => setEditForm({ ...editForm, permissionGroupId: parseInt(value) })}
-                >
-                  <SelectTrigger id="permissionGroup">
-                    <SelectValue placeholder="选择权限组" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {mockPermissionGroups.map((group) => (
-                      <SelectItem key={group.id} value={group.id.toString()}>
-                        {group.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="status">状态 *</Label>
-              <Select
-                value={editForm.status}
-                onValueChange={(value) => setEditForm({ ...editForm, status: value as Website['status'] })}
-              >
-                <SelectTrigger id="status">
-                  <SelectValue placeholder="选择状态" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="active">运行中</SelectItem>
-                  <SelectItem value="inactive">已停用</SelectItem>
-                  <SelectItem value="maintenance">维护中</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setIsEditDialogOpen(false)}>
-              取消
-            </Button>
-            <Button onClick={handleSave}>
-              {selectedWebsite ? '保存' : '创建'}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
       {/* 删除确认对话框 */}
       <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>确认删除</DialogTitle>
             <DialogDescription>
-              确定要删除网站 <span className="font-semibold">{selectedWebsite?.domain}</span> 吗？此操作无法撤销。
+              确定要删除网站 <span className="font-semibold">{selectedWebsite?.domains[0]}</span> 吗？此操作无法撤销。
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
@@ -520,7 +402,7 @@ export default function WebsiteList() {
           <DialogHeader>
             <DialogTitle>确认清理缓存</DialogTitle>
             <DialogDescription>
-              确定要清理网站 <span className="font-semibold">{selectedWebsite?.domain}</span> 的缓存吗？
+              确定要清理网站 <span className="font-semibold">{selectedWebsite?.domains[0]}</span> 的缓存吗？
               <br />
               此操作将清除CDN节点上的所有缓存文件。
             </DialogDescription>

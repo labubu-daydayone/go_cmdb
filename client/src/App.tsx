@@ -21,6 +21,7 @@ import CertManagement from "./pages/domain/CertManagement";
 
 // 网站管理模块
 import WebsiteList from "./pages/website/WebsiteList";
+import WebsiteEdit from "./pages/website/WebsiteEdit";
 import DnsConfig from "./pages/website/DnsConfig";
 import ParseLine from "./pages/website/ParseLine";
 import NodeList from "./pages/website/NodeList";
@@ -55,6 +56,8 @@ function Router() {
           
           {/* 网站管理 */}
           <Route path="/website/list" component={() => <Layout><WebsiteList /></Layout>} />
+          <Route path="/website/new" component={() => <Layout><WebsiteEdit /></Layout>} />
+          <Route path="/website/:id/edit" component={() => <Layout><WebsiteEdit /></Layout>} />
           <Route path="/website/dns" component={() => <Layout><DnsConfig /></Layout>} />
           <Route path="/website/line" component={() => <Layout><ParseLine /></Layout>} />
           <Route path="/website/nodes" component={() => <Layout><NodeList /></Layout>} />
