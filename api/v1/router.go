@@ -2,7 +2,9 @@ package v1
 
 import (
 	"go_cmdb/api/v1/auth"
+	"go_cmdb/api/v1/line_groups"
 	"go_cmdb/api/v1/middleware"
+	"go_cmdb/api/v1/node_groups"
 	"go_cmdb/api/v1/nodes"
 	"go_cmdb/internal/config"
 	"go_cmdb/internal/httpx"
@@ -51,6 +53,26 @@ func SetupRouter(r *gin.Engine, db *gorm.DB, cfg *config.Config) {
 				nodesGroup.POST("/sub-ips/add", nodesHandler.AddSubIPs)
 				nodesGroup.POST("/sub-ips/delete", nodesHandler.DeleteSubIPs)
 				nodesGroup.POST("/sub-ips/toggle", nodesHandler.ToggleSubIP)
+			}
+
+			// Node groups routes
+			nodeGroupsHandler := node_groups.NewHandler(db)
+			nodeGroupsGroup := protected.Group("/node-groups")
+			{
+				nodeGroupsGroup.GET("", nodeGroupsHandler.List)
+				nodeGroupsGroup.POST("/create", nodeGroupsHandler.Create)
+				nodeGroupsGroup.POST("/update", nodeGroupsHandler.Update)
+				nodeGroupsGroup.POST("/delete", nodeGroupsHandler.Delete)
+			}
+
+			// Line groups routes
+			lineGroupsHandler := line_groups.NewHandler(db)
+			lineGroupsGroup := protected.Group("/line-groups")
+			{
+				lineGroupsGroup.GET("", lineGroupsHandler.List)
+				lineGroupsGroup.POST("/create", lineGroupsHandler.Create)
+				lineGroupsGroup.POST("/update", lineGroupsHandler.Update)
+				lineGroupsGroup.POST("/delete", lineGroupsHandler.Delete)
 			}
 		}
 	}

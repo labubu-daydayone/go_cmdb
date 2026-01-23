@@ -22,6 +22,9 @@ func Migrate(db *gorm.DB) error {
 		&model.DomainDNSRecord{},
 		&model.Node{},
 		&model.NodeSubIP{},
+		&model.NodeGroup{},
+		&model.NodeGroupSubIP{},
+		&model.LineGroup{},
 	}
 
 	// Run AutoMigrate for all models
