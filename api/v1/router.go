@@ -1,6 +1,7 @@
 package v1
 
 import (
+	"go_cmdb/api/v1/acme"
 	"go_cmdb/api/v1/agent_identities"
 	"go_cmdb/api/v1/agent_tasks"
 	"go_cmdb/api/v1/auth"
@@ -146,12 +147,23 @@ func SetupRouter(r *gin.Engine, db *gorm.DB, cfg *config.Config) {
 				dnsHandlerInstance := dnsHandler.NewHandler(db)
 				dnsGroup := protected.Group("/dns")
 				{
-					dnsGroup.GET("/records", dnsHandlerInstance.ListRecords)
-					dnsGroup.GET("/records/:id", dnsHandlerInstance.GetRecord)
-					dnsGroup.POST("/records/create", dnsHandlerInstance.CreateRecord)
-					dnsGroup.POST("/records/delete", dnsHandlerInstance.DeleteRecord)
-					dnsGroup.POST("/records/retry", dnsHandlerInstance.RetryRecord)
-				}
+				dnsGroup.GET("/records", dnsHandlerInstance.ListRecords)
+				dnsGroup.GET("/records/:id", dnsHandlerInstance.GetRecord)
+				dnsGroup.POST("/records/create", dnsHandlerInstance.CreateRecord)
+				dnsGroup.POST("/records/delete", dnsHandlerInstance.DeleteRecord)
+				dnsGroup.POST("/records/retry", dnsHandlerInstance.RetryRecord)
+			}
+
+			// ACME routes
+			acmeHandlerInstance := acme.NewHandler(db)
+			acmeGroup := protected.Group("/acme")
+			{
+				acmeGroup.POST("/account/create", acmeHandlerInstance.CreateAccount)
+				acmeGroup.POST("/certificate/request", acmeHandlerInstance.RequestCertificate)
+				acmeGroup.POST("/certificate/retry", acmeHandlerInstance.RetryRequest)
+				acmeGroup.GET("/certificate/requests", acmeHandlerInstance.ListRequests)
+				acmeGroup.GET("/certificate/requests/:id", acmeHandlerInstance.GetRequest)
+			}
 			}
 		}
 	}

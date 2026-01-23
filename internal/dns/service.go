@@ -20,6 +20,11 @@ func NewService(db *gorm.DB) *Service {
 	return &Service{db: db}
 }
 
+// GetDB returns the database instance
+func (s *Service) GetDB() *gorm.DB {
+	return s.db
+}
+
 // GetPendingRecords retrieves DNS records that need to be processed
 // Filters:
 // - status in ('pending', 'error')
