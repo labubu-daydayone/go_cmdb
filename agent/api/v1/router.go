@@ -12,16 +12,13 @@ import (
 
 // TaskExecutor handles task execution
 type TaskExecutor struct {
-	agentToken string
 	// In-memory map for idempotency (requestId -> result)
 	resultCache sync.Map
 }
 
 // NewTaskExecutor creates a new task executor
-func NewTaskExecutor(agentToken string) *TaskExecutor {
-	return &TaskExecutor{
-		agentToken: agentToken,
-	}
+func NewTaskExecutor() *TaskExecutor {
+	return &TaskExecutor{}
 }
 
 // ExecuteTaskRequest represents a task execution request
@@ -44,17 +41,7 @@ type ExecuteTaskResponse struct {
 
 // Execute handles POST /agent/v1/tasks/execute
 func (e *TaskExecutor) Execute(c *gin.Context) {
-	// Check authorization
-	authHeader := c.GetHeader("Authorization")
-	expectedAuth := "Bearer " + e.agentToken
-	if authHeader != expectedAuth {
-		c.JSON(401, gin.H{
-			"code":    1001,
-			"message": "unauthorized",
-			"data":    nil,
-		})
-		return
-	}
+	// No Bearer token check - mTLS handles authentication
 
 	// Parse request body
 	var req ExecuteTaskRequest
@@ -164,8 +151,8 @@ func (e *TaskExecutor) executePurgeCache(requestID string, payload interface{}) 
 }
 
 // SetupRouter sets up the agent API v1 routes
-func SetupRouter(r *gin.Engine, agentToken string) {
-	executor := NewTaskExecutor(agentToken)
+func SetupRouter(r *gin.Engine) {
+	executor := NewTaskExecutor()
 
 	v1 := r.Group("/agent/v1")
 	{

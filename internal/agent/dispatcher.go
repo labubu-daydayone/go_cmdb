@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 
+	"go_cmdb/internal/config"
 	"go_cmdb/internal/model"
 
 	"gorm.io/gorm"
@@ -16,15 +17,20 @@ type Dispatcher struct {
 	client *Client
 }
 
-// NewDispatcher creates a new task dispatcher
-func NewDispatcher(db *gorm.DB, agentToken string) *Dispatcher {
+// NewDispatcher creates a new task dispatcher with mTLS support
+func NewDispatcher(db *gorm.DB, cfg *config.Config) (*Dispatcher, error) {
+	client, err := NewClient(cfg)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create agent client: %w", err)
+	}
+
 	return &Dispatcher{
 		db:     db,
-		client: NewClient(agentToken),
-	}
+		client: client,
+	}, nil
 }
 
-// DispatchTask dispatches a task to an agent
+// DispatchTask dispatches a task to an agent with identity verification
 func (d *Dispatcher) DispatchTask(task *model.AgentTask) error {
 	// Get node information
 	var node model.Node
@@ -32,8 +38,33 @@ func (d *Dispatcher) DispatchTask(task *model.AgentTask) error {
 		return fmt.Errorf("failed to get node: %w", err)
 	}
 
-	// Build agent URL
-	agentURL := fmt.Sprintf("http://%s:%d", node.MainIP, node.AgentPort)
+	// Verify agent identity (MUST check before dispatching)
+	var identity model.AgentIdentity
+	if err := d.db.Where("node_id = ?", node.ID).First(&identity).Error; err != nil {
+		// Identity not found
+		task.Status = model.TaskStatusFailed
+		task.LastError = "agent identity not found"
+		task.Attempts++
+		if saveErr := d.db.Save(task).Error; saveErr != nil {
+			log.Printf("Failed to update task status: %v", saveErr)
+		}
+		return fmt.Errorf("agent identity not found for node %d", node.ID)
+	}
+
+	// Check identity status
+	if identity.Status != model.AgentIdentityStatusActive {
+		// Identity revoked
+		task.Status = model.TaskStatusFailed
+		task.LastError = fmt.Sprintf("agent identity is %s", identity.Status)
+		task.Attempts++
+		if saveErr := d.db.Save(task).Error; saveErr != nil {
+			log.Printf("Failed to update task status: %v", saveErr)
+		}
+		return fmt.Errorf("agent identity is %s for node %d", identity.Status, node.ID)
+	}
+
+	// Build agent URL (HTTPS only)
+	agentURL := fmt.Sprintf("https://%s:%d", node.MainIP, node.AgentPort)
 
 	// Update task status to running
 	task.Status = model.TaskStatusRunning
@@ -56,15 +87,15 @@ func (d *Dispatcher) DispatchTask(task *model.AgentTask) error {
 		Payload:   payload,
 	}
 
-	// Send request to agent
+	// Send request to agent via mTLS
 	resp, err := d.client.ExecuteTask(agentURL, req)
 	if err != nil {
-		// Task failed
+		// Task failed (could be mTLS handshake failure or execution error)
 		task.Status = model.TaskStatusFailed
 		task.LastError = err.Error()
 		task.Attempts++
-		if err := d.db.Save(task).Error; err != nil {
-			log.Printf("Failed to update task status after error: %v", err)
+		if saveErr := d.db.Save(task).Error; saveErr != nil {
+			log.Printf("Failed to update task status after error: %v", saveErr)
 		}
 		return err
 	}

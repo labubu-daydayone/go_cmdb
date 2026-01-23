@@ -2,27 +2,67 @@ package agent
 
 import (
 	"bytes"
+	"crypto/tls"
+	"crypto/x509"
 	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
+	"os"
 	"time"
+
+	"go_cmdb/internal/config"
 )
 
 // Client represents an HTTP client for communicating with agents
 type Client struct {
 	httpClient *http.Client
-	token      string
+	config     *config.Config
 }
 
-// NewClient creates a new agent client
-func NewClient(token string) *Client {
-	return &Client{
-		httpClient: &http.Client{
-			Timeout: 10 * time.Second,
-		},
-		token: token,
+// NewClient creates a new agent client with mTLS support
+func NewClient(cfg *config.Config) (*Client, error) {
+	if !cfg.MTLS.Enabled {
+		return nil, fmt.Errorf("mTLS is required but not enabled")
 	}
+
+	// Load client certificate
+	cert, err := tls.LoadX509KeyPair(cfg.MTLS.ClientCert, cfg.MTLS.ClientKey)
+	if err != nil {
+		return nil, fmt.Errorf("failed to load client certificate: %w", err)
+	}
+
+	// Load CA certificate
+	caCert, err := os.ReadFile(cfg.MTLS.CACert)
+	if err != nil {
+		return nil, fmt.Errorf("failed to load CA certificate: %w", err)
+	}
+
+	caCertPool := x509.NewCertPool()
+	if !caCertPool.AppendCertsFromPEM(caCert) {
+		return nil, fmt.Errorf("failed to append CA certificate")
+	}
+
+	// Create TLS config
+	tlsConfig := &tls.Config{
+		Certificates:       []tls.Certificate{cert},
+		RootCAs:            caCertPool,
+		InsecureSkipVerify: false, // MUST verify server certificate
+		MinVersion:         tls.VersionTLS12,
+	}
+
+	// Create HTTP client with mTLS
+	httpClient := &http.Client{
+		Timeout: 10 * time.Second,
+		Transport: &http.Transport{
+			TLSClientConfig: tlsConfig,
+		},
+	}
+
+	return &Client{
+		httpClient: httpClient,
+		config:     cfg,
+	}, nil
 }
 
 // ExecuteTaskRequest represents a task execution request
@@ -43,7 +83,7 @@ type ExecuteTaskResponse struct {
 	} `json:"data"`
 }
 
-// ExecuteTask sends a task execution request to an agent
+// ExecuteTask sends a task execution request to an agent via mTLS
 func (c *Client) ExecuteTask(agentURL string, req ExecuteTaskRequest) (*ExecuteTaskResponse, error) {
 	// Prepare request body
 	body, err := json.Marshal(req)
@@ -51,20 +91,19 @@ func (c *Client) ExecuteTask(agentURL string, req ExecuteTaskRequest) (*ExecuteT
 		return nil, fmt.Errorf("failed to marshal request: %w", err)
 	}
 
-	// Create HTTP request
+	// Create HTTP request (HTTPS only)
 	httpReq, err := http.NewRequest("POST", agentURL+"/agent/v1/tasks/execute", bytes.NewBuffer(body))
 	if err != nil {
 		return nil, fmt.Errorf("failed to create request: %w", err)
 	}
 
-	// Set headers
+	// Set headers (no Bearer token, mTLS only)
 	httpReq.Header.Set("Content-Type", "application/json")
-	httpReq.Header.Set("Authorization", "Bearer "+c.token)
 
 	// Send request
 	httpResp, err := c.httpClient.Do(httpReq)
 	if err != nil {
-		return nil, fmt.Errorf("failed to send request: %w", err)
+		return nil, fmt.Errorf("failed to send request (mTLS handshake may have failed): %w", err)
 	}
 	defer httpResp.Body.Close()
 

@@ -2,9 +2,11 @@ package agent_tasks
 
 import (
 	"encoding/json"
+	"log"
 	"strconv"
 
 	"go_cmdb/internal/agent"
+	"go_cmdb/internal/config"
 	"go_cmdb/internal/httpx"
 	"go_cmdb/internal/model"
 
@@ -20,10 +22,15 @@ type Handler struct {
 }
 
 // NewHandler creates a new agent task handler
-func NewHandler(db *gorm.DB, agentToken string) *Handler {
+func NewHandler(db *gorm.DB, cfg *config.Config) *Handler {
+	dispatcher, err := agent.NewDispatcher(db, cfg)
+	if err != nil {
+		log.Fatalf("Failed to create dispatcher: %v", err)
+	}
+
 	return &Handler{
 		db:         db,
-		dispatcher: agent.NewDispatcher(db, agentToken),
+		dispatcher: dispatcher,
 	}
 }
 

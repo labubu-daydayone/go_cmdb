@@ -53,3 +53,23 @@ func AuthRequired() gin.HandlerFunc {
 		c.Next()
 	}
 }
+
+// AdminRequired is a middleware that ensures the user has admin role
+func AdminRequired() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		role, exists := c.Get("role")
+		if !exists {
+			httpx.FailErr(c, httpx.ErrUnauthorized("role not found in context"))
+			c.Abort()
+			return
+		}
+
+		if role != "admin" {
+			httpx.FailErr(c, httpx.ErrForbidden("admin role required"))
+			c.Abort()
+			return
+		}
+
+		c.Next()
+	}
+}
