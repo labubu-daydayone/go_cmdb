@@ -15,6 +15,7 @@ import (
 	"go_cmdb/api/v1/nodes"
 	"go_cmdb/api/v1/origin_groups"
 	"go_cmdb/api/v1/origins"
+	"go_cmdb/api/v1/releases"
 	"go_cmdb/api/v1/risks"
 	"go_cmdb/api/v1/websites"
 	"go_cmdb/internal/config"
@@ -190,9 +191,13 @@ func SetupRouter(r *gin.Engine, db *gorm.DB, cfg *config.Config) {
 						risksGroup.POST("/:id/resolve", risksHandlerInstance.ResolveRisk)
 					}
 					protected.GET("/websites/:id/risks", risksHandlerInstance.ListWebsiteRisks)
-					protected.GET("/certificates/:id/risks", risksHandlerInstance.ListCertificateRisks)
-					protected.POST("/websites/:id/precheck/https", risksHandlerInstance.PrecheckHTTPS)
-					}
+				protected.GET("/certificates/:id/risks", risksHandlerInstance.ListCertificateRisks)
+				protected.POST("/websites/:id/precheck/https", risksHandlerInstance.PrecheckHTTPS)
+
+				// Release routes (B0-01-02)
+				releasesHandlerInstance := releases.NewHandler(db)
+				protected.POST("/releases", releasesHandlerInstance.CreateRelease)
+				}
 		}
 	}
 
