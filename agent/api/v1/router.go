@@ -7,18 +7,37 @@ import (
 	"os"
 	"sync"
 
+	"go_cmdb/agent/config"
+	"go_cmdb/agent/executor"
+
 	"github.com/gin-gonic/gin"
 )
 
 // TaskExecutor handles task execution
 type TaskExecutor struct {
 	// In-memory map for idempotency (requestId -> result)
-	resultCache sync.Map
+	resultCache       sync.Map
+	applyConfigExec   *executor.ApplyConfigExecutor
 }
 
 // NewTaskExecutor creates a new task executor
 func NewTaskExecutor() *TaskExecutor {
-	return &TaskExecutor{}
+	dirConfig := config.NewDirConfig()
+	
+	// Ensure base directories exist
+	if err := dirConfig.EnsureDirectories(); err != nil {
+		log.Fatalf("Failed to ensure directories: %v", err)
+	}
+	
+	// Create apply_config executor
+	applyConfigExec, err := executor.NewApplyConfigExecutor(dirConfig)
+	if err != nil {
+		log.Fatalf("Failed to create apply_config executor: %v", err)
+	}
+	
+	return &TaskExecutor{
+		applyConfigExec: applyConfigExec,
+	}
 }
 
 // ExecuteTaskRequest represents a task execution request
@@ -105,20 +124,21 @@ func (e *TaskExecutor) Execute(c *gin.Context) {
 	c.JSON(200, resp)
 }
 
-// executeApplyConfig simulates apply_config task
+// executeApplyConfig executes apply_config task
 func (e *TaskExecutor) executeApplyConfig(requestID string, payload interface{}) (string, error) {
-	// Write payload to file
-	filename := fmt.Sprintf("/tmp/cmdb_apply_config_%s.json", requestID)
-	data, err := json.MarshalIndent(payload, "", "  ")
+	// Serialize payload to JSON
+	payloadJSON, err := json.Marshal(payload)
 	if err != nil {
 		return "", fmt.Errorf("failed to marshal payload: %w", err)
 	}
-
-	if err := os.WriteFile(filename, data, 0644); err != nil {
-		return "", fmt.Errorf("failed to write file: %w", err)
+	
+	// Execute apply_config
+	message, err := e.applyConfigExec.Execute(string(payloadJSON))
+	if err != nil {
+		return "", err
 	}
-
-	return fmt.Sprintf("Config applied and saved to %s", filename), nil
+	
+	return message, nil
 }
 
 // executeReload simulates reload task

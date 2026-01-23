@@ -4,6 +4,7 @@ import (
 	"go_cmdb/api/v1/agent_identities"
 	"go_cmdb/api/v1/agent_tasks"
 	"go_cmdb/api/v1/auth"
+	configHandler "go_cmdb/api/v1/config"
 	"go_cmdb/api/v1/line_groups"
 	"go_cmdb/api/v1/middleware"
 	"go_cmdb/api/v1/node_groups"
@@ -129,6 +130,15 @@ func SetupRouter(r *gin.Engine, db *gorm.DB, cfg *config.Config) {
 				agentIdentitiesGroup.GET("", agentIdentitiesHandler.List)
 				agentIdentitiesGroup.POST("/create", agentIdentitiesHandler.Create)
 				agentIdentitiesGroup.POST("/revoke", agentIdentitiesHandler.Revoke)
+			}
+
+			// Config routes
+			configHandlerInstance := configHandler.NewHandler(db, cfg)
+			configGroup := protected.Group("/config")
+			{
+				configGroup.POST("/apply", configHandlerInstance.Apply)
+				configGroup.GET("/versions", configHandlerInstance.ListVersions)
+				configGroup.GET("/versions/:version", configHandlerInstance.GetVersion)
 			}
 		}
 	}
