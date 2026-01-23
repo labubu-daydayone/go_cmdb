@@ -5,6 +5,7 @@ import (
 	"go_cmdb/api/v1/agent_identities"
 	"go_cmdb/api/v1/agent_tasks"
 	"go_cmdb/api/v1/auth"
+	"go_cmdb/api/v1/certificate_renew"
 	configHandler "go_cmdb/api/v1/config"
 	dnsHandler "go_cmdb/api/v1/dns"
 	"go_cmdb/api/v1/line_groups"
@@ -154,17 +155,26 @@ func SetupRouter(r *gin.Engine, db *gorm.DB, cfg *config.Config) {
 				dnsGroup.POST("/records/retry", dnsHandlerInstance.RetryRecord)
 			}
 
-			// ACME routes
-			acmeHandlerInstance := acme.NewHandler(db)
-			acmeGroup := protected.Group("/acme")
-			{
-				acmeGroup.POST("/account/create", acmeHandlerInstance.CreateAccount)
-				acmeGroup.POST("/certificate/request", acmeHandlerInstance.RequestCertificate)
-				acmeGroup.POST("/certificate/retry", acmeHandlerInstance.RetryRequest)
-				acmeGroup.GET("/certificate/requests", acmeHandlerInstance.ListRequests)
-				acmeGroup.GET("/certificate/requests/:id", acmeHandlerInstance.GetRequest)
-			}
-			}
+				// ACME routes
+				acmeHandlerInstance := acme.NewHandler(db)
+				acmeGroup := protected.Group("/acme")
+				{
+					acmeGroup.POST("/account/create", acmeHandlerInstance.CreateAccount)
+					acmeGroup.POST("/certificate/request", acmeHandlerInstance.RequestCertificate)
+					acmeGroup.POST("/certificate/retry", acmeHandlerInstance.RetryRequest)
+					acmeGroup.GET("/certificate/requests", acmeHandlerInstance.ListRequests)
+					acmeGroup.GET("/certificate/requests/:id", acmeHandlerInstance.GetRequest)
+				}
+
+				// Certificate renewal routes
+				certificateRenewHandlerInstance := certificate_renew.NewHandler(db)
+				certificateRenewGroup := protected.Group("/certificates/renewal")
+				{
+					certificateRenewGroup.GET("/candidates", certificateRenewHandlerInstance.GetRenewalCandidates)
+					certificateRenewGroup.POST("/trigger", certificateRenewHandlerInstance.TriggerRenewal)
+					certificateRenewGroup.POST("/disable-auto", certificateRenewHandlerInstance.DisableAutoRenew)
+				}
+				}
 		}
 	}
 

@@ -12,6 +12,7 @@ type CertificateRequest struct {
 	PollMaxAttempts     int        `gorm:"not null;default:10" json:"pollMaxAttempts"` // Max retry attempts
 	LastError           string     `gorm:"type:text" json:"lastError"` // Last error message
 	ResultCertificateID *int       `gorm:"index" json:"resultCertificateId"` // Reference to certificates.id
+	RenewCertID         *int       `gorm:"index" json:"renewCertId"` // Certificate ID for renewal (null for new certificate)
 	CreatedAt           time.Time  `gorm:"not null;default:CURRENT_TIMESTAMP" json:"createdAt"`
 	UpdatedAt           time.Time  `gorm:"not null;default:CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP" json:"updatedAt"`
 }
