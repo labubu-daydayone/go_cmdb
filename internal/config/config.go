@@ -16,8 +16,9 @@ type Config struct {
 	Migrate     bool
 	HTTPAddr    string
 	AgentToken  string // Deprecated: use mTLS instead
-	MTLS        MTLSConfig
-	RiskScanner RiskScannerConfig
+	MTLS            MTLSConfig
+	RiskScanner     RiskScannerConfig
+	ReleaseExecutor ReleaseExecutorConfig
 }
 
 // MySQLConfig holds MySQL configuration
@@ -56,6 +57,12 @@ type RiskScannerConfig struct {
 	ACMEMaxAttempts       int
 }
 
+// ReleaseExecutorConfig holds release executor configuration
+type ReleaseExecutorConfig struct {
+	Enabled     bool
+	IntervalSec int
+}
+
 // Load loads configuration from environment variables
 func Load() (*Config, error) {
 	// Load .env file if exists (ignore error if not found)
@@ -90,6 +97,10 @@ func Load() (*Config, error) {
 				CertExpiringDays:      getEnvInt("CERT_EXPIRING_DAYS", 15),
 				CertExpiringThreshold: getEnvInt("CERT_EXPIRING_WEBSITE_THRESHOLD", 2),
 				ACMEMaxAttempts:       getEnvInt("ACME_MAX_ATTEMPTS", 3),
+			},
+			ReleaseExecutor: ReleaseExecutorConfig{
+				Enabled:     getEnv("RELEASE_EXECUTOR_ENABLED", "1") == "1",
+				IntervalSec: getEnvInt("RELEASE_EXECUTOR_INTERVAL_SEC", 5),
 			},
 		}
 

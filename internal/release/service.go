@@ -94,3 +94,103 @@ func (s *Service) CreateRelease(req *CreateReleaseRequest) (*CreateReleaseRespon
 
 	return resp, err
 }
+
+// GetReleaseResponse 获取发布任务响应
+type GetReleaseResponse struct {
+	ReleaseID    int64             `json:"releaseId"`
+	Version      int64             `json:"version"`
+	Status       string            `json:"status"`
+	TotalNodes   int               `json:"totalNodes"`
+	SuccessNodes int               `json:"successNodes"`
+	FailedNodes  int               `json:"failedNodes"`
+	Batches      []BatchNodeStatus `json:"batches"`
+	CreatedAt    string            `json:"createdAt"`
+	UpdatedAt    string            `json:"updatedAt"`
+}
+
+// BatchNodeStatus batch节点状态
+type BatchNodeStatus struct {
+	Batch int          `json:"batch"`
+	Nodes []NodeStatus `json:"nodes"`
+}
+
+// NodeStatus 节点状态
+type NodeStatus struct {
+	NodeID     int     `json:"nodeId"`
+	Status     string  `json:"status"`
+	ErrorMsg   *string `json:"errorMsg,omitempty"`
+	StartedAt  *string `json:"startedAt,omitempty"`
+	FinishedAt *string `json:"finishedAt,omitempty"`
+}
+
+// GetRelease 获取发布任务详情
+func (s *Service) GetRelease(releaseID int64) (*GetReleaseResponse, error) {
+	// 查询release_task
+	var task model.ReleaseTask
+	if err := s.db.First(&task, releaseID).Error; err != nil {
+		if err == gorm.ErrRecordNotFound {
+			return nil, httpx.ErrNotFound("release task not found")
+		}
+		return nil, err
+	}
+
+	// 查询所有节点（按batch和node_id排序）
+	var nodes []model.ReleaseTaskNode
+	if err := s.db.Where("release_task_id = ?", releaseID).
+		Order("batch ASC, node_id ASC").
+		Find(&nodes).Error; err != nil {
+		return nil, err
+	}
+
+	// 按batch分组
+	batchMap := make(map[int][]NodeStatus)
+	for _, node := range nodes {
+		nodeStatus := NodeStatus{
+			NodeID:   node.NodeID,
+			Status:   string(node.Status),
+			ErrorMsg: node.ErrorMsg,
+		}
+
+		if node.StartedAt != nil {
+			startedAt := node.StartedAt.Format("2006-01-02T15:04:05Z07:00")
+			nodeStatus.StartedAt = &startedAt
+		}
+
+		if node.FinishedAt != nil {
+			finishedAt := node.FinishedAt.Format("2006-01-02T15:04:05Z07:00")
+			nodeStatus.FinishedAt = &finishedAt
+		}
+
+		batchMap[node.Batch] = append(batchMap[node.Batch], nodeStatus)
+	}
+
+	// 构建batches数组
+	var batches []BatchNodeStatus
+	for batch, nodes := range batchMap {
+		batches = append(batches, BatchNodeStatus{
+			Batch: batch,
+			Nodes: nodes,
+		})
+	}
+
+	// 按batch排序
+	for i := 0; i < len(batches); i++ {
+		for j := i + 1; j < len(batches); j++ {
+			if batches[i].Batch > batches[j].Batch {
+				batches[i], batches[j] = batches[j], batches[i]
+			}
+		}
+	}
+
+	return &GetReleaseResponse{
+		ReleaseID:    task.ID,
+		Version:      task.Version,
+		Status:       string(task.Status),
+		TotalNodes:   task.TotalNodes,
+		SuccessNodes: task.SuccessNodes,
+		FailedNodes:  task.FailedNodes,
+		Batches:      batches,
+		CreatedAt:    task.CreatedAt.Format("2006-01-02T15:04:05Z07:00"),
+		UpdatedAt:    task.UpdatedAt.Format("2006-01-02T15:04:05Z07:00"),
+	}, nil
+}

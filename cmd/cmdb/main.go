@@ -4,11 +4,16 @@ import (
 	"log"
 	"os"
 
+	"context"
+	"time"
+
 	"go_cmdb/api/v1"
+	"go_cmdb/internal/agentclient"
 	"go_cmdb/internal/auth"
 	"go_cmdb/internal/cache"
 	"go_cmdb/internal/config"
 	"go_cmdb/internal/db"
+	"go_cmdb/internal/release"
 	"go_cmdb/internal/risk"
 
 	"github.com/gin-gonic/gin"
@@ -67,7 +72,34 @@ func main() {
 	defer scanner.Stop()
 	log.Println("✓ Risk Scanner initialized")
 
-	// 6. Initialize Gin router
+	// 6. Start Release Executor
+	if cfg.ReleaseExecutor.Enabled {
+		if !cfg.MTLS.Enabled {
+			log.Println("⚠ Release Executor requires mTLS but mTLS is not enabled, skipping executor")
+		} else {
+			agentClient, err := agentclient.NewClient(cfg)
+			if err != nil {
+				log.Fatalf("Failed to create agent client: %v", err)
+				os.Exit(1)
+			}
+
+			executor := release.NewExecutor(
+				db.GetDB(),
+				agentClient,
+				time.Duration(cfg.ReleaseExecutor.IntervalSec)*time.Second,
+			)
+
+			ctx, cancel := context.WithCancel(context.Background())
+			defer cancel()
+
+			go executor.RunLoop(ctx)
+			log.Println("✓ Release Executor initialized")
+		}
+	} else {
+		log.Println("✓ Release Executor disabled (RELEASE_EXECUTOR_ENABLED=0)")
+	}
+
+	// 7. Initialize Gin router
 	gin.SetMode(gin.ReleaseMode)
 	r := gin.Default()
 
