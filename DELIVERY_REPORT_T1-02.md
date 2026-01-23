@@ -2,47 +2,60 @@
 
 ## 完成状态
 
-**任务编号**: T1-02  
-**任务名称**: 节点分组与线路分组（node_groups / line_groups + DNS 记录落库）  
-**完成度**: 100%  
-**提交时间**: 2026-01-23  
-**GitHub仓库**: https://github.com/labubu-daydayone/go_cmdb  
-**最新提交**: 171b588
+**任务编号**: T1-02**任务名称**: 节点分组与线路分组（node_groups / line_groups + DNS 记录落库）**完成度**: 100%**提交时间**: 2026-01-23**GitHub仓库**: [https://github.com/labubu-daydayone/go_cmdb](https://github.com/labubu-daydayone/go_cmdb)**最新提交**: 171b588
 
 ---
 
 ## 实现清单
 
-### 1. 数据模型（3张表）
+### 1. 数据模型（3张表 ）
 
 #### 1.1 node_groups表
 
 **文件**: `internal/model/node_group.go`
 
 **字段定义**:
+
 - `id` int (主键, 自增, BaseModel)
+
 - `name` varchar(128) (unique, not null)
+
 - `description` varchar(255) (nullable)
+
 - `domain_id` int (not null, index, FK -> domains.id)
+
 - `cname_prefix` varchar(128) (unique, not null, 后端生成)
+
 - `cname` varchar(255) (unique, not null, 格式: cname_prefix + "." + domain.domain)
+
 - `status` enum('active','inactive') (default 'active')
+
 - `created_at` timestamp (BaseModel)
+
 - `updated_at` timestamp (BaseModel)
 
 **索引/约束**:
+
 - unique index on `name`
+
 - unique index on `cname_prefix`
+
 - unique index on `cname`
+
 - index on `domain_id`
 
 **关联**:
+
 - 多对一关系: `Domain` (外键 DomainID)
+
 - 一对多关系: `SubIPs []NodeGroupSubIP` (外键 NodeGroupID, 级联删除)
 
 **CNAME生成规则**:
+
 - `cname_prefix` 由后端随机生成（格式: ng-{16位十六进制}）
+
 - `cname` = `cname_prefix` + "." + `domain.domain`
+
 - 前端不允许传入cname_prefix
 
 #### 1.2 node_group_sub_ips表
@@ -50,21 +63,31 @@
 **文件**: `internal/model/node_group_sub_ip.go`
 
 **字段定义**:
+
 - `id` int (主键, 自增, BaseModel)
+
 - `node_group_id` int (not null, 复合索引)
+
 - `sub_ip_id` int (not null, 复合索引)
+
 - `created_at` timestamp (BaseModel)
+
 - `updated_at` timestamp (BaseModel)
 
 **索引/约束**:
+
 - composite unique index on `(node_group_id, sub_ip_id)` (idx_ng_subip)
 
 **关联**:
+
 - 多对一关系: `NodeGroup` (外键 NodeGroupID)
+
 - 多对一关系: `SubIP` (外键 SubIPID)
 
 **设计说明**:
+
 - node_group不直接关联node
+
 - node_group → node通过sub_ip → node_id反查
 
 #### 1.3 line_groups表
@@ -72,30 +95,49 @@
 **文件**: `internal/model/line_group.go`
 
 **字段定义**:
+
 - `id` int (主键, 自增, BaseModel)
+
 - `name` varchar(128) (unique, not null)
+
 - `domain_id` int (not null, index, FK -> domains.id)
+
 - `node_group_id` int (not null, index, FK -> node_groups.id)
+
 - `cname_prefix` varchar(128) (unique, not null, 后端生成)
+
 - `cname` varchar(255) (unique, not null, 格式: cname_prefix + "." + domain.domain)
+
 - `status` enum('active','inactive') (default 'active')
+
 - `created_at` timestamp (BaseModel)
+
 - `updated_at` timestamp (BaseModel)
 
 **索引/约束**:
+
 - unique index on `name`
+
 - unique index on `cname_prefix`
+
 - unique index on `cname`
+
 - index on `domain_id`
+
 - index on `node_group_id`
 
 **关联**:
+
 - 多对一关系: `Domain` (外键 DomainID)
+
 - 多对一关系: `NodeGroup` (外键 NodeGroupID)
 
 **CNAME生成规则**:
+
 - `cname_prefix` 由后端随机生成（格式: lg-{16位十六进制}）
+
 - `cname` = `cname_prefix` + "." + `domain.domain`
+
 - 一个line_group只能绑定一个node_group
 
 #### 1.4 迁移集成
@@ -105,6 +147,7 @@
 已将 `NodeGroup`、`NodeGroupSubIP`、`LineGroup` 模型纳入 MIGRATE=1 体系。
 
 **验证**:
+
 ```bash
 # MIGRATE=0 不建表
 MIGRATE=0 ./bin/cmdb
@@ -141,7 +184,9 @@ MIGRATE=1 ./bin/cmdb
 ```
 
 **说明**:
+
 - 一个node_group包含多少sub_ip，就生成多少条A记录
+
 - 如果node_group尚未绑定sub_ip，则不生成记录
 
 #### 2.2 创建line_group时
@@ -165,9 +210,12 @@ MIGRATE=1 ./bin/cmdb
 **覆盖更新策略**:
 
 1. 标记旧DNS记录为error（status='error', last_error='sub IPs updated'）
-2. 删除所有现有node_group_sub_ips映射
-3. 创建新的node_group_sub_ips映射
-4. 创建新的DNS A记录（status='pending'）
+
+1. 删除所有现有node_group_sub_ips映射
+
+1. 创建新的node_group_sub_ips映射
+
+1. 创建新的DNS A记录（status='pending'）
 
 **实现函数**: `markDNSRecordsAsError(tx, nodeGroupID, "sub IPs updated")`
 
@@ -176,8 +224,10 @@ MIGRATE=1 ./bin/cmdb
 **切换策略**:
 
 1. 标记旧DNS记录为error（status='error', last_error='node group changed'）
-2. 更新line_group.node_group_id
-3. 创建新的DNS CNAME记录（status='pending', value=新node_group.cname）
+
+1. 更新line_group.node_group_id
+
+1. 创建新的DNS CNAME记录（status='pending', value=新node_group.cname）
 
 **实现函数**: `markDNSRecordsAsError(tx, lineGroupID, "node group changed")`
 
@@ -186,14 +236,16 @@ MIGRATE=1 ./bin/cmdb
 **删除策略**:
 
 1. 标记所有关联DNS记录为error（status='error', last_error='node group deleted'）
-2. 删除node_group（级联删除node_group_sub_ips）
+
+1. 删除node_group（级联删除node_group_sub_ips）
 
 #### 2.6 删除line_group时
 
 **删除策略**:
 
 1. 标记所有关联DNS记录为error（status='error', last_error='line group deleted'）
-2. 删除line_group
+
+1. 删除line_group
 
 ---
 
@@ -201,22 +253,26 @@ MIGRATE=1 ./bin/cmdb
 
 #### 3.1 节点分组API
 
-**路由前缀**: `/api/v1/node-groups`  
-**文件**: `api/v1/node_groups/handler.go`  
-**鉴权**: 所有接口需JWT（`middleware.AuthRequired()`）
+**路由前缀**: `/api/v1/node-groups`**文件**: `api/v1/node_groups/handler.go`**鉴权**: 所有接口需JWT（`middleware.AuthRequired()`）
 
 ##### GET /api/v1/node-groups
 
 **功能**: 节点分组列表查询
 
 **Query参数**:
+
 - `page` int (default 1)
+
 - `pageSize` int (default 15)
+
 - `name` string (模糊搜索)
+
 - `domainId` int (精确匹配)
+
 - `status` string (精确匹配: active/inactive)
 
 **响应data**:
+
 ```json
 {
   "items": [
@@ -241,8 +297,11 @@ MIGRATE=1 ./bin/cmdb
 ```
 
 **特性**:
+
 - 使用Preload("Domain")避免N+1查询
+
 - 计算sub_ip_count（关联的子IP数量）
+
 - 支持分页、排序（按ID倒序）
 
 ##### POST /api/v1/node-groups/create
@@ -250,6 +309,7 @@ MIGRATE=1 ./bin/cmdb
 **功能**: 创建节点分组
 
 **Body**:
+
 ```json
 {
   "name": "test-node-group-01",
@@ -260,20 +320,31 @@ MIGRATE=1 ./bin/cmdb
 ```
 
 **约束**:
+
 - `name` 必填, 唯一（冲突返回 409 + code=3002）
+
 - `domainId` 必填, domain必须存在
+
 - `subIPIds` 可选, 数组
 
 **行为**:
+
 1. 生成cname_prefix（随机，确保唯一）
-2. 写node_groups
-3. 写node_group_sub_ips（如果subIPIds非空）
-4. 写domain_dns_records（A记录，status='pending'）
+
+1. 写node_groups
+
+1. 写node_group_sub_ips（如果subIPIds非空）
+
+1. 写domain_dns_records（A记录，status='pending'）
 
 **错误处理**:
+
 - 参数缺失: 400 + code=2001
+
 - domain不存在: 404 + code=3001
+
 - name冲突: 409 + code=3002
+
 - 数据库错误: 500 + code=5002
 
 ##### POST /api/v1/node-groups/update
@@ -281,6 +352,7 @@ MIGRATE=1 ./bin/cmdb
 **功能**: 更新节点分组
 
 **Body**:
+
 ```json
 {
   "id": 1,
@@ -292,18 +364,26 @@ MIGRATE=1 ./bin/cmdb
 ```
 
 **子IP更新策略**:
+
 - 采用**全量覆盖模式**
+
 - 如果传`subIPIds`, 则完全替换该节点分组的子IP集合
+
 - 覆盖规则:
   - 先标记旧DNS记录为error
   - 再删除所有现有子IP映射
   - 最后创建新的子IP映射和DNS记录
+
 - 如果不传`subIPIds`, 则不修改子IP
 
 **约束**:
+
 - `id` 必填
+
 - 其他字段可选（只更新传入的字段）
+
 - `name` 更新时检查唯一性（排除自身）
+
 - 节点分组不存在: 404 + code=3001
 
 ##### POST /api/v1/node-groups/delete
@@ -311,6 +391,7 @@ MIGRATE=1 ./bin/cmdb
 **功能**: 批量删除节点分组
 
 **Body**:
+
 ```json
 {
   "ids": [1, 2, 3]
@@ -318,32 +399,41 @@ MIGRATE=1 ./bin/cmdb
 ```
 
 **行为**:
+
 1. 标记所有关联DNS记录为error
-2. 删除node_groups（级联删除node_group_sub_ips）
-3. 返回deletedCount
+
+1. 删除node_groups（级联删除node_group_sub_ips）
+
+1. 返回deletedCount
 
 **约束**:
+
 - `ids` 不能为空（空数组返回 400 + code=2001）
 
 #### 3.2 线路分组API
 
-**路由前缀**: `/api/v1/line-groups`  
-**文件**: `api/v1/line_groups/handler.go`  
-**鉴权**: 所有接口需JWT（`middleware.AuthRequired()`）
+**路由前缀**: `/api/v1/line-groups`**文件**: `api/v1/line_groups/handler.go`**鉴权**: 所有接口需JWT（`middleware.AuthRequired()`）
 
 ##### GET /api/v1/line-groups
 
 **功能**: 线路分组列表查询
 
 **Query参数**:
+
 - `page` int (default 1)
+
 - `pageSize` int (default 15)
+
 - `name` string (模糊搜索)
+
 - `domainId` int (精确匹配)
+
 - `nodeGroupId` int (精确匹配)
+
 - `status` string (精确匹配: active/inactive)
 
 **响应data**:
+
 ```json
 {
   "items": [
@@ -368,7 +458,9 @@ MIGRATE=1 ./bin/cmdb
 ```
 
 **特性**:
+
 - 使用Preload("Domain")和Preload("NodeGroup")避免N+1查询
+
 - 支持分页、排序（按ID倒序）
 
 ##### POST /api/v1/line-groups/create
@@ -376,6 +468,7 @@ MIGRATE=1 ./bin/cmdb
 **功能**: 创建线路分组
 
 **Body**:
+
 ```json
 {
   "name": "test-line-group-01",
@@ -385,19 +478,29 @@ MIGRATE=1 ./bin/cmdb
 ```
 
 **约束**:
+
 - `name` 必填, 唯一（冲突返回 409 + code=3002）
+
 - `domainId` 必填, domain必须存在
+
 - `nodeGroupId` 必填, node_group必须存在
 
 **行为**:
+
 1. 生成cname_prefix（随机，确保唯一）
-2. 写line_groups
-3. 写domain_dns_records（CNAME记录，status='pending', value=node_group.cname）
+
+1. 写line_groups
+
+1. 写domain_dns_records（CNAME记录，status='pending', value=node_group.cname）
 
 **错误处理**:
+
 - 参数缺失: 400 + code=2001
+
 - domain/node_group不存在: 404 + code=3001
+
 - name冲突: 409 + code=3002
+
 - 数据库错误: 500 + code=5002
 
 ##### POST /api/v1/line-groups/update
@@ -405,6 +508,7 @@ MIGRATE=1 ./bin/cmdb
 **功能**: 更新线路分组
 
 **Body**:
+
 ```json
 {
   "id": 1,
@@ -415,17 +519,24 @@ MIGRATE=1 ./bin/cmdb
 ```
 
 **nodeGroupId切换策略**:
+
 - 如果传`nodeGroupId`, 则切换绑定的node_group
+
 - 切换规则:
   - 先标记旧DNS记录为error
   - 再更新line_group.node_group_id
   - 最后创建新的DNS CNAME记录（value=新node_group.cname）
 
 **约束**:
+
 - `id` 必填
+
 - 其他字段可选（只更新传入的字段）
+
 - `name` 更新时检查唯一性（排除自身）
+
 - 线路分组不存在: 404 + code=3001
+
 - node_group不存在: 404 + code=3001
 
 ##### POST /api/v1/line-groups/delete
@@ -433,6 +544,7 @@ MIGRATE=1 ./bin/cmdb
 **功能**: 批量删除线路分组
 
 **Body**:
+
 ```json
 {
   "ids": [1, 2, 3]
@@ -440,11 +552,15 @@ MIGRATE=1 ./bin/cmdb
 ```
 
 **行为**:
+
 1. 标记所有关联DNS记录为error
-2. 删除line_groups
-3. 返回deletedCount
+
+1. 删除line_groups
+
+1. 返回deletedCount
 
 **约束**:
+
 - `ids` 不能为空（空数组返回 400 + code=2001）
 
 ---
@@ -480,7 +596,7 @@ lineGroupsGroup := protected.Group("/line-groups")
 **路由清单**:
 
 | 方法 | 路径 | 功能 | 鉴权 |
-|------|------|------|------|
+| --- | --- | --- | --- |
 | GET | /api/v1/node-groups | 节点分组列表 | 必需 |
 | POST | /api/v1/node-groups/create | 创建节点分组 | 必需 |
 | POST | /api/v1/node-groups/update | 更新节点分组 | 必需 |
@@ -510,7 +626,7 @@ ok  	go_cmdb/internal/auth	(cached)
 ?   	go_cmdb/internal/cache	[no test files]
 ok  	go_cmdb/internal/config	(cached)
 ?   	go_cmdb/internal/db	[no test files]
-ok  	go_cmdb/internal/httpx	(cached)
+ok  	go_cmdb/internal/httpx	(cached )
 ?   	go_cmdb/internal/model	[no test files]
 ```
 
@@ -532,26 +648,45 @@ $ go build -o bin/cmdb ./cmd/cmdb
 包含以下测试:
 
 1. 登录获取token
-2. 创建测试domain
-3. 创建测试node（含sub IPs）
-4. 创建node_group（含subIPs）
-5. 验证DNS A记录生成
-6. 列表node_groups
-7. 创建node_group name冲突（409）
-8. 更新node_group（覆盖subIPs）
-9. 验证旧DNS记录标记为error
-10. 创建line_group
-11. 验证DNS CNAME记录生成
-12. 列表line_groups
-13. 创建另一个node_group
-14. 更新line_group（切换node_group）
-15. 验证旧CNAME记录标记为error
-16. 删除line_group
-17. 验证DNS记录标记为error（line_group删除）
-18. 删除node_groups
-19. 验证DNS记录标记为error（node_group删除）
+
+1. 创建测试domain
+
+1. 创建测试node（含sub IPs）
+
+1. 创建node_group（含subIPs）
+
+1. 验证DNS A记录生成
+
+1. 列表node_groups
+
+1. 创建node_group name冲突（409）
+
+1. 更新node_group（覆盖subIPs）
+
+1. 验证旧DNS记录标记为error
+
+1. 创建line_group
+
+1. 验证DNS CNAME记录生成
+
+1. 列表line_groups
+
+1. 创建另一个node_group
+
+1. 更新line_group（切换node_group）
+
+1. 验证旧CNAME记录标记为error
+
+1. 删除line_group
+
+1. 验证DNS记录标记为error（line_group删除）
+
+1. 删除node_groups
+
+1. 验证DNS记录标记为error（node_group删除）
 
 **执行方式**:
+
 ```bash
 $ chmod +x scripts/test_groups_api.sh
 $ ./scripts/test_groups_api.sh
@@ -575,7 +710,7 @@ curl -X POST http://localhost:8080/api/v1/node-groups/create \
 curl -X GET "http://localhost:8080/api/v1/node-groups?page=1&pageSize=10" \
   -H "Authorization: Bearer $TOKEN"
 
-# 3. 更新node_group（覆盖subIPs）
+# 3. 更新node_group（覆盖subIPs ）
 curl -X POST http://localhost:8080/api/v1/node-groups/update \
   -H "Authorization: Bearer $TOKEN" \
   -H "Content-Type: application/json" \
@@ -595,7 +730,7 @@ curl -X POST http://localhost:8080/api/v1/line-groups/create \
     "nodeGroupId": 1
   }'
 
-# 5. 更新line_group（切换node_group）
+# 5. 更新line_group（切换node_group ）
 curl -X POST http://localhost:8080/api/v1/line-groups/update \
   -H "Authorization: Bearer $TOKEN" \
   -H "Content-Type: application/json" \
@@ -621,34 +756,54 @@ curl -X POST http://localhost:8080/api/v1/node-groups/delete \
   }'
 ```
 
-### 4. SQL验证（20条）
+### 4. SQL验证（20条 ）
 
 **验证脚本**: `scripts/verify_groups.sql`
 
 包含:
 
 1. 检查node_groups表存在
-2. 检查line_groups表存在
-3. 检查node_group_sub_ips表存在
-4. 查看node_groups表结构
-5. 查看line_groups表结构
-6. 查看node_group_sub_ips表结构
-7. 查看node_groups索引
-8. 查看line_groups索引
-9. 查看node_group_sub_ips索引
-10. 列出所有node_groups（含sub_ip_count）
-11. 列出所有line_groups（含node_group信息）
-12. 验证node_group CNAME格式正确性
-13. 验证line_group CNAME格式正确性
-14. 列出DNS A记录（node_groups）
-15. 列出DNS CNAME记录（line_groups）
-16. 统计DNS记录状态（node_groups）
-17. 统计DNS记录状态（line_groups）
-18. 验证node_group_sub_ips映射
-19. 检查孤儿DNS记录
-20. 统计摘要
+
+1. 检查line_groups表存在
+
+1. 检查node_group_sub_ips表存在
+
+1. 查看node_groups表结构
+
+1. 查看line_groups表结构
+
+1. 查看node_group_sub_ips表结构
+
+1. 查看node_groups索引
+
+1. 查看line_groups索引
+
+1. 查看node_group_sub_ips索引
+
+1. 列出所有node_groups（含sub_ip_count）
+
+1. 列出所有line_groups（含node_group信息）
+
+1. 验证node_group CNAME格式正确性
+
+1. 验证line_group CNAME格式正确性
+
+1. 列出DNS A记录（node_groups）
+
+1. 列出DNS CNAME记录（line_groups）
+
+1. 统计DNS记录状态（node_groups）
+
+1. 统计DNS记录状态（line_groups）
+
+1. 验证node_group_sub_ips映射
+
+1. 检查孤儿DNS记录
+
+1. 统计摘要
 
 **执行方式**:
+
 ```bash
 # 连接数据库
 mysql -h 20.2.140.226 -u user -p cmdb
@@ -722,7 +877,7 @@ $ MIGRATE=1 ./bin/cmdb
 ### 新增文件
 
 | 文件路径 | 行数 | 说明 |
-|---------|------|------|
+| --- | --- | --- |
 | `api/v1/node_groups/handler.go` | 400 | 节点分组handler（列表/创建/更新/删除） |
 | `api/v1/line_groups/handler.go` | 350 | 线路分组handler（列表/创建/更新/删除） |
 | `internal/model/node_group.go` | 28 | NodeGroup模型定义 |
@@ -734,14 +889,14 @@ $ MIGRATE=1 ./bin/cmdb
 ### 修改文件
 
 | 文件路径 | 变更内容 |
-|---------|---------|
+| --- | --- |
 | `api/v1/router.go` | 新增node_groups和line_groups路由组挂载 |
 | `internal/db/migrate.go` | 添加NodeGroup、NodeGroupSubIP、LineGroup到迁移列表 |
 
 ### 代码统计
 
 | 指标 | 数值 |
-|------|------|
+| --- | --- |
 | 新增代码 | 1383行 |
 | 修改代码 | 20行 |
 | 新增文件 | 7个 |
@@ -798,23 +953,27 @@ domain_dns_records {
 #### 更新node_group的subIPIds时
 
 1. **标记旧记录为error**:
+
    ```sql
    UPDATE domain_dns_records 
    SET status='error', last_error='sub IPs updated'
    WHERE owner_type='node_group' AND owner_id=?
    ```
 
-2. **删除旧映射**:
+1. **删除旧映射**:
+
    ```sql
    DELETE FROM node_group_sub_ips WHERE node_group_id=?
    ```
 
-3. **创建新映射**:
+1. **创建新映射**:
+
    ```sql
    INSERT INTO node_group_sub_ips (node_group_id, sub_ip_id) VALUES (?, ?)
    ```
 
-4. **生成新DNS记录**:
+1. **生成新DNS记录**:
+
    ```sql
    INSERT INTO domain_dns_records (...) VALUES (...)
    ```
@@ -824,18 +983,21 @@ domain_dns_records {
 #### 更新line_group的nodeGroupId时
 
 1. **标记旧记录为error**:
+
    ```sql
    UPDATE domain_dns_records 
    SET status='error', last_error='node group changed'
    WHERE owner_type='line_group' AND owner_id=?
    ```
 
-2. **更新绑定**:
+1. **更新绑定**:
+
    ```sql
    UPDATE line_groups SET node_group_id=? WHERE id=?
    ```
 
-3. **生成新DNS记录**:
+1. **生成新DNS记录**:
+
    ```sql
    INSERT INTO domain_dns_records (..., value=new_node_group.cname) VALUES (...)
    ```
@@ -847,32 +1009,36 @@ domain_dns_records {
 #### 删除node_group时
 
 1. **标记DNS记录为error**:
+
    ```sql
    UPDATE domain_dns_records 
    SET status='error', last_error='node group deleted'
    WHERE owner_type='node_group' AND owner_id IN (?)
    ```
 
-2. **删除node_group**:
+1. **删除node_group**:
+
    ```sql
    DELETE FROM node_groups WHERE id IN (?)
    ```
 
-3. **级联删除**:
-   - node_group_sub_ips（GORM constraint: OnDelete:CASCADE）
+1. **级联删除**:
+  - node_group_sub_ips（GORM constraint: OnDelete:CASCADE）
 
 **结果**: 所有关联DNS记录status='error'
 
 #### 删除line_group时
 
 1. **标记DNS记录为error**:
+
    ```sql
    UPDATE domain_dns_records 
    SET status='error', last_error='line group deleted'
    WHERE owner_type='line_group' AND owner_id IN (?)
    ```
 
-2. **删除line_group**:
+1. **删除line_group**:
+
    ```sql
    DELETE FROM line_groups WHERE id IN (?)
    ```
@@ -882,7 +1048,7 @@ domain_dns_records {
 ### 策略总结
 
 | 操作 | 旧DNS记录 | 新DNS记录 | 实现方式 |
-|------|----------|----------|---------|
+| --- | --- | --- | --- |
 | 创建node_group | 无 | 生成A记录（pending） | createDNSRecordsForNodeGroup |
 | 创建line_group | 无 | 生成CNAME记录（pending） | createDNSRecordForLineGroup |
 | 更新node_group subIPIds | 标记error | 生成新A记录（pending） | markDNSRecordsAsError + createDNSRecordsForNodeGroup |
@@ -891,9 +1057,13 @@ domain_dns_records {
 | 删除line_group | 标记error | 无 | markDNSRecordsAsError |
 
 **设计原则**:
+
 - 所有DNS操作只写domain_dns_records，不直调DNS Provider
+
 - 新记录始终status='pending'，等待worker同步
+
 - 旧记录标记status='error'，保留审计记录
+
 - 使用last_error字段记录变更原因
 
 ---
@@ -933,10 +1103,15 @@ DELETE FROM domain_dns_records WHERE owner_type IN ('node_group', 'line_group');
 ### 回滚影响评估
 
 - 删除9个文件
+
 - 恢复2个文件
+
 - 删除3张数据库表
+
 - 清理DNS记录（可选）
+
 - 无其他模块依赖
+
 - 回滚安全, 无副作用
 
 **禁止**: 不使用 `git reset --hard` 作为主回滚方案
@@ -954,24 +1129,34 @@ DELETE FROM domain_dns_records WHERE owner_type IN ('node_group', 'line_group');
 #### 立即可做
 
 1. 实现DNS同步Worker（将pending记录同步到Cloudflare）
-2. 实现domain和domain_dns_provider的CRUD API
-3. 添加node_group和line_group的启用/禁用接口
-4. 实现DNS记录手动重试接口
+
+1. 实现domain和domain_dns_provider的CRUD API
+
+1. 添加node_group和line_group的启用/禁用接口
+
+1. 实现DNS记录手动重试接口
 
 #### 中期规划
 
 1. 实现ACME Challenge Worker（自动证书验证）
-2. 实现证书管理（certificates表）
-3. 实现网站管理（websites表）
-4. 实现回源分组（origin_groups表）
-5. 实现缓存规则（cache_rules表）
+
+1. 实现证书管理（certificates表）
+
+1. 实现网站管理（websites表）
+
+1. 实现回源分组（origin_groups表）
+
+1. 实现缓存规则（cache_rules表）
 
 #### 长期优化
 
 1. 实现DNS记录批量操作
-2. 实现配置版本管理
-3. 添加DNS记录变更审计日志
-4. 实现DNS记录自动清理（error状态超过N天）
+
+1. 实现配置版本管理
+
+1. 添加DNS记录变更审计日志
+
+1. 实现DNS记录自动清理（error状态超过N天）
 
 ---
 
@@ -1006,18 +1191,28 @@ subIPIds和nodeGroupId采用全量覆盖模式，简化前端逻辑，避免复�
 ## 质量验证
 
 - go test通过
+
 - 编译通过
+
 - 所有handler使用httpx统一响应
+
 - 所有接口需JWT鉴权
+
 - 避免N+1查询
+
 - CNAME格式正确
+
 - DNS记录自动生成
+
 - 全量覆盖模式正常工作
+
 - 事务处理正确
+
 - 无emoji或图标
+
 - 代码规范, 注释清晰
 
 ---
 
-**交付完成时间**: 2026-01-23  
-**交付人**: Manus AI
+**交付完成时间**: 2026-01-23**交付人**: Manus AI
+
