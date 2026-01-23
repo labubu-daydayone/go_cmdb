@@ -35,6 +35,8 @@ func Migrate(db *gorm.DB) error {
 		&model.AgentTask{},
 		&model.AgentIdentity{},
 		&model.CertificateRisk{},
+		&model.ReleaseTask{},
+		&model.ReleaseTaskNode{},
 	}
 
 	// Run AutoMigrate for all models
