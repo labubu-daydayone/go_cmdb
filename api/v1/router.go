@@ -5,6 +5,7 @@ import (
 	"go_cmdb/api/v1/agent_tasks"
 	"go_cmdb/api/v1/auth"
 	configHandler "go_cmdb/api/v1/config"
+	dnsHandler "go_cmdb/api/v1/dns"
 	"go_cmdb/api/v1/line_groups"
 	"go_cmdb/api/v1/middleware"
 	"go_cmdb/api/v1/node_groups"
@@ -132,17 +133,28 @@ func SetupRouter(r *gin.Engine, db *gorm.DB, cfg *config.Config) {
 				agentIdentitiesGroup.POST("/revoke", agentIdentitiesHandler.Revoke)
 			}
 
-			// Config routes
-			configHandlerInstance := configHandler.NewHandler(db, cfg)
-			configGroup := protected.Group("/config")
-			{
-				configGroup.POST("/apply", configHandlerInstance.Apply)
-				configGroup.GET("/versions", configHandlerInstance.ListVersions)
-				configGroup.GET("/versions/:version", configHandlerInstance.GetVersion)
+				// Config routes
+				configHandlerInstance := configHandler.NewHandler(db, cfg)
+				configGroup := protected.Group("/config")
+				{
+					configGroup.POST("/apply", configHandlerInstance.Apply)
+					configGroup.GET("/versions", configHandlerInstance.ListVersions)
+					configGroup.GET("/versions/:version", configHandlerInstance.GetVersion)
+				}
+
+				// DNS routes
+				dnsHandlerInstance := dnsHandler.NewHandler(db)
+				dnsGroup := protected.Group("/dns")
+				{
+					dnsGroup.GET("/records", dnsHandlerInstance.ListRecords)
+					dnsGroup.GET("/records/:id", dnsHandlerInstance.GetRecord)
+					dnsGroup.POST("/records/create", dnsHandlerInstance.CreateRecord)
+					dnsGroup.POST("/records/delete", dnsHandlerInstance.DeleteRecord)
+					dnsGroup.POST("/records/retry", dnsHandlerInstance.RetryRecord)
+				}
 			}
 		}
 	}
-}
 
 // pingHandler handles the ping request using unified response
 func pingHandler(c *gin.Context) {
