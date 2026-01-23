@@ -1,6 +1,7 @@
 package v1
 
 import (
+	"go_cmdb/api/v1/agent_tasks"
 	"go_cmdb/api/v1/auth"
 	"go_cmdb/api/v1/line_groups"
 	"go_cmdb/api/v1/middleware"
@@ -107,6 +108,16 @@ func SetupRouter(r *gin.Engine, db *gorm.DB, cfg *config.Config) {
 				websitesGroup.POST("/create", websitesHandler.Create)
 				websitesGroup.POST("/update", websitesHandler.Update)
 				websitesGroup.POST("/delete", websitesHandler.Delete)
+			}
+
+			// Agent tasks routes
+			agentTasksHandler := agent_tasks.NewHandler(db, cfg.AgentToken)
+			agentTasksGroup := protected.Group("/agent-tasks")
+			{
+				agentTasksGroup.GET("", agentTasksHandler.List)
+				agentTasksGroup.GET("/:id", agentTasksHandler.GetByID)
+				agentTasksGroup.POST("/create", agentTasksHandler.Create)
+				agentTasksGroup.POST("/retry", agentTasksHandler.Retry)
 			}
 		}
 	}

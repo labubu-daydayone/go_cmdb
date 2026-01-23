@@ -32,6 +32,7 @@ func Migrate(db *gorm.DB) error {
 		&model.Website{},
 		&model.WebsiteDomain{},
 		&model.WebsiteHTTPS{},
+		&model.AgentTask{},
 	}
 
 	// Run AutoMigrate for all models

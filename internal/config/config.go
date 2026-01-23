@@ -10,11 +10,12 @@ import (
 
 // Config holds all configuration
 type Config struct {
-	MySQL    MySQLConfig
-	Redis    RedisConfig
-	JWT      JWTConfig
-	Migrate  bool
-	HTTPAddr string
+	MySQL      MySQLConfig
+	Redis      RedisConfig
+	JWT        JWTConfig
+	Migrate    bool
+	HTTPAddr   string
+	AgentToken string
 }
 
 // MySQLConfig holds MySQL configuration
@@ -55,8 +56,9 @@ func Load() (*Config, error) {
 			ExpireMinutes: getEnvInt("JWT_EXPIRE_MINUTES", 1440),
 			Issuer:        getEnv("JWT_ISSUER", "go_cmdb"),
 		},
-		Migrate:  getEnv("MIGRATE", "0") == "1",
-		HTTPAddr: getEnv("HTTP_ADDR", ":8080"),
+		Migrate:    getEnv("MIGRATE", "0") == "1",
+		HTTPAddr:   getEnv("HTTP_ADDR", ":8080"),
+		AgentToken: getEnv("AGENT_TOKEN", "default-agent-token"),
 	}
 
 	// Validate required fields
