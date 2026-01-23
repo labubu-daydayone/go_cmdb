@@ -30,6 +30,8 @@ func Migrate(db *gorm.DB) error {
 		&model.OriginSet{},
 		&model.OriginAddress{},
 		&model.Website{},
+		&model.WebsiteDomain{},
+		&model.WebsiteHTTPS{},
 	}
 
 	// Run AutoMigrate for all models

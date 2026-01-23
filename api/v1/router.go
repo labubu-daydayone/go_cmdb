@@ -8,6 +8,7 @@ import (
 	"go_cmdb/api/v1/nodes"
 	"go_cmdb/api/v1/origin_groups"
 	"go_cmdb/api/v1/origins"
+	"go_cmdb/api/v1/websites"
 	"go_cmdb/internal/config"
 	"go_cmdb/internal/httpx"
 
@@ -95,6 +96,17 @@ func SetupRouter(r *gin.Engine, db *gorm.DB, cfg *config.Config) {
 				originsGroup.POST("/create-manual", originsHandler.CreateManual)
 				originsGroup.POST("/update", originsHandler.Update)
 				originsGroup.POST("/delete", originsHandler.Delete)
+			}
+
+			// Websites routes
+			websitesHandler := websites.NewHandler(db)
+			websitesGroup := protected.Group("/websites")
+			{
+				websitesGroup.GET("", websitesHandler.List)
+				websitesGroup.GET("/:id", websitesHandler.GetByID)
+				websitesGroup.POST("/create", websitesHandler.Create)
+				websitesGroup.POST("/update", websitesHandler.Update)
+				websitesGroup.POST("/delete", websitesHandler.Delete)
 			}
 		}
 	}
