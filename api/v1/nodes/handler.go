@@ -1,0 +1,508 @@
+package nodes
+
+import (
+	"fmt"
+	"strings"
+
+	"go_cmdb/internal/httpx"
+	"go_cmdb/internal/model"
+
+	"github.com/gin-gonic/gin"
+	"gorm.io/gorm"
+)
+
+// ListRequest represents list nodes request
+type ListRequest struct {
+	Page     int    `form:"page"`
+	PageSize int    `form:"pageSize"`
+	Name     string `form:"name"`
+	IP       string `form:"ip"`
+	Status   string `form:"status"`
+	Enabled  *bool  `form:"enabled"`
+}
+
+// ListResponse represents list nodes response
+type ListResponse struct {
+	Items    []model.Node `json:"items"`
+	Total    int64        `json:"total"`
+	Page     int          `json:"page"`
+	PageSize int          `json:"pageSize"`
+}
+
+// CreateRequest represents create node request
+type CreateRequest struct {
+	Name      string          `json:"name" binding:"required"`
+	MainIP    string          `json:"mainIP" binding:"required"`
+	AgentPort int             `json:"agentPort"`
+	Enabled   *bool           `json:"enabled"`
+	SubIPs    []SubIPRequest  `json:"subIPs"`
+}
+
+// SubIPRequest represents sub IP in create/update request
+type SubIPRequest struct {
+	ID      int   `json:"id"`
+	IP      string `json:"ip" binding:"required"`
+	Enabled *bool  `json:"enabled"`
+}
+
+// UpdateRequest represents update node request
+type UpdateRequest struct {
+	ID        int             `json:"id" binding:"required"`
+	Name      *string         `json:"name"`
+	MainIP    *string         `json:"mainIP"`
+	AgentPort *int            `json:"agentPort"`
+	Enabled   *bool           `json:"enabled"`
+	Status    *string         `json:"status"`
+	SubIPs    []SubIPRequest  `json:"subIPs"`
+}
+
+// DeleteRequest represents delete nodes request
+type DeleteRequest struct {
+	IDs []int `json:"ids" binding:"required,min=1"`
+}
+
+// AddSubIPsRequest represents add sub IPs request
+type AddSubIPsRequest struct {
+	NodeID int            `json:"nodeId" binding:"required"`
+	SubIPs []SubIPRequest `json:"subIPs" binding:"required,min=1"`
+}
+
+// DeleteSubIPsRequest represents delete sub IPs request
+type DeleteSubIPsRequest struct {
+	NodeID   int   `json:"nodeId" binding:"required"`
+	SubIPIDs []int `json:"subIPIds" binding:"required,min=1"`
+}
+
+// ToggleSubIPRequest represents toggle sub IP enabled request
+type ToggleSubIPRequest struct {
+	NodeID  int  `json:"nodeId" binding:"required"`
+	SubIPID int  `json:"subIPId" binding:"required"`
+	Enabled bool `json:"enabled"`
+}
+
+// Handler handles nodes API
+type Handler struct {
+	db *gorm.DB
+}
+
+// NewHandler creates a new nodes handler
+func NewHandler(db *gorm.DB) *Handler {
+	return &Handler{db: db}
+}
+
+// List handles GET /api/v1/nodes
+func (h *Handler) List(c *gin.Context) {
+	var req ListRequest
+	if err := c.ShouldBindQuery(&req); err != nil {
+		httpx.FailErr(c, httpx.ErrParamInvalid(err.Error()))
+		return
+	}
+
+	// Set defaults
+	if req.Page < 1 {
+		req.Page = 1
+	}
+	if req.PageSize < 1 {
+		req.PageSize = 15
+	}
+
+	// Build query
+	query := h.db.Model(&model.Node{})
+
+	// Name filter (fuzzy)
+	if req.Name != "" {
+		query = query.Where("name LIKE ?", "%"+req.Name+"%")
+	}
+
+	// IP filter (main_ip or sub_ip)
+	if req.IP != "" {
+		subQuery := h.db.Model(&model.NodeSubIP{}).
+			Select("node_id").
+			Where("ip LIKE ?", "%"+req.IP+"%")
+		
+		query = query.Where("main_ip LIKE ? OR id IN (?)", "%"+req.IP+"%", subQuery)
+	}
+
+	// Status filter
+	if req.Status != "" {
+		query = query.Where("status = ?", req.Status)
+	}
+
+	// Enabled filter
+	if req.Enabled != nil {
+		query = query.Where("enabled = ?", *req.Enabled)
+	}
+
+	// Count total
+	var total int64
+	if err := query.Count(&total).Error; err != nil {
+		httpx.FailErr(c, httpx.ErrDatabaseError("failed to count nodes", err))
+		return
+	}
+
+	// Fetch nodes with pagination
+	var nodes []model.Node
+	offset := (req.Page - 1) * req.PageSize
+	if err := query.
+		Preload("SubIPs").
+		Offset(offset).
+		Limit(req.PageSize).
+		Order("id DESC").
+		Find(&nodes).Error; err != nil {
+		httpx.FailErr(c, httpx.ErrDatabaseError("failed to fetch nodes", err))
+		return
+	}
+
+	httpx.OK(c, ListResponse{
+		Items:    nodes,
+		Total:    total,
+		Page:     req.Page,
+		PageSize: req.PageSize,
+	})
+}
+
+// Create handles POST /api/v1/nodes/create
+func (h *Handler) Create(c *gin.Context) {
+	var req CreateRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		httpx.FailErr(c, httpx.ErrParamMissing(err.Error()))
+		return
+	}
+
+	// Validate mainIP not empty
+	if strings.TrimSpace(req.MainIP) == "" {
+		httpx.FailErr(c, httpx.ErrParamInvalid("mainIP cannot be empty"))
+		return
+	}
+
+	// Check name uniqueness
+	var count int64
+	if err := h.db.Model(&model.Node{}).Where("name = ?", req.Name).Count(&count).Error; err != nil {
+		httpx.FailErr(c, httpx.ErrDatabaseError("failed to check name uniqueness", err))
+		return
+	}
+	if count > 0 {
+		httpx.FailErr(c, httpx.ErrAlreadyExists("node name already exists"))
+		return
+	}
+
+	// Check subIPs uniqueness within request
+	ipMap := make(map[string]bool)
+	for _, subIP := range req.SubIPs {
+		if ipMap[subIP.IP] {
+			httpx.FailErr(c, httpx.ErrParamInvalid(fmt.Sprintf("duplicate sub IP: %s", subIP.IP)))
+			return
+		}
+		ipMap[subIP.IP] = true
+	}
+
+	// Create node
+	node := model.Node{
+		Name:      req.Name,
+		MainIP:    req.MainIP,
+		AgentPort: req.AgentPort,
+		Enabled:   true,
+		Status:    model.NodeStatusOffline,
+	}
+
+	if req.Enabled != nil {
+		node.Enabled = *req.Enabled
+	}
+	if node.AgentPort == 0 {
+		node.AgentPort = 8080
+	}
+
+	// Create sub IPs
+	for _, subIP := range req.SubIPs {
+		enabled := true
+		if subIP.Enabled != nil {
+			enabled = *subIP.Enabled
+		}
+		node.SubIPs = append(node.SubIPs, model.NodeSubIP{
+			IP:      subIP.IP,
+			Enabled: enabled,
+		})
+	}
+
+	// Save to database
+	if err := h.db.Create(&node).Error; err != nil {
+		httpx.FailErr(c, httpx.ErrDatabaseError("failed to create node", err))
+		return
+	}
+
+	// Reload with sub IPs
+	if err := h.db.Preload("SubIPs").First(&node, node.ID).Error; err != nil {
+		httpx.FailErr(c, httpx.ErrDatabaseError("failed to reload node", err))
+		return
+	}
+
+	httpx.OK(c, node)
+}
+
+// Update handles POST /api/v1/nodes/update
+func (h *Handler) Update(c *gin.Context) {
+	var req UpdateRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		httpx.FailErr(c, httpx.ErrParamMissing(err.Error()))
+		return
+	}
+
+	// Find node
+	var node model.Node
+	if err := h.db.Preload("SubIPs").First(&node, req.ID).Error; err != nil {
+		if err == gorm.ErrRecordNotFound {
+			httpx.FailErr(c, httpx.ErrNotFound("node not found"))
+			return
+		}
+		httpx.FailErr(c, httpx.ErrDatabaseError("failed to find node", err))
+		return
+	}
+
+	// Start transaction
+	tx := h.db.Begin()
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+		}
+	}()
+
+	// Update fields
+	updates := make(map[string]interface{})
+	
+	if req.Name != nil {
+		// Check name uniqueness
+		var count int64
+		if err := tx.Model(&model.Node{}).Where("name = ? AND id != ?", *req.Name, req.ID).Count(&count).Error; err != nil {
+			tx.Rollback()
+			httpx.FailErr(c, httpx.ErrDatabaseError("failed to check name uniqueness", err))
+			return
+		}
+		if count > 0 {
+			tx.Rollback()
+			httpx.FailErr(c, httpx.ErrAlreadyExists("node name already exists"))
+			return
+		}
+		updates["name"] = *req.Name
+	}
+	
+	if req.MainIP != nil {
+		updates["main_ip"] = *req.MainIP
+	}
+	
+	if req.AgentPort != nil {
+		updates["agent_port"] = *req.AgentPort
+	}
+	
+	if req.Enabled != nil {
+		updates["enabled"] = *req.Enabled
+	}
+	
+	if req.Status != nil {
+		updates["status"] = *req.Status
+	}
+
+	if len(updates) > 0 {
+		if err := tx.Model(&node).Updates(updates).Error; err != nil {
+			tx.Rollback()
+			httpx.FailErr(c, httpx.ErrDatabaseError("failed to update node", err))
+			return
+		}
+	}
+
+	// Handle subIPs full replacement if provided
+	if req.SubIPs != nil {
+		// Delete all existing sub IPs
+		if err := tx.Where("node_id = ?", req.ID).Delete(&model.NodeSubIP{}).Error; err != nil {
+			tx.Rollback()
+			httpx.FailErr(c, httpx.ErrDatabaseError("failed to delete old sub IPs", err))
+			return
+		}
+
+		// Create new sub IPs
+		for _, subIP := range req.SubIPs {
+			enabled := true
+			if subIP.Enabled != nil {
+				enabled = *subIP.Enabled
+			}
+			
+			newSubIP := model.NodeSubIP{
+				NodeID:  req.ID,
+				IP:      subIP.IP,
+				Enabled: enabled,
+			}
+			
+			if err := tx.Create(&newSubIP).Error; err != nil {
+				tx.Rollback()
+				httpx.FailErr(c, httpx.ErrDatabaseError("failed to create sub IP", err))
+				return
+			}
+		}
+	}
+
+	// Commit transaction
+	if err := tx.Commit().Error; err != nil {
+		httpx.FailErr(c, httpx.ErrDatabaseError("failed to commit transaction", err))
+		return
+	}
+
+	// Reload node with sub IPs
+	if err := h.db.Preload("SubIPs").First(&node, req.ID).Error; err != nil {
+		httpx.FailErr(c, httpx.ErrDatabaseError("failed to reload node", err))
+		return
+	}
+
+	httpx.OK(c, node)
+}
+
+// Delete handles POST /api/v1/nodes/delete
+func (h *Handler) Delete(c *gin.Context) {
+	var req DeleteRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		httpx.FailErr(c, httpx.ErrParamMissing(err.Error()))
+		return
+	}
+
+	// Delete nodes (cascade delete sub IPs)
+	result := h.db.Delete(&model.Node{}, req.IDs)
+	if result.Error != nil {
+		httpx.FailErr(c, httpx.ErrDatabaseError("failed to delete nodes", result.Error))
+		return
+	}
+
+	httpx.OK(c, gin.H{
+		"deletedCount": result.RowsAffected,
+	})
+}
+
+// AddSubIPs handles POST /api/v1/nodes/sub-ips/add
+func (h *Handler) AddSubIPs(c *gin.Context) {
+	var req AddSubIPsRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		httpx.FailErr(c, httpx.ErrParamMissing(err.Error()))
+		return
+	}
+
+	// Check node exists
+	var node model.Node
+	if err := h.db.First(&node, req.NodeID).Error; err != nil {
+		if err == gorm.ErrRecordNotFound {
+			httpx.FailErr(c, httpx.ErrNotFound("node not found"))
+			return
+		}
+		httpx.FailErr(c, httpx.ErrDatabaseError("failed to find node", err))
+		return
+	}
+
+	// Check subIPs uniqueness within request
+	ipMap := make(map[string]bool)
+	for _, subIP := range req.SubIPs {
+		if ipMap[subIP.IP] {
+			httpx.FailErr(c, httpx.ErrParamInvalid(fmt.Sprintf("duplicate sub IP: %s", subIP.IP)))
+			return
+		}
+		ipMap[subIP.IP] = true
+	}
+
+	// Create sub IPs
+	var createdSubIPs []model.NodeSubIP
+	for _, subIP := range req.SubIPs {
+		enabled := true
+		if subIP.Enabled != nil {
+			enabled = *subIP.Enabled
+		}
+		
+		newSubIP := model.NodeSubIP{
+			NodeID:  req.NodeID,
+			IP:      subIP.IP,
+			Enabled: enabled,
+		}
+		
+		if err := h.db.Create(&newSubIP).Error; err != nil {
+			httpx.FailErr(c, httpx.ErrDatabaseError("failed to create sub IP", err))
+			return
+		}
+		
+		createdSubIPs = append(createdSubIPs, newSubIP)
+	}
+
+	httpx.OK(c, gin.H{
+		"addedCount": len(createdSubIPs),
+		"subIPs":     createdSubIPs,
+	})
+}
+
+// DeleteSubIPs handles POST /api/v1/nodes/sub-ips/delete
+func (h *Handler) DeleteSubIPs(c *gin.Context) {
+	var req DeleteSubIPsRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		httpx.FailErr(c, httpx.ErrParamMissing(err.Error()))
+		return
+	}
+
+	// Check node exists
+	var node model.Node
+	if err := h.db.First(&node, req.NodeID).Error; err != nil {
+		if err == gorm.ErrRecordNotFound {
+			httpx.FailErr(c, httpx.ErrNotFound("node not found"))
+			return
+		}
+		httpx.FailErr(c, httpx.ErrDatabaseError("failed to find node", err))
+		return
+	}
+
+	// Delete sub IPs
+	result := h.db.Where("node_id = ? AND id IN ?", req.NodeID, req.SubIPIDs).Delete(&model.NodeSubIP{})
+	if result.Error != nil {
+		httpx.FailErr(c, httpx.ErrDatabaseError("failed to delete sub IPs", result.Error))
+		return
+	}
+
+	httpx.OK(c, gin.H{
+		"deletedCount": result.RowsAffected,
+	})
+}
+
+// ToggleSubIP handles POST /api/v1/nodes/sub-ips/toggle
+func (h *Handler) ToggleSubIP(c *gin.Context) {
+	var req ToggleSubIPRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		httpx.FailErr(c, httpx.ErrParamMissing(err.Error()))
+		return
+	}
+
+	// Check node exists
+	var node model.Node
+	if err := h.db.First(&node, req.NodeID).Error; err != nil {
+		if err == gorm.ErrRecordNotFound {
+			httpx.FailErr(c, httpx.ErrNotFound("node not found"))
+			return
+		}
+		httpx.FailErr(c, httpx.ErrDatabaseError("failed to find node", err))
+		return
+	}
+
+	// Check sub IP exists
+	var subIP model.NodeSubIP
+	if err := h.db.Where("id = ? AND node_id = ?", req.SubIPID, req.NodeID).First(&subIP).Error; err != nil {
+		if err == gorm.ErrRecordNotFound {
+			httpx.FailErr(c, httpx.ErrNotFound("sub IP not found"))
+			return
+		}
+		httpx.FailErr(c, httpx.ErrDatabaseError("failed to find sub IP", err))
+		return
+	}
+
+	// Update enabled only
+	if err := h.db.Model(&subIP).Update("enabled", req.Enabled).Error; err != nil {
+		httpx.FailErr(c, httpx.ErrDatabaseError("failed to update sub IP", err))
+		return
+	}
+
+	// Reload sub IP
+	if err := h.db.First(&subIP, req.SubIPID).Error; err != nil {
+		httpx.FailErr(c, httpx.ErrDatabaseError("failed to reload sub IP", err))
+		return
+	}
+
+	httpx.OK(c, subIP)
+}

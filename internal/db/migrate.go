@@ -20,6 +20,8 @@ func Migrate(db *gorm.DB) error {
 		&model.Domain{},
 		&model.DomainDNSProvider{},
 		&model.DomainDNSRecord{},
+		&model.Node{},
+		&model.NodeSubIP{},
 	}
 
 	// Run AutoMigrate for all models

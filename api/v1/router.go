@@ -3,6 +3,7 @@ package v1
 import (
 	"go_cmdb/api/v1/auth"
 	"go_cmdb/api/v1/middleware"
+	"go_cmdb/api/v1/nodes"
 	"go_cmdb/internal/config"
 	"go_cmdb/internal/httpx"
 
@@ -36,6 +37,21 @@ func SetupRouter(r *gin.Engine, db *gorm.DB, cfg *config.Config) {
 		protected.Use(middleware.AuthRequired())
 		{
 			protected.GET("/me", meHandler)
+
+			// Nodes routes
+			nodesHandler := nodes.NewHandler(db)
+			nodesGroup := protected.Group("/nodes")
+			{
+				nodesGroup.GET("", nodesHandler.List)
+				nodesGroup.POST("/create", nodesHandler.Create)
+				nodesGroup.POST("/update", nodesHandler.Update)
+				nodesGroup.POST("/delete", nodesHandler.Delete)
+
+				// Sub IPs routes
+				nodesGroup.POST("/sub-ips/add", nodesHandler.AddSubIPs)
+				nodesGroup.POST("/sub-ips/delete", nodesHandler.DeleteSubIPs)
+				nodesGroup.POST("/sub-ips/toggle", nodesHandler.ToggleSubIP)
+			}
 		}
 	}
 }
