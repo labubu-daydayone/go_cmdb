@@ -13,6 +13,7 @@ type Config struct {
 	MySQL    MySQLConfig
 	Redis    RedisConfig
 	JWT      JWTConfig
+	Migrate  bool
 	HTTPAddr string
 }
 
@@ -54,6 +55,7 @@ func Load() (*Config, error) {
 			ExpireMinutes: getEnvInt("JWT_EXPIRE_MINUTES", 1440),
 			Issuer:        getEnv("JWT_ISSUER", "go_cmdb"),
 		},
+		Migrate:  getEnv("MIGRATE", "0") == "1",
 		HTTPAddr: getEnv("HTTP_ADDR", ":8080"),
 	}
 

@@ -9,7 +9,6 @@ import (
 	"go_cmdb/internal/cache"
 	"go_cmdb/internal/config"
 	"go_cmdb/internal/db"
-	"go_cmdb/internal/model"
 
 	"github.com/gin-gonic/gin"
 )
@@ -31,9 +30,15 @@ func main() {
 	defer db.Close()
 	log.Println("✓ MySQL connected successfully")
 
-	// Auto migrate user table
-	if err := db.GetDB().AutoMigrate(&model.User{}); err != nil {
-		log.Printf("Warning: Failed to auto migrate: %v", err)
+	// Run database migration if MIGRATE=1
+	if cfg.Migrate {
+		log.Println("MIGRATE=1 detected, running database migration...")
+		if err := db.Migrate(db.GetDB()); err != nil {
+			log.Fatalf("Failed to migrate database: %v", err)
+			os.Exit(1)
+		}
+	} else {
+		log.Println("MIGRATE=0 or not set, migration disabled")
 	}
 
 	// 3. Initialize JWT
