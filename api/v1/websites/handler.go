@@ -1,10 +1,13 @@
 package websites
 
 import (
+	"log"
+	"strconv"
+
 	"go_cmdb/internal/cert"
 	"go_cmdb/internal/httpx"
 	"go_cmdb/internal/model"
-	"strconv"
+	"go_cmdb/internal/ws"
 
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
@@ -326,16 +329,22 @@ func (h *Handler) Create(c *gin.Context) {
 		return nil
 	})
 
-	if err != nil {
-		if appErr, ok := err.(*httpx.AppError); ok {
-			httpx.FailErr(c, appErr)
-		} else {
-			httpx.FailErr(c, httpx.ErrDatabaseError("transaction failed", err))
+		if err != nil {
+			if appErr, ok := err.(*httpx.AppError); ok {
+				httpx.FailErr(c, appErr)
+			} else {
+				httpx.FailErr(c, httpx.ErrDatabaseError("transaction failed", err))
+			}
+			return
 		}
-		return
-	}
 
-	httpx.OK(c, gin.H{"id": websiteID})
+		// Publish website event (after transaction success)
+		// Note: Broadcast failure should not affect the main flow
+		if err := ws.PublishWebsiteEvent("add", gin.H{"id": websiteID}); err != nil {
+			log.Printf("[WebSocket] Failed to publish website event: %v", err)
+		}
+
+		httpx.OK(c, gin.H{"id": websiteID})
 }
 
 // validateCreateRequest 校验创建请求
@@ -670,17 +679,22 @@ func (h *Handler) Update(c *gin.Context) {
 		return nil
 	})
 
-	if err != nil {
-		if appErr, ok := err.(*httpx.AppError); ok {
-			httpx.FailErr(c, appErr)
-		} else {
-			httpx.FailErr(c, httpx.ErrDatabaseError("transaction failed", err))
+		if err != nil {
+			if appErr, ok := err.(*httpx.AppError); ok {
+				httpx.FailErr(c, appErr)
+			} else {
+				httpx.FailErr(c, httpx.ErrDatabaseError("transaction failed", err))
+			}
+			return
 		}
-		return
-	}
 
-	httpx.OK(c, gin.H{"success": true})
-}
+		// Publish website event (after transaction success)
+		if err := ws.PublishWebsiteEvent("update", gin.H{"id": req.ID}); err != nil {
+			log.Printf("[WebSocket] Failed to publish website event: %v", err)
+		}
+
+		httpx.OK(c, gin.H{"success": true})
+	}
 
 // DeleteRequest 删除请求
 type DeleteRequest struct {
@@ -748,16 +762,23 @@ func (h *Handler) Delete(c *gin.Context) {
 		return nil
 	})
 
-	if err != nil {
-		if appErr, ok := err.(*httpx.AppError); ok {
-			httpx.FailErr(c, appErr)
-		} else {
-			httpx.FailErr(c, httpx.ErrDatabaseError("transaction failed", err))
+		if err != nil {
+			if appErr, ok := err.(*httpx.AppError); ok {
+				httpx.FailErr(c, appErr)
+			} else {
+				httpx.FailErr(c, httpx.ErrDatabaseError("transaction failed", err))
+			}
+			return
 		}
-		return
-	}
 
-	httpx.OK(c, gin.H{"success": true, "deleted": len(req.IDs)})
+		// Publish website events (after transaction success)
+		for _, id := range req.IDs {
+			if err := ws.PublishWebsiteEvent("delete", gin.H{"id": id}); err != nil {
+				log.Printf("[WebSocket] Failed to publish website event: %v", err)
+			}
+		}
+
+		httpx.OK(c, gin.H{"success": true, "deleted": len(req.IDs)})
 }
 
 // GetByIDRequest 根据ID查询请求

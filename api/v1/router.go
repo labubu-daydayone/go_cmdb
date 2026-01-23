@@ -20,13 +20,19 @@ import (
 	"go_cmdb/api/v1/websites"
 	"go_cmdb/internal/config"
 	"go_cmdb/internal/httpx"
+	"go_cmdb/internal/ws"
 
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
 )
 
-// SetupRouter sets up the API v1 routes
+	// SetupRouter sets up the API v1 routes
 func SetupRouter(r *gin.Engine, db *gorm.DB, cfg *config.Config) {
+	// Mount Socket.IO server with JWT authentication
+	// Socket.IO will be available at /socket.io/ (default path)
+	if ws.Server != nil {
+		r.Any("/socket.io/*any", gin.WrapH(ws.WrapWithAuth(ws.Server)))
+	}
 	v1 := r.Group("/api/v1")
 	{
 		// Public routes (no authentication required)

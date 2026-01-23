@@ -15,6 +15,7 @@ import (
 	"go_cmdb/internal/db"
 	"go_cmdb/internal/release"
 	"go_cmdb/internal/risk"
+	"go_cmdb/internal/ws"
 
 	"github.com/gin-gonic/gin"
 )
@@ -99,7 +100,14 @@ func main() {
 		log.Println("✓ Release Executor disabled (RELEASE_EXECUTOR_ENABLED=0)")
 	}
 
-	// 7. Initialize Gin router
+	// 7. Initialize Socket.IO server
+	if err := ws.InitServer(); err != nil {
+		log.Fatalf("Failed to initialize Socket.IO server: %v", err)
+		os.Exit(1)
+	}
+	log.Println("✓ Socket.IO server initialized")
+
+	// 8. Initialize Gin router
 	gin.SetMode(gin.ReleaseMode)
 	r := gin.Default()
 
