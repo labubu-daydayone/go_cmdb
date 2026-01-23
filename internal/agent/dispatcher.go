@@ -48,6 +48,10 @@ func (d *Dispatcher) DispatchTask(task *model.AgentTask) error {
 		if saveErr := d.db.Save(task).Error; saveErr != nil {
 			log.Printf("Failed to update task status: %v", saveErr)
 		}
+		// Update config_versions status if task type is apply_config
+		if task.Type == model.TaskTypeApplyConfig {
+			d.updateConfigVersionStatus(task, model.ConfigVersionStatusFailed, task.LastError)
+		}
 		return fmt.Errorf("agent identity not found for node %d", node.ID)
 	}
 
@@ -59,6 +63,10 @@ func (d *Dispatcher) DispatchTask(task *model.AgentTask) error {
 		task.Attempts++
 		if saveErr := d.db.Save(task).Error; saveErr != nil {
 			log.Printf("Failed to update task status: %v", saveErr)
+		}
+		// Update config_versions status if task type is apply_config
+		if task.Type == model.TaskTypeApplyConfig {
+			d.updateConfigVersionStatus(task, model.ConfigVersionStatusFailed, task.LastError)
 		}
 		return fmt.Errorf("agent identity is %s for node %d", identity.Status, node.ID)
 	}
@@ -97,6 +105,10 @@ func (d *Dispatcher) DispatchTask(task *model.AgentTask) error {
 		if saveErr := d.db.Save(task).Error; saveErr != nil {
 			log.Printf("Failed to update task status after error: %v", saveErr)
 		}
+		// Update config_versions status if task type is apply_config
+		if task.Type == model.TaskTypeApplyConfig {
+			d.updateConfigVersionStatus(task, model.ConfigVersionStatusFailed, task.LastError)
+		}
 		return err
 	}
 
@@ -109,6 +121,48 @@ func (d *Dispatcher) DispatchTask(task *model.AgentTask) error {
 		return err
 	}
 
+	// Update config_versions status if task type is apply_config
+	if task.Type == model.TaskTypeApplyConfig {
+		d.updateConfigVersionStatus(task, model.ConfigVersionStatusApplied, "")
+	}
+
 	log.Printf("Task %d dispatched successfully: %s", task.ID, resp.Data.Message)
 	return nil
+}
+
+// updateConfigVersionStatus updates config_versions status based on task result
+func (d *Dispatcher) updateConfigVersionStatus(task *model.AgentTask, status string, lastError string) {
+	// Parse payload to extract version
+	var payload map[string]interface{}
+	if err := json.Unmarshal([]byte(task.Payload), &payload); err != nil {
+		log.Printf("Failed to parse task payload for config version update: %v", err)
+		return
+	}
+
+	// Extract version from payload
+	versionFloat, ok := payload["version"].(float64)
+	if !ok {
+		log.Printf("Failed to extract version from task payload")
+		return
+	}
+	version := int64(versionFloat)
+
+	// Update config_versions status
+	updates := map[string]interface{}{
+		"status": status,
+	}
+
+	if status == model.ConfigVersionStatusFailed && lastError != "" {
+		// Truncate last_error to 255 characters (database field limit)
+		if len(lastError) > 255 {
+			lastError = lastError[:252] + "..."
+		}
+		updates["last_error"] = lastError
+	}
+
+	if err := d.db.Model(&model.ConfigVersion{}).
+		Where("version = ?", version).
+		Updates(updates).Error; err != nil {
+		log.Printf("Failed to update config_versions status: %v", err)
+	}
 }

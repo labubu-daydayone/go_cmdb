@@ -10,15 +10,23 @@ import (
 type DirConfig struct {
 	NginxDir       string // Default: /etc/nginx
 	NginxBin       string // Default: nginx
+	NginxConf      string // Default: /etc/nginx/nginx.conf
+	NginxTestCmd   string // Default: nginx -t -c /etc/nginx/nginx.conf
 	NginxReloadCmd string // Default: nginx -s reload
 	CMDBRenderDir  string // Default: /etc/nginx/cmdb
 }
 
 // NewDirConfig creates a new directory configuration from environment variables
 func NewDirConfig() *DirConfig {
+	nginxConf := getEnv("NGINX_CONF", "/etc/nginx/nginx.conf")
+	nginxBin := getEnv("NGINX_BIN", "nginx")
+	nginxTestCmd := getEnv("NGINX_TEST_CMD", fmt.Sprintf("%s -t -c %s", nginxBin, nginxConf))
+
 	return &DirConfig{
 		NginxDir:       getEnv("NGINX_DIR", "/etc/nginx"),
-		NginxBin:       getEnv("NGINX_BIN", "nginx"),
+		NginxBin:       nginxBin,
+		NginxConf:      nginxConf,
+		NginxTestCmd:   nginxTestCmd,
 		NginxReloadCmd: getEnv("NGINX_RELOAD_CMD", "nginx -s reload"),
 		CMDBRenderDir:  getEnv("CMDB_RENDER_DIR", "/etc/nginx/cmdb"),
 	}
@@ -49,7 +57,17 @@ func (c *DirConfig) GetStagingDir(version int64) string {
 	return filepath.Join(c.CMDBRenderDir, ".staging", fmt.Sprintf("%d", version))
 }
 
-// GetLiveDir returns the live directory path
+// GetVersionsDir returns the versions directory path
+func (c *DirConfig) GetVersionsDir() string {
+	return filepath.Join(c.CMDBRenderDir, "versions")
+}
+
+// GetVersionDir returns the directory path for a specific version
+func (c *DirConfig) GetVersionDir(version int64) string {
+	return filepath.Join(c.GetVersionsDir(), fmt.Sprintf("%d", version))
+}
+
+// GetLiveDir returns the live directory path (symlink to current version)
 func (c *DirConfig) GetLiveDir() string {
 	return filepath.Join(c.CMDBRenderDir, "live")
 }
@@ -57,10 +75,8 @@ func (c *DirConfig) GetLiveDir() string {
 // EnsureDirectories creates all required directories
 func (c *DirConfig) EnsureDirectories() error {
 	dirs := []string{
-		c.GetUpstreamsDir(),
-		c.GetServersDir(),
-		c.GetCertsDir(),
 		c.GetMetaDir(),
+		c.GetVersionsDir(),
 	}
 
 	for _, dir := range dirs {
@@ -99,6 +115,33 @@ func (c *DirConfig) CleanStagingDir(version int64) error {
 	if err := os.RemoveAll(stagingDir); err != nil {
 		return fmt.Errorf("failed to clean staging directory: %w", err)
 	}
+	return nil
+}
+
+// AtomicSwitchToVersion atomically switches the live symlink to point to a specific version
+func (c *DirConfig) AtomicSwitchToVersion(version int64) error {
+	versionDir := c.GetVersionDir(version)
+	liveDir := c.GetLiveDir()
+
+	// Check if version directory exists
+	if _, err := os.Stat(versionDir); os.IsNotExist(err) {
+		return fmt.Errorf("version directory does not exist: %s", versionDir)
+	}
+
+	// Create temporary symlink
+	tempLink := liveDir + ".tmp"
+	os.Remove(tempLink) // Remove if exists
+
+	if err := os.Symlink(versionDir, tempLink); err != nil {
+		return fmt.Errorf("failed to create temp symlink: %w", err)
+	}
+
+	// Atomically rename temp symlink to live
+	if err := os.Rename(tempLink, liveDir); err != nil {
+		os.Remove(tempLink) // Clean up temp link
+		return fmt.Errorf("failed to rename symlink: %w", err)
+	}
+
 	return nil
 }
 

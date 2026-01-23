@@ -19,20 +19,15 @@ func NewService(db *gorm.DB) *Service {
 	return &Service{db: db}
 }
 
-// GenerateVersion generates a new version number
-func (s *Service) GenerateVersion() int64 {
-	return time.Now().UnixMilli()
-}
-
-// CreateVersion creates a new config version
-func (s *Service) CreateVersion(nodeID int, payload string) (*model.ConfigVersion, error) {
-	// Generate version using timestamp (milliseconds)
-	version := time.Now().UnixMilli()
-
+// CreateVersion creates a new config version with database-generated version number
+// Version is guaranteed to be globally unique and incrementing by using the database auto-increment ID
+func (s *Service) CreateVersion(nodeID int, payload string, reason string) (*model.ConfigVersion, error) {
+	// Step 1: Insert a record with version=0 (placeholder) to get auto-increment ID
 	configVersion := &model.ConfigVersion{
-		Version:   version,
+		Version:   0, // Placeholder, will be updated to ID
 		NodeID:    nodeID,
 		Payload:   payload,
+		Reason:    reason,
 		Status:    model.ConfigVersionStatusPending,
 		CreatedAt: time.Now(),
 	}
@@ -40,6 +35,15 @@ func (s *Service) CreateVersion(nodeID int, payload string) (*model.ConfigVersio
 	if err := s.db.Create(configVersion).Error; err != nil {
 		return nil, fmt.Errorf("failed to create config version: %w", err)
 	}
+
+	// Step 2: Update version to be equal to the auto-increment ID
+	// This guarantees global uniqueness and incrementing order
+	if err := s.db.Model(configVersion).Update("version", configVersion.ID).Error; err != nil {
+		return nil, fmt.Errorf("failed to update version to ID: %w", err)
+	}
+
+	// Step 3: Reload to get the updated version value
+	configVersion.Version = configVersion.ID
 
 	return configVersion, nil
 }
@@ -73,7 +77,7 @@ func (s *Service) GetByVersion(version int64) (*model.ConfigVersion, error) {
 }
 
 // UpdateStatus updates the status of a config version
-func (s *Service) UpdateStatus(version int64, status string) error {
+func (s *Service) UpdateStatus(version int64, status string, lastError ...string) error {
 	updates := map[string]interface{}{
 		"status": status,
 	}
@@ -81,6 +85,10 @@ func (s *Service) UpdateStatus(version int64, status string) error {
 	if status == model.ConfigVersionStatusApplied {
 		now := time.Now()
 		updates["applied_at"] = &now
+	}
+
+	if status == model.ConfigVersionStatusFailed && len(lastError) > 0 {
+		updates["last_error"] = lastError[0]
 	}
 
 	if err := s.db.Model(&model.ConfigVersion{}).

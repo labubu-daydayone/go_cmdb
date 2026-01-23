@@ -71,10 +71,16 @@ func (h *Handler) Apply(c *gin.Context) {
 		return
 	}
 
-	// Step 1: Create config version
-	// Generate payload first to get version
-	version := h.configVer.GenerateVersion()
-	payload, err := h.aggregator.GeneratePayload(req.NodeID, version)
+	// Step 1: Create config version with placeholder payload to get database-generated version ID
+	// This ensures version is globally unique and incrementing
+	configVersion, err := h.configVer.CreateVersion(req.NodeID, "{}", req.Reason)
+	if err != nil {
+		httpx.FailErr(c, httpx.ErrInternalError("failed to create config version", err))
+		return
+	}
+
+	// Step 2: Generate payload using the database-generated version
+	payload, err := h.aggregator.GeneratePayload(req.NodeID, configVersion.Version)
 	if err != nil {
 		httpx.FailErr(c, httpx.ErrInternalError("failed to generate payload", err))
 		return
@@ -87,14 +93,13 @@ func (h *Handler) Apply(c *gin.Context) {
 		return
 	}
 
-	// Create config version record
-	configVersion, err := h.configVer.CreateVersion(req.NodeID, payloadJSON)
-	if err != nil {
-		httpx.FailErr(c, httpx.ErrInternalError("failed to create config version", err))
+	// Step 3: Update config version with actual payload
+	if err := h.db.Model(configVersion).Update("payload", payloadJSON).Error; err != nil {
+		httpx.FailErr(c, httpx.ErrDatabaseError("failed to update payload", err))
 		return
 	}
 
-	// Step 2: Create agent task
+	// Step 4: Create agent task
 	requestID := uuid.New().String()
 	task := &model.AgentTask{
 		RequestID: requestID,
@@ -110,7 +115,7 @@ func (h *Handler) Apply(c *gin.Context) {
 		return
 	}
 
-	// Step 3: Dispatch task to agent (async)
+	// Step 5: Dispatch task to agent (async)
 	go func() {
 		if err := h.dispatcher.DispatchTask(task); err != nil {
 			log.Printf("Failed to dispatch task %d: %v", task.ID, err)

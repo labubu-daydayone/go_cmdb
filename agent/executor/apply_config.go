@@ -75,9 +75,12 @@ type VersionMeta struct {
 
 // ErrorMeta represents error metadata
 type ErrorMeta struct {
-	Version int64  `json:"version"`
-	Error   string `json:"error"`
-	Time    string `json:"time"`
+	Version  int64  `json:"version"`
+	Cmd      string `json:"cmd"`
+	ExitCode int    `json:"exitCode"`
+	Stderr   string `json:"stderr"`
+	Error    string `json:"error"`
+	Time     string `json:"time"`
 }
 
 // ApplyConfigExecutor handles apply_config task execution
@@ -139,14 +142,21 @@ func (e *ApplyConfigExecutor) Execute(payloadJSON string) (string, error) {
 		return "", fmt.Errorf("nginx test failed: %w", err)
 	}
 
-	// Step 5: Atomic switch (rename staging -> live)
-	liveDir := e.dirConfig.GetLiveDir()
-	if err := e.atomicSwitch(stagingDir, liveDir); err != nil {
+	// Step 5: Move staging to versions directory
+	versionDir := e.dirConfig.GetVersionDir(payload.Version)
+	if err := os.Rename(stagingDir, versionDir); err != nil {
 		e.writeLastError(payload.Version, err)
-		return "", fmt.Errorf("failed to switch to new configuration: %w", err)
+		e.dirConfig.CleanStagingDir(payload.Version)
+		return "", fmt.Errorf("failed to move staging to versions: %w", err)
 	}
 
-	// Step 6: Update metadata
+	// Step 6: Atomically switch live symlink to new version
+	if err := e.dirConfig.AtomicSwitchToVersion(payload.Version); err != nil {
+		e.writeLastError(payload.Version, err)
+		return "", fmt.Errorf("failed to switch live symlink: %w", err)
+	}
+
+	// Step 7: Update metadata
 	if err := e.writeAppliedVersion(payload.Version); err != nil {
 		return "", fmt.Errorf("failed to write applied version: %w", err)
 	}
@@ -155,7 +165,7 @@ func (e *ApplyConfigExecutor) Execute(payloadJSON string) (string, error) {
 		return "", fmt.Errorf("failed to write last success version: %w", err)
 	}
 
-	// Step 7: Reload nginx
+	// Step 8: Reload nginx
 	if err := e.nginxReload(); err != nil {
 		// Reload failed, but configuration is already applied
 		// Log error but don't fail the task
@@ -237,38 +247,45 @@ func (e *ApplyConfigExecutor) renderConfigurations(stagingDir string, payload *A
 
 // nginxTest executes nginx -t to validate configuration
 func (e *ApplyConfigExecutor) nginxTest(stagingDir string) error {
-	// For testing, we can use a mock nginx -t command
-	// In production, this should be the real nginx binary
-
-	cmd := exec.Command(e.dirConfig.NginxBin, "-t", "-c", filepath.Join(stagingDir, "nginx.conf"))
+	// Execute nginx test command
+	cmd := exec.Command("sh", "-c", e.dirConfig.NginxTestCmd)
 	output, err := cmd.CombinedOutput()
 
 	if err != nil {
-		return fmt.Errorf("nginx test failed: %w, output: %s", err, string(output))
-	}
-
-	return nil
-}
-
-// atomicSwitch atomically switches staging to live
-func (e *ApplyConfigExecutor) atomicSwitch(stagingDir, liveDir string) error {
-	// Remove old live directory if exists
-	if _, err := os.Stat(liveDir); err == nil {
-		oldDir := liveDir + ".old"
-		if err := os.Rename(liveDir, oldDir); err != nil {
-			return fmt.Errorf("failed to backup old live directory: %w", err)
+		// Extract exit code
+		exitCode := -1
+		if exitErr, ok := err.(*exec.ExitError); ok {
+			exitCode = exitErr.ExitCode()
 		}
-		// Clean up old directory in background
-		go os.RemoveAll(oldDir)
-	}
 
-	// Atomic rename
-	if err := os.Rename(stagingDir, liveDir); err != nil {
-		return fmt.Errorf("failed to rename staging to live: %w", err)
+		// Truncate stderr to 2KB
+		stderr := string(output)
+		if len(stderr) > 2048 {
+			stderr = stderr[:2048] + "... (truncated)"
+		}
+
+		return &NginxTestError{
+			Cmd:      e.dirConfig.NginxTestCmd,
+			ExitCode: exitCode,
+			Stderr:   stderr,
+		}
 	}
 
 	return nil
 }
+
+// NginxTestError represents nginx test error with detailed information
+type NginxTestError struct {
+	Cmd      string
+	ExitCode int
+	Stderr   string
+}
+
+func (e *NginxTestError) Error() string {
+	return fmt.Sprintf("nginx test failed (exit code %d): %s", e.ExitCode, e.Stderr)
+}
+
+
 
 // nginxReload reloads nginx
 func (e *ApplyConfigExecutor) nginxReload() error {
@@ -356,6 +373,13 @@ func (e *ApplyConfigExecutor) writeLastError(version int64, err error) {
 		Version: version,
 		Error:   err.Error(),
 		Time:    time.Now().Format(time.RFC3339),
+	}
+
+	// Extract detailed error info if it's a NginxTestError
+	if nginxErr, ok := err.(*NginxTestError); ok {
+		meta.Cmd = nginxErr.Cmd
+		meta.ExitCode = nginxErr.ExitCode
+		meta.Stderr = nginxErr.Stderr
 	}
 
 	data, _ := json.MarshalIndent(meta, "", "  ")
