@@ -171,8 +171,10 @@ func (w *Worker) processRequest(request *model.CertificateRequest) {
 		// Mark request as success
 		w.service.MarkAsSuccess(request.ID, existingCert.ID)
 		
-		// Trigger website HTTPS apply
-		w.triggerWebsiteApply(request.ID)
+	// Trigger website HTTPS apply and config apply
+	if err := w.service.OnCertificateIssued(request.ID, existingCert.ID); err != nil {
+		log.Printf("[ACME Worker] Failed to trigger post-issuance actions: %v\n", err)
+	}
 		
 		return
 	}
@@ -205,8 +207,10 @@ func (w *Worker) processRequest(request *model.CertificateRequest) {
 
 	log.Printf("[ACME Worker] Request %d completed successfully, certificate_id=%d\n", request.ID, certificate.ID)
 
-	// Step 13: Trigger website HTTPS apply
-	w.triggerWebsiteApply(request.ID)
+	// Step 13: Trigger website HTTPS apply and config apply
+	if err := w.service.OnCertificateIssued(request.ID, certificate.ID); err != nil {
+		log.Printf("[ACME Worker] Failed to trigger post-issuance actions: %v\n", err)
+	}
 }
 
 // ensureCertificateDomains ensures certificate_domains records exist
@@ -235,55 +239,7 @@ func (w *Worker) ensureCertificateDomains(certificateID int, domains []string) {
 	}
 }
 
-// triggerWebsiteApply triggers config apply for websites using this certificate
-func (w *Worker) triggerWebsiteApply(requestID int) {
-	// Get certificate bindings
-	bindings, err := w.service.GetCertificateBindingsByRequest(requestID)
-	if err != nil {
-		log.Printf("[ACME Worker] Failed to get certificate bindings: %v\n", err)
-		return
-	}
-
-	if len(bindings) == 0 {
-		log.Printf("[ACME Worker] No certificate bindings found for request %d\n", requestID)
-		return
-	}
-
-	// Activate bindings and trigger apply_config for each website
-	for _, binding := range bindings {
-		// Activate binding
-		if err := w.service.ActivateCertificateBinding(binding.ID); err != nil {
-			log.Printf("[ACME Worker] Failed to activate binding %d: %v\n", binding.ID, err)
-			continue
-		}
-
-		// Get website
-		var website model.Website
-		if err := w.db.First(&website, binding.WebsiteID).Error; err != nil {
-			log.Printf("[ACME Worker] Failed to get website %d: %v\n", binding.WebsiteID, err)
-			continue
-		}
-
-		// Trigger apply_config
-		// Note: This is a simplified version, actual implementation should use config service
-		log.Printf("[ACME Worker] Triggering apply_config for website %d (line_group_id=%d)\n", website.ID, website.LineGroupID)
-		
-	// Import config service
-	// Note: This creates a circular dependency, so we use a simplified approach
-	// In production, should use event bus or message queue
-	
-	// Update website_https.certificate_id
-	if err := w.db.Exec("UPDATE website_https SET certificate_id = ? WHERE website_id = ?", binding.CertificateID, website.ID).Error; err != nil {
-		log.Printf("[ACME Worker] Failed to update website_https.certificate_id: %v\n", err)
-		continue
-	}
-	
-	// Create config apply task
-	// This is a simplified version that directly creates agent_task
-	// In production, should call config service API
-	log.Printf("[ACME Worker] Certificate ready for website %d, triggering config apply\n", website.ID)
-	}
-}
+// triggerWebsiteApply is deprecated, use service.OnCertificateIssued instead
 
 // calculateFingerprint calculates SHA256 fingerprint of certificate
 func calculateFingerprint(certPem string) string {
