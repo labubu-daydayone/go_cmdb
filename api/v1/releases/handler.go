@@ -68,7 +68,7 @@ func (h *Handler) GetRelease(c *gin.Context) {
 		return
 	}
 
-	resp, err := h.service.GetRelease(id)
+	resp, err := h.service.GetReleaseDetail(id)
 	if err != nil {
 		// 如果是AppError，直接返回；否则包装为内部错误
 		if appErr, ok := err.(*httpx.AppError); ok {
@@ -76,6 +76,24 @@ func (h *Handler) GetRelease(c *gin.Context) {
 		} else {
 			httpx.FailErr(c, httpx.ErrInternalError("failed to get release", err))
 		}
+		return
+	}
+
+	httpx.OK(c, resp)
+}
+
+// ListReleases 查询发布任务列表
+// GET /api/v1/releases
+func (h *Handler) ListReleases(c *gin.Context) {
+	var req release.ListReleasesRequest
+	if err := c.ShouldBindQuery(&req); err != nil {
+		httpx.FailErr(c, httpx.ErrParamInvalid(err.Error()))
+		return
+	}
+
+	resp, err := h.service.ListReleases(&req)
+	if err != nil {
+		httpx.FailErr(c, httpx.ErrInternalError("failed to list releases", err))
 		return
 	}
 

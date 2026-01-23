@@ -194,8 +194,9 @@ func SetupRouter(r *gin.Engine, db *gorm.DB, cfg *config.Config) {
 				protected.GET("/certificates/:id/risks", risksHandlerInstance.ListCertificateRisks)
 				protected.POST("/websites/:id/precheck/https", risksHandlerInstance.PrecheckHTTPS)
 
-				// Release routes (B0-01-02, B0-01-03)
+				// Release routes (B0-01-02, B0-01-03, B0-01-04)
 				releasesHandlerInstance := releases.NewHandler(db)
+				protected.GET("/releases", releasesHandlerInstance.ListReleases)
 				protected.POST("/releases", releasesHandlerInstance.CreateRelease)
 				protected.GET("/releases/:id", releasesHandlerInstance.GetRelease)
 				}
