@@ -10,13 +10,14 @@ import (
 
 // Config holds all configuration
 type Config struct {
-	MySQL      MySQLConfig
-	Redis      RedisConfig
-	JWT        JWTConfig
-	Migrate    bool
-	HTTPAddr   string
-	AgentToken string // Deprecated: use mTLS instead
-	MTLS       MTLSConfig
+	MySQL       MySQLConfig
+	Redis       RedisConfig
+	JWT         JWTConfig
+	Migrate     bool
+	HTTPAddr    string
+	AgentToken  string // Deprecated: use mTLS instead
+	MTLS        MTLSConfig
+	RiskScanner RiskScannerConfig
 }
 
 // MySQLConfig holds MySQL configuration
@@ -46,6 +47,15 @@ type MTLSConfig struct {
 	CACert     string
 }
 
+// RiskScannerConfig holds risk scanner configuration
+type RiskScannerConfig struct {
+	Enabled               bool
+	IntervalSec           int
+	CertExpiringDays      int
+	CertExpiringThreshold int
+	ACMEMaxAttempts       int
+}
+
 // Load loads configuration from environment variables
 func Load() (*Config, error) {
 	// Load .env file if exists (ignore error if not found)
@@ -68,13 +78,20 @@ func Load() (*Config, error) {
 		Migrate:    getEnv("MIGRATE", "0") == "1",
 		HTTPAddr:   getEnv("HTTP_ADDR", ":8080"),
 		AgentToken: getEnv("AGENT_TOKEN", ""), // Deprecated
-		MTLS: MTLSConfig{
-			Enabled:    getEnv("MTLS_ENABLED", "0") == "1",
-			ClientCert: getEnv("CONTROL_CERT", ""),
-			ClientKey:  getEnv("CONTROL_KEY", ""),
-			CACert:     getEnv("CONTROL_CA", ""),
-		},
-	}
+			MTLS: MTLSConfig{
+				Enabled:    getEnv("MTLS_ENABLED", "0") == "1",
+				ClientCert: getEnv("CONTROL_CERT", ""),
+				ClientKey:  getEnv("CONTROL_KEY", ""),
+				CACert:     getEnv("CONTROL_CA", ""),
+			},
+			RiskScanner: RiskScannerConfig{
+				Enabled:               getEnv("RISK_SCANNER_ENABLED", "1") == "1",
+				IntervalSec:           getEnvInt("RISK_SCANNER_INTERVAL_SEC", 300),
+				CertExpiringDays:      getEnvInt("CERT_EXPIRING_DAYS", 15),
+				CertExpiringThreshold: getEnvInt("CERT_EXPIRING_WEBSITE_THRESHOLD", 2),
+				ACMEMaxAttempts:       getEnvInt("ACME_MAX_ATTEMPTS", 3),
+			},
+		}
 
 	// Validate required fields
 	if cfg.MySQL.DSN == "" {

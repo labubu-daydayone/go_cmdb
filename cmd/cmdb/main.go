@@ -9,6 +9,7 @@ import (
 	"go_cmdb/internal/cache"
 	"go_cmdb/internal/config"
 	"go_cmdb/internal/db"
+	"go_cmdb/internal/risk"
 
 	"github.com/gin-gonic/gin"
 )
@@ -53,7 +54,20 @@ func main() {
 	defer cache.Close()
 	log.Println("✓ Redis connected successfully")
 
-	// 5. Initialize Gin router
+	// 5. Start Risk Scanner
+	scannerConfig := risk.ScannerConfig{
+		Enabled:              cfg.RiskScanner.Enabled,
+		IntervalSec:          cfg.RiskScanner.IntervalSec,
+		CertExpiringDays:     cfg.RiskScanner.CertExpiringDays,
+		CertExpiringThreshold: cfg.RiskScanner.CertExpiringThreshold,
+		ACMEMaxAttempts:      cfg.RiskScanner.ACMEMaxAttempts,
+	}
+	scanner := risk.NewScanner(db.GetDB(), scannerConfig)
+	scanner.Start()
+	defer scanner.Stop()
+	log.Println("✓ Risk Scanner initialized")
+
+	// 6. Initialize Gin router
 	gin.SetMode(gin.ReleaseMode)
 	r := gin.Default()
 

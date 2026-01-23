@@ -34,6 +34,7 @@ func Migrate(db *gorm.DB) error {
 		&model.WebsiteHTTPS{},
 		&model.AgentTask{},
 		&model.AgentIdentity{},
+		&model.CertificateRisk{},
 	}
 
 	// Run AutoMigrate for all models
