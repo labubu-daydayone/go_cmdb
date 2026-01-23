@@ -34,10 +34,11 @@ const (
 
 // AppError represents an application error with HTTP status and business code
 type AppError struct {
-	HTTPStatus int    // HTTP status code
-	Code       int    // Business error code
-	Message    string // User-facing error message
-	Err        error  // Internal error (for logging only, not returned to client)
+	HTTPStatus int         // HTTP status code
+	Code       int         // Business error code
+	Message    string      // User-facing error message
+	Err        error       // Internal error (for logging only, not returned to client)
+	Data       interface{} // Additional data (for detailed error information)
 }
 
 // Error implements the error interface
@@ -46,6 +47,12 @@ func (e *AppError) Error() string {
 		return fmt.Sprintf("code=%d, message=%s, err=%v", e.Code, e.Message, e.Err)
 	}
 	return fmt.Sprintf("code=%d, message=%s", e.Code, e.Message)
+}
+
+// WithData adds additional data to the error
+func (e *AppError) WithData(data interface{}) *AppError {
+	e.Data = data
+	return e
 }
 
 // NewAppError creates a new AppError

@@ -49,9 +49,15 @@ func FailErr(c *gin.Context, err *AppError) {
 		log.Printf("[ERROR] %s (code=%d, internal_err=%v)", err.Message, err.Code, err.Err)
 	}
 
+	// Use err.Data if present, otherwise nil
+	data := err.Data
+	if data == nil {
+		data = nil // Explicitly set to nil for JSON serialization
+	}
+
 	c.JSON(err.HTTPStatus, Response{
 		Code:    err.Code,
 		Message: err.Message,
-		Data:    nil,
+		Data:    data,
 	})
 }

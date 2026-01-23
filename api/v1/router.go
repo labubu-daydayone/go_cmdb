@@ -5,6 +5,7 @@ import (
 	"go_cmdb/api/v1/agent_identities"
 	"go_cmdb/api/v1/agent_tasks"
 	"go_cmdb/api/v1/auth"
+	"go_cmdb/api/v1/cert"
 	"go_cmdb/api/v1/certificate_renew"
 	configHandler "go_cmdb/api/v1/config"
 	dnsHandler "go_cmdb/api/v1/dns"
@@ -174,6 +175,11 @@ func SetupRouter(r *gin.Engine, db *gorm.DB, cfg *config.Config) {
 					certificateRenewGroup.POST("/trigger", certificateRenewHandlerInstance.TriggerRenewal)
 					certificateRenewGroup.POST("/disable-auto", certificateRenewHandlerInstance.DisableAutoRenew)
 				}
+
+				// Certificate coverage routes (T2-07)
+				certHandlerInstance := cert.NewHandler(db)
+				protected.GET("/certificates/:id/websites", certHandlerInstance.GetCertificateWebsites)
+				protected.GET("/websites/:id/certificates/candidates", certHandlerInstance.GetWebsiteCertificateCandidates)
 				}
 		}
 	}

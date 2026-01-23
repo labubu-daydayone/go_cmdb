@@ -1,6 +1,7 @@
 package websites
 
 import (
+	"go_cmdb/internal/cert"
 	"go_cmdb/internal/httpx"
 	"go_cmdb/internal/model"
 	"strconv"
@@ -11,12 +12,16 @@ import (
 
 // Handler 网站管理handler
 type Handler struct {
-	db *gorm.DB
+	db          *gorm.DB
+	certService *cert.Service
 }
 
 // NewHandler 创建handler
 func NewHandler(db *gorm.DB) *Handler {
-	return &Handler{db: db}
+	return &Handler{
+		db:          db,
+		certService: cert.NewService(db),
+	}
 }
 
 // ListRequest 列表请求
@@ -294,22 +299,29 @@ func (h *Handler) Create(c *gin.Context) {
 			}
 		}
 
-		// 6. 创建website_https（如果enabled）
-		if req.HTTPS != nil && req.HTTPS.Enabled {
-			https := model.WebsiteHTTPS{
-				WebsiteID:      website.ID,
-				Enabled:        true,
-				ForceRedirect:  req.HTTPS.ForceRedirect,
-				HSTS:           req.HTTPS.HSTS,
-				CertMode:       req.HTTPS.CertMode,
-				CertificateID:  req.HTTPS.CertificateID,
-				ACMEProviderID: req.HTTPS.ACMEProviderID,
-				ACMEAccountID:  req.HTTPS.ACMEAccountID,
+			// 6. 创建website_https（如果enabled）
+			if req.HTTPS != nil && req.HTTPS.Enabled {
+				// select模式：校验证书覆盖
+				if req.HTTPS.CertMode == model.CertModeSelect {
+					if err := h.validateCertificateCoverage(tx, req.HTTPS.CertificateID, website.ID); err != nil {
+						return err
+					}
+				}
+
+				https := model.WebsiteHTTPS{
+					WebsiteID:      website.ID,
+					Enabled:        true,
+					ForceRedirect:  req.HTTPS.ForceRedirect,
+					HSTS:           req.HTTPS.HSTS,
+					CertMode:       req.HTTPS.CertMode,
+					CertificateID:  req.HTTPS.CertificateID,
+					ACMEProviderID: req.HTTPS.ACMEProviderID,
+					ACMEAccountID:  req.HTTPS.ACMEAccountID,
+				}
+				if err := tx.Create(&https).Error; err != nil {
+					return httpx.ErrDatabaseError("failed to create website https", err)
+				}
 			}
-			if err := tx.Create(&https).Error; err != nil {
-				return httpx.ErrDatabaseError("failed to create website https", err)
-			}
-		}
 
 		return nil
 	})
@@ -356,6 +368,16 @@ func (h *Handler) validateCreateRequest(req *CreateRequest) *httpx.AppError {
 		} else if req.HTTPS.CertMode == model.CertModeACME {
 			if req.HTTPS.ACMEProviderID <= 0 && req.HTTPS.ACMEAccountID <= 0 {
 				return httpx.ErrParamMissing("acme_provider_id or acme_account_id is required for acme mode")
+			}
+			// ACME模式：简单校验域名非空和合法性
+			if len(req.Domains) == 0 {
+				return httpx.ErrParamMissing("domains is required for acme mode")
+			}
+			// 简单域名合法性校验（可选）
+			for _, domain := range req.Domains {
+				if domain == "" {
+					return httpx.ErrParamInvalid("domain cannot be empty")
+				}
 			}
 		}
 	}
@@ -601,42 +623,49 @@ func (h *Handler) Update(c *gin.Context) {
 		}
 
 		// 更新HTTPS配置
-		if req.HTTPS != nil {
-			var https model.WebsiteHTTPS
-			err := tx.Where("website_id = ?", website.ID).First(&https).Error
-			if err == gorm.ErrRecordNotFound {
-				// 创建新记录
-				https = model.WebsiteHTTPS{
-					WebsiteID:      website.ID,
-					Enabled:        req.HTTPS.Enabled,
-					ForceRedirect:  req.HTTPS.ForceRedirect,
-					HSTS:           req.HTTPS.HSTS,
-					CertMode:       req.HTTPS.CertMode,
-					CertificateID:  req.HTTPS.CertificateID,
-					ACMEProviderID: req.HTTPS.ACMEProviderID,
-					ACMEAccountID:  req.HTTPS.ACMEAccountID,
+			if req.HTTPS != nil {
+				// select模式且enabled：校验证书覆盖
+				if req.HTTPS.Enabled && req.HTTPS.CertMode == model.CertModeSelect {
+					if err := h.validateCertificateCoverage(tx, req.HTTPS.CertificateID, website.ID); err != nil {
+						return err
+					}
 				}
-				if err := tx.Create(&https).Error; err != nil {
-					return httpx.ErrDatabaseError("failed to create website https", err)
-				}
-			} else if err != nil {
-				return httpx.ErrDatabaseError("failed to query website https", err)
-			} else {
-				// 更新现有记录
-				httpsUpdates := map[string]interface{}{
-					"enabled":         req.HTTPS.Enabled,
-					"force_redirect":  req.HTTPS.ForceRedirect,
-					"hsts":            req.HTTPS.HSTS,
-					"cert_mode":       req.HTTPS.CertMode,
-					"certificate_id":  req.HTTPS.CertificateID,
-					"acme_provider_id": req.HTTPS.ACMEProviderID,
-					"acme_account_id":  req.HTTPS.ACMEAccountID,
-				}
-				if err := tx.Model(&https).Updates(httpsUpdates).Error; err != nil {
-					return httpx.ErrDatabaseError("failed to update website https", err)
+
+				var https model.WebsiteHTTPS
+				err := tx.Where("website_id = ?", website.ID).First(&https).Error
+				if err == gorm.ErrRecordNotFound {
+					// 创建新记录
+					https = model.WebsiteHTTPS{
+						WebsiteID:      website.ID,
+						Enabled:        req.HTTPS.Enabled,
+						ForceRedirect:  req.HTTPS.ForceRedirect,
+						HSTS:           req.HTTPS.HSTS,
+						CertMode:       req.HTTPS.CertMode,
+						CertificateID:  req.HTTPS.CertificateID,
+						ACMEProviderID: req.HTTPS.ACMEProviderID,
+						ACMEAccountID:  req.HTTPS.ACMEAccountID,
+					}
+					if err := tx.Create(&https).Error; err != nil {
+						return httpx.ErrDatabaseError("failed to create website https", err)
+					}
+				} else if err != nil {
+					return httpx.ErrDatabaseError("failed to query website https", err)
+				} else {
+					// 更新现有记录
+					httpsUpdates := map[string]interface{}{
+						"enabled":         req.HTTPS.Enabled,
+						"force_redirect":  req.HTTPS.ForceRedirect,
+						"hsts":            req.HTTPS.HSTS,
+						"cert_mode":       req.HTTPS.CertMode,
+						"certificate_id":  req.HTTPS.CertificateID,
+						"acme_provider_id": req.HTTPS.ACMEProviderID,
+						"acme_account_id":  req.HTTPS.ACMEAccountID,
+					}
+					if err := tx.Model(&https).Updates(httpsUpdates).Error; err != nil {
+						return httpx.ErrDatabaseError("failed to update website https", err)
+					}
 				}
 			}
-		}
 
 		return nil
 	})
@@ -767,4 +796,45 @@ func (h *Handler) GetByID(c *gin.Context) {
 	}
 
 	httpx.OK(c, website)
+}
+
+// validateCertificateCoverage validates if a certificate covers all website domains
+// Returns AppError if coverage is not complete (T2-07)
+func (h *Handler) validateCertificateCoverage(tx *gorm.DB, certificateID int, websiteID int) *httpx.AppError {
+	// Check if certificate exists
+	var certExists bool
+	if err := tx.Raw("SELECT EXISTS(SELECT 1 FROM certificates WHERE id = ?)", certificateID).Scan(&certExists).Error; err != nil {
+		return httpx.ErrDatabaseError("failed to check certificate", err)
+	}
+
+	if !certExists {
+		return httpx.ErrNotFound("certificate not found")
+	}
+
+	// Get certificate domains
+	certDomains, err := h.certService.GetCertificateDomains(certificateID)
+	if err != nil {
+		return httpx.ErrDatabaseError("failed to get certificate domains", err)
+	}
+
+	// Get website domains
+	websiteDomains, err := h.certService.GetWebsiteDomains(websiteID)
+	if err != nil {
+		return httpx.ErrDatabaseError("failed to get website domains", err)
+	}
+
+	// Calculate coverage
+	coverage := cert.CalculateCoverage(certDomains, websiteDomains)
+
+	// Only allow if fully covered
+	if coverage.Status != cert.CoverageStatusCovered {
+		return httpx.ErrStateConflict("Certificate does not cover all website domains").WithData(gin.H{
+			"certificateDomains": certDomains,
+			"websiteDomains":     websiteDomains,
+			"missingDomains":     coverage.MissingDomains,
+			"coverageStatus":     coverage.Status,
+		})
+	}
+
+	return nil
 }
