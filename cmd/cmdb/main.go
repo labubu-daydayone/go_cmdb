@@ -5,9 +5,11 @@ import (
 	"os"
 
 	"go_cmdb/api/v1"
+	"go_cmdb/internal/auth"
 	"go_cmdb/internal/cache"
 	"go_cmdb/internal/config"
 	"go_cmdb/internal/db"
+	"go_cmdb/internal/model"
 
 	"github.com/gin-gonic/gin"
 )
@@ -27,20 +29,31 @@ func main() {
 		os.Exit(1)
 	}
 	defer db.Close()
+	log.Println("✓ MySQL connected successfully")
 
-	// 3. Initialize Redis
+	// Auto migrate user table
+	if err := db.GetDB().AutoMigrate(&model.User{}); err != nil {
+		log.Printf("Warning: Failed to auto migrate: %v", err)
+	}
+
+	// 3. Initialize JWT
+	auth.InitJWT(cfg.JWT.Secret)
+	log.Println("✓ JWT initialized")
+
+	// 4. Initialize Redis
 	if err := cache.InitRedis(cfg.Redis.Addr, cfg.Redis.Password, cfg.Redis.DB); err != nil {
 		log.Fatalf("Failed to initialize Redis: %v", err)
 		os.Exit(1)
 	}
 	defer cache.Close()
+	log.Println("✓ Redis connected successfully")
 
-	// 4. Initialize Gin router
+	// 5. Initialize Gin router
 	gin.SetMode(gin.ReleaseMode)
 	r := gin.Default()
 
 	// Setup API v1 routes
-	v1.SetupRouter(r)
+	v1.SetupRouter(r, db.GetDB(), cfg)
 
 	log.Printf("✓ Server starting on %s", cfg.HTTPAddr)
 

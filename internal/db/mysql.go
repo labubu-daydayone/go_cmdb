@@ -32,6 +32,11 @@ func InitMySQL(dsn string) error {
 	return nil
 }
 
+// GetDB returns the database instance
+func GetDB() *gorm.DB {
+	return DB
+}
+
 // Close closes the database connection
 func Close() error {
 	if DB != nil {

@@ -1,16 +1,27 @@
 package v1
 
 import (
+	"go_cmdb/api/v1/auth"
+	"go_cmdb/api/v1/middleware"
+	"go_cmdb/internal/config"
 	"go_cmdb/internal/httpx"
 
 	"github.com/gin-gonic/gin"
+	"gorm.io/gorm"
 )
 
 // SetupRouter sets up the API v1 routes
-func SetupRouter(r *gin.Engine) {
+func SetupRouter(r *gin.Engine, db *gorm.DB, cfg *config.Config) {
 	v1 := r.Group("/api/v1")
 	{
+		// Public routes (no authentication required)
 		v1.GET("/ping", pingHandler)
+
+		// Auth routes
+		authGroup := v1.Group("/auth")
+		{
+			authGroup.POST("/login", auth.LoginHandler(db, cfg))
+		}
 
 		// Demo routes for testing error responses
 		demo := v1.Group("/demo")
@@ -19,6 +30,13 @@ func SetupRouter(r *gin.Engine) {
 			demo.GET("/param", demoParamHandler)
 			demo.GET("/notfound", demoNotFoundHandler)
 		}
+
+		// Protected routes (authentication required)
+		protected := v1.Group("")
+		protected.Use(middleware.AuthRequired())
+		{
+			protected.GET("/me", meHandler)
+		}
 	}
 }
 
@@ -26,6 +44,19 @@ func SetupRouter(r *gin.Engine) {
 func pingHandler(c *gin.Context) {
 	httpx.OK(c, gin.H{
 		"pong": true,
+	})
+}
+
+// meHandler returns current user information
+func meHandler(c *gin.Context) {
+	uid, _ := c.Get("uid")
+	username, _ := c.Get("username")
+	role, _ := c.Get("role")
+
+	httpx.OK(c, gin.H{
+		"uid":      uid,
+		"username": username,
+		"role":     role,
 	})
 }
 
