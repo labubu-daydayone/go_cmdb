@@ -15,8 +15,9 @@ echo "=========================================="
 # 清理测试数据
 echo ""
 echo "清理测试数据..."
-sshpass -p "Uviev5Ohyeit" ssh -o StrictHostKeyChecking=no root@20.2.140.226 "$MYSQL_CMD -e \"DELETE FROM api_keys WHERE name LIKE 'test_%';\""
 sshpass -p "Uviev5Ohyeit" ssh -o StrictHostKeyChecking=no root@20.2.140.226 "$MYSQL_CMD -e \"DELETE FROM domain_dns_providers WHERE api_key_id IN (SELECT id FROM api_keys WHERE name LIKE 'test_%');\""
+sshpass -p "Uviev5Ohyeit" ssh -o StrictHostKeyChecking=no root@20.2.140.226 "$MYSQL_CMD -e \"DELETE FROM domains WHERE domain LIKE 'test-domain-%';\""
+sshpass -p "Uviev5Ohyeit" ssh -o StrictHostKeyChecking=no root@20.2.140.226 "$MYSQL_CMD -e \"DELETE FROM api_keys WHERE name LIKE 'test_%';\""
 echo "✓ 测试数据已清理"
 
 # ==================== SQL 验证 ====================
