@@ -208,9 +208,10 @@ func SetupRouter(r *gin.Engine, db *gorm.DB, cfg *config.Config) {
 				protected.POST("/releases", releasesHandlerInstance.CreateRelease)
 				protected.GET("/releases/:id", releasesHandlerInstance.GetRelease)
 
-				// Domain routes (T2-10-02)
+				// Domain routes (T2-10-02, T2-10-03)
 				domainsGroup := protected.Group("/domains")
 				{
+					domainsGroup.GET("", domains.ListDomains)
 					domainsGroup.POST("/sync", domains.SyncDomains)
 				}
 

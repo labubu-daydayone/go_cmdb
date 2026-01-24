@@ -2,6 +2,7 @@ package domains
 
 import (
 	"net/http"
+	"strconv"
 
 	"github.com/gin-gonic/gin"
 
@@ -50,5 +51,49 @@ func SyncDomains(c *gin.Context) {
 			Created: result.Created,
 			Updated: result.Updated,
 		},
+	})
+}
+
+// ListDomains handles GET /api/v1/domains
+func ListDomains(c *gin.Context) {
+	// Parse query parameters
+	page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
+	pageSize, _ := strconv.Atoi(c.DefaultQuery("pageSize", "20"))
+	keyword := c.Query("keyword")
+	purpose := c.Query("purpose")
+	provider := c.Query("provider")
+	apiKeyIDStr := c.Query("apiKeyId")
+	status := c.Query("status")
+
+	params := domain.ListDomainsParams{
+		Page:     page,
+		PageSize: pageSize,
+		Keyword:  keyword,
+		Purpose:  purpose,
+		Provider: provider,
+		Status:   status,
+	}
+
+	// Parse apiKeyId if provided
+	if apiKeyIDStr != "" {
+		if apiKeyID, err := strconv.ParseInt(apiKeyIDStr, 10, 64); err == nil {
+			params.APIKeyID = &apiKeyID
+		}
+	}
+
+	result, err := domain.ListDomains(c.Request.Context(), params)
+	if err != nil {
+		c.JSON(http.StatusOK, gin.H{
+			"code":    1003,
+			"message": "query failed: " + err.Error(),
+			"data":    nil,
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"code":    0,
+		"message": "success",
+		"data":    result,
 	})
 }
