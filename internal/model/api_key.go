@@ -29,3 +29,12 @@ type APIKey struct {
 func (APIKey) TableName() string {
 	return "api_keys"
 }
+
+// MaskedToken returns a masked version of the API token
+// showing only the last 4 characters (e.g., "****abcd")
+func (k *APIKey) MaskedToken() string {
+	if len(k.APIToken) <= 4 {
+		return "****"
+	}
+	return "****" + k.APIToken[len(k.APIToken)-4:]
+}

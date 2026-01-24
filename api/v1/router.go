@@ -4,6 +4,7 @@ import (
 	"go_cmdb/api/v1/acme"
 	"go_cmdb/api/v1/agent_identities"
 	"go_cmdb/api/v1/agent_tasks"
+	"go_cmdb/api/v1/api_keys"
 	"go_cmdb/api/v1/auth"
 	"go_cmdb/api/v1/cert"
 	"go_cmdb/api/v1/certificate_renew"
@@ -211,6 +212,16 @@ func SetupRouter(r *gin.Engine, db *gorm.DB, cfg *config.Config) {
 				domainsGroup := protected.Group("/domains")
 				{
 					domainsGroup.POST("/sync", domains.SyncDomains)
+				}
+
+				// API Keys routes (T2-10-00)
+				apiKeysGroup := protected.Group("/api-keys")
+				{
+					apiKeysGroup.GET("", api_keys.List)
+					apiKeysGroup.POST("/create", api_keys.Create)
+					apiKeysGroup.POST("/update", api_keys.Update)
+					apiKeysGroup.POST("/delete", api_keys.Delete)
+					apiKeysGroup.POST("/toggle-status", api_keys.ToggleStatus)
 				}
 				}
 		}
