@@ -5,8 +5,10 @@ type DNSProvider string
 
 const (
 	DNSProviderCloudflare DNSProvider = "cloudflare"
-	DNSProviderRoute53    DNSProvider = "route53"
 	DNSProviderAliyun     DNSProvider = "aliyun"
+	DNSProviderTencent    DNSProvider = "tencent"
+	DNSProviderHuawei     DNSProvider = "huawei"
+	DNSProviderManual     DNSProvider = "manual"
 )
 
 // DNSProviderStatus represents DNS provider status
