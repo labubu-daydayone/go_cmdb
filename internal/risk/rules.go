@@ -139,13 +139,14 @@ func (r *CertExpiringRule) Detect(db *gorm.DB) ([]model.CertificateRisk, error) 
 		SELECT 
 			c.id AS certificate_id,
 			c.expire_at,
-			GROUP_CONCAT(cb.website_id) AS affected_websites,
-			COUNT(DISTINCT cb.website_id) AS website_count
+			GROUP_CONCAT(cb.bind_id) AS affected_websites,
+			COUNT(DISTINCT cb.bind_id) AS website_count
 		FROM certificates c
 		JOIN certificate_bindings cb ON c.id = cb.certificate_id
 		WHERE c.expire_at < ?
 		  AND c.expire_at > NOW()
-		  AND cb.active = 1
+		  AND cb.bind_type = 'website'
+		  AND cb.is_active = 1
 		GROUP BY c.id, c.expire_at
 		HAVING website_count >= ?
 	`, expiringDate, r.WebsiteThreshold).Scan(&results).Error
@@ -215,18 +216,19 @@ func (r *ACMERenewFailedRule) Detect(db *gorm.DB) ([]model.CertificateRisk, erro
 
 	err := db.Raw(`
 		SELECT 
-			cr.renew_cert_id AS certificate_id,
+			cr.result_certificate_id AS certificate_id,
 			cr.id AS request_id,
 			cr.attempts,
 			cr.last_error
 		FROM certificate_requests cr
 		WHERE cr.status = 'failed'
 		  AND cr.attempts >= ?
-		  AND cr.renew_cert_id IS NOT NULL
+		  AND cr.result_certificate_id IS NOT NULL
 		  AND EXISTS (
 			  SELECT 1 FROM certificate_bindings cb
-			  WHERE cb.certificate_id = cr.renew_cert_id
-			    AND cb.active = 1
+			  WHERE cb.certificate_id = cr.result_certificate_id
+			    AND cb.bind_type = 'website'
+			    AND cb.is_active = 1
 		  )
 	`, r.MaxAttempts).Scan(&results).Error
 
