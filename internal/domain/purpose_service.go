@@ -96,9 +96,11 @@ func DisableCDN(ctx context.Context, domainID int) (*model.Domain, error) {
 	}
 
 	// 4. Check if domain is used by websites (through website_domains)
+	// Use JOIN to check by domain ID
 	var websiteDomainCount int64
 	if err := db.DB.Table("website_domains").
-		Where("domain_id = ?", domainID).
+		Joins("INNER JOIN domains ON website_domains.domain = domains.domain").
+		Where("domains.id = ?", domainID).
 		Count(&websiteDomainCount).Error; err != nil {
 		return nil, fmt.Errorf("failed to check website usage: %w", err)
 	}
