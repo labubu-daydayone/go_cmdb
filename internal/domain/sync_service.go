@@ -84,9 +84,10 @@ func syncSingleZone(apiKeyID int, zone cloudflare.Zone) (bool, error) {
 	if err != nil {
 		// Domain does not exist, create it with purpose=unset
 		newDomain := model.Domain{
-			Domain:  zone.Name,
-			Purpose: model.DomainPurposeUnset,
-			Status:  model.DomainStatusActive,
+			Domain:         zone.Name,
+			Purpose:        model.DomainPurposeUnset,
+			Status:         model.DomainStatusActive,
+			ProviderZoneID: zone.ID,
 		}
 		if err := tx.Create(&newDomain).Error; err != nil {
 			tx.Rollback()
@@ -95,8 +96,15 @@ func syncSingleZone(apiKeyID int, zone cloudflare.Zone) (bool, error) {
 		domainID = newDomain.ID
 		created = true
 	} else {
-		// Domain exists, do not modify purpose
+		// Domain exists, update provider_zone_id to ensure consistency
 		domainID = existingDomain.ID
+		if existingDomain.ProviderZoneID != zone.ID {
+			if err := tx.Model(&model.Domain{}).Where("id = ?", domainID).Update("provider_zone_id", zone.ID).Error; err != nil {
+				tx.Rollback()
+				return false, fmt.Errorf("failed to update domain provider_zone_id: %w", err)
+			}
+			log.Printf("[DomainSync] Updated provider_zone_id for domain %s: %s -> %s", zone.Name, existingDomain.ProviderZoneID, zone.ID)
+		}
 	}
 
 	// 2. Check if domain is already bound to a non-cloudflare provider

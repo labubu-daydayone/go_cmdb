@@ -20,9 +20,10 @@ const (
 // Domain represents a domain/zone
 type Domain struct {
 	BaseModel
-	Domain  string        `gorm:"type:varchar(255);uniqueIndex;not null" json:"domain"`
-	Purpose DomainPurpose `gorm:"type:enum('unset','cdn','general');default:'unset'" json:"purpose"`
-	Status  DomainStatus  `gorm:"type:enum('active','inactive');default:'active'" json:"status"`
+	Domain         string        `gorm:"type:varchar(255);uniqueIndex;not null" json:"domain"`
+	Purpose        DomainPurpose `gorm:"type:enum('unset','cdn','general');default:'unset'" json:"purpose"`
+	Status         DomainStatus  `gorm:"type:enum('active','inactive');default:'active'" json:"status"`
+	ProviderZoneID string        `gorm:"type:varchar(128);index:idx_domains_provider_zone_id" json:"-"` // DNS provider zone id, not exposed in API
 }
 
 // TableName specifies the table name for Domain model
