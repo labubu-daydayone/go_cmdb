@@ -25,7 +25,7 @@ type Handler struct {
 func NewHandler(db *gorm.DB, cfg *config.Config) *Handler {
 	dispatcher, err := agent.NewDispatcher(db, cfg)
 	if err != nil {
-		log.Fatalf("Failed to create dispatcher: %v", err)
+		log.Printf("⚠ Failed to create dispatcher: %v", err)
 	}
 
 	return &Handler{

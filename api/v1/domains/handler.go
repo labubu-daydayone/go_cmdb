@@ -97,3 +97,85 @@ func ListDomains(c *gin.Context) {
 		"data":    result,
 	})
 }
+
+// EnableCDN handles POST /api/v1/domains/:id/enable-cdn
+func EnableCDN(c *gin.Context) {
+	// Parse domain ID from URL parameter
+	domainIDStr := c.Param("id")
+	domainID, err := strconv.Atoi(domainIDStr)
+	if err != nil {
+		c.JSON(http.StatusOK, gin.H{
+			"code":    2001,
+			"message": "invalid domain id",
+			"data":    nil,
+		})
+		return
+	}
+
+	// Call service to enable CDN
+	updatedDomain, err := domain.EnableCDN(c.Request.Context(), domainID)
+	if err != nil {
+		// Determine error code based on error message
+		code := 3003
+		if err.Error() == "domain not found" {
+			code = 3001
+		}
+		c.JSON(http.StatusOK, gin.H{
+			"code":    code,
+			"message": err.Error(),
+			"data":    nil,
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"code":    0,
+		"message": "success",
+		"data": gin.H{
+			"id":      updatedDomain.ID,
+			"domain":  updatedDomain.Domain,
+			"purpose": updatedDomain.Purpose,
+		},
+	})
+}
+
+// DisableCDN handles POST /api/v1/domains/:id/disable-cdn
+func DisableCDN(c *gin.Context) {
+	// Parse domain ID from URL parameter
+	domainIDStr := c.Param("id")
+	domainID, err := strconv.Atoi(domainIDStr)
+	if err != nil {
+		c.JSON(http.StatusOK, gin.H{
+			"code":    2001,
+			"message": "invalid domain id",
+			"data":    nil,
+		})
+		return
+	}
+
+	// Call service to disable CDN
+	updatedDomain, err := domain.DisableCDN(c.Request.Context(), domainID)
+	if err != nil {
+		// Determine error code based on error message
+		code := 3003
+		if err.Error() == "domain not found" {
+			code = 3001
+		}
+		c.JSON(http.StatusOK, gin.H{
+			"code":    code,
+			"message": err.Error(),
+			"data":    nil,
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"code":    0,
+		"message": "success",
+		"data": gin.H{
+			"id":      updatedDomain.ID,
+			"domain":  updatedDomain.Domain,
+			"purpose": updatedDomain.Purpose,
+		},
+	})
+}
