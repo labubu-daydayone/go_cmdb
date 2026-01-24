@@ -159,12 +159,13 @@ func SetupRouter(r *gin.Engine, db *gorm.DB, cfg *config.Config) {
 				dnsHandlerInstance := dnsHandler.NewHandler(db)
 				dnsGroup := protected.Group("/dns")
 				{
-				dnsGroup.GET("/records", dnsHandlerInstance.ListRecords)
-				dnsGroup.GET("/records/:id", dnsHandlerInstance.GetRecord)
-				dnsGroup.POST("/records/create", dnsHandlerInstance.CreateRecord)
-				dnsGroup.POST("/records/delete", dnsHandlerInstance.DeleteRecord)
-				dnsGroup.POST("/records/retry", dnsHandlerInstance.RetryRecord)
-			}
+					dnsGroup.GET("/records", dnsHandlerInstance.ListRecords)
+					dnsGroup.GET("/records/:id", dnsHandlerInstance.GetRecord)
+					dnsGroup.POST("/records/create", dnsHandlerInstance.CreateRecord)
+					dnsGroup.POST("/records/delete", dnsHandlerInstance.DeleteRecord)
+					dnsGroup.POST("/records/retry", dnsHandlerInstance.RetryRecord)
+					dnsGroup.POST("/records/sync", dnsHandlerInstance.SyncRecords)
+				}
 
 				// ACME routes
 				acmeHandlerInstance := acme.NewHandler(db)

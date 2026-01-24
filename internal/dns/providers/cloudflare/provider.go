@@ -342,3 +342,44 @@ func formatErrors(errors []CloudflareError) string {
 
 	return fmt.Sprintf("%v", errMsgs)
 }
+
+// ListRecords lists all DNS records for a zone
+func (p *CloudflareProvider) ListRecords(ctx context.Context, zoneID string) ([]CloudflareRecord, error) {
+	url := fmt.Sprintf("%s/zones/%s/dns_records?per_page=1000", cloudflareAPIBase, zoneID)
+
+	req, err := http.NewRequestWithContext(ctx, "GET", url, nil)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create request: %w", err)
+	}
+
+	req.Header.Set("X-Auth-Email", p.email)
+	req.Header.Set("X-Auth-Key", p.apiToken)
+	req.Header.Set("Content-Type", "application/json")
+
+	resp, err := p.client.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("failed to send request: %w", err)
+	}
+	defer resp.Body.Close()
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read response: %w", err)
+	}
+
+	var cfResp CloudflareResponse
+	if err := json.Unmarshal(body, &cfResp); err != nil {
+		return nil, fmt.Errorf("failed to parse response: %w", err)
+	}
+
+	if !cfResp.Success {
+		return nil, fmt.Errorf("cloudflare API error: %s", formatErrors(cfResp.Errors))
+	}
+
+	var records []CloudflareRecord
+	if err := json.Unmarshal(cfResp.Result, &records); err != nil {
+		return nil, fmt.Errorf("failed to parse result: %w", err)
+	}
+
+	return records, nil
+}

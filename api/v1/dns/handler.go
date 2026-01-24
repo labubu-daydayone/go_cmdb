@@ -267,3 +267,38 @@ func (h *Handler) GetRecord(c *gin.Context) {
 		"data":    record,
 	})
 }
+
+// SyncRecordsRequest represents the request body for syncing DNS records
+type SyncRecordsRequest struct {
+	DomainID int `json:"domainId" binding:"required"`
+}
+
+// SyncRecords pulls DNS records from Cloudflare and syncs to local database
+// POST /api/v1/dns/records/sync
+func (h *Handler) SyncRecords(c *gin.Context) {
+	var req SyncRecordsRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusOK, gin.H{
+			"code":    2001,
+			"message": "invalid request: " + err.Error(),
+			"data":    nil,
+		})
+		return
+	}
+
+	result, err := dns.PullSyncRecords(c.Request.Context(), req.DomainID)
+	if err != nil {
+		c.JSON(http.StatusOK, gin.H{
+			"code":    3001,
+			"message": "sync failed: " + err.Error(),
+			"data":    nil,
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"code":    0,
+		"message": "success",
+		"data":    result,
+	})
+}

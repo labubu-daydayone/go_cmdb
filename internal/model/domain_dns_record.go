@@ -32,6 +32,7 @@ const (
 	DNSRecordOwnerLineGroup      DNSRecordOwnerType = "line_group"
 	DNSRecordOwnerWebsiteDomain  DNSRecordOwnerType = "website_domain"
 	DNSRecordOwnerACMEChallenge  DNSRecordOwnerType = "acme_challenge"
+	DNSRecordOwnerExternal       DNSRecordOwnerType = "external" // External records from Cloudflare pull sync
 )
 
 // DNSRecordDesiredState represents desired state of DNS record
@@ -57,7 +58,7 @@ type DomainDNSRecord struct {
 	LastError        string             `gorm:"type:varchar(255)" json:"last_error"`
 	RetryCount       int                `gorm:"default:0" json:"retry_count"`
 	NextRetryAt      *time.Time         `json:"next_retry_at"`
-	OwnerType        DNSRecordOwnerType `gorm:"type:enum('node_group','line_group','website_domain','acme_challenge');index:idx_owner;not null" json:"owner_type"`
+	OwnerType        DNSRecordOwnerType `gorm:"type:enum('node_group','line_group','website_domain','acme_challenge','external');index:idx_owner;not null" json:"owner_type"`
 	OwnerID          int                `gorm:"index:idx_owner;not null" json:"owner_id"`
 }
 
