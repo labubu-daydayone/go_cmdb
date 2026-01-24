@@ -25,6 +25,7 @@ func SyncDomainsByAPIKey(ctx context.Context, apiKeyID int) (*SyncResult, error)
 		ID       int    `gorm:"column:id"`
 		Provider string `gorm:"column:provider"`
 		APIToken string `gorm:"column:api_token"`
+		Account  string `gorm:"column:account"`
 	}
 	if err := db.DB.Table("api_keys").Where("id = ?", apiKeyID).First(&apiKey).Error; err != nil {
 		return nil, fmt.Errorf("api_key not found: %w", err)
@@ -36,7 +37,7 @@ func SyncDomainsByAPIKey(ctx context.Context, apiKeyID int) (*SyncResult, error)
 	}
 
 	// 3. Call Cloudflare API: List Zones
-	cfProvider := cloudflare.NewCloudflareProvider(apiKey.APIToken)
+	cfProvider := cloudflare.NewCloudflareProvider(apiKey.Account, apiKey.APIToken)
 	zones, err := cfProvider.ListZones(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to list cloudflare zones: %w", err)

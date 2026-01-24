@@ -34,7 +34,8 @@ func (p *CloudflareProvider) ListZones(ctx context.Context) ([]Zone, error) {
 		return nil, fmt.Errorf("failed to create request: %w", err)
 	}
 
-	req.Header.Set("Authorization", "Bearer "+p.apiToken)
+	req.Header.Set("X-Auth-Email", p.email)
+	req.Header.Set("X-Auth-Key", p.apiToken)
 	req.Header.Set("Content-Type", "application/json")
 
 	resp, err := p.client.Do(req)

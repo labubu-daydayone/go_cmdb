@@ -25,13 +25,15 @@ var (
 
 // CloudflareProvider implements dns.Provider for Cloudflare API
 type CloudflareProvider struct {
+	email    string
 	apiToken string
 	client   *http.Client
 }
 
 // NewCloudflareProvider creates a new Cloudflare DNS provider
-func NewCloudflareProvider(apiToken string) *CloudflareProvider {
+func NewCloudflareProvider(email, apiToken string) *CloudflareProvider {
 	return &CloudflareProvider{
+		email:    email,
 		apiToken: apiToken,
 		client: &http.Client{
 			Timeout: requestTimeout,
@@ -110,7 +112,8 @@ func (p *CloudflareProvider) DeleteRecord(zoneID string, providerRecordID string
 		return fmt.Errorf("failed to create request: %w", err)
 	}
 
-	req.Header.Set("Authorization", "Bearer "+p.apiToken)
+	req.Header.Set("X-Auth-Email", p.email)
+	req.Header.Set("X-Auth-Key", p.apiToken)
 	req.Header.Set("Content-Type", "application/json")
 
 	resp, err := p.client.Do(req)
@@ -146,7 +149,8 @@ func (p *CloudflareProvider) FindRecord(zoneID string, recordType string, name s
 		return "", fmt.Errorf("failed to create request: %w", err)
 	}
 
-	req.Header.Set("Authorization", "Bearer "+p.apiToken)
+	req.Header.Set("X-Auth-Email", p.email)
+	req.Header.Set("X-Auth-Key", p.apiToken)
 	req.Header.Set("Content-Type", "application/json")
 
 	resp, err := p.client.Do(req)
@@ -203,7 +207,8 @@ func (p *CloudflareProvider) createRecord(zoneID string, record dnstypes.DNSReco
 		return "", fmt.Errorf("failed to create request: %w", err)
 	}
 
-	req.Header.Set("Authorization", "Bearer "+p.apiToken)
+	req.Header.Set("X-Auth-Email", p.email)
+	req.Header.Set("X-Auth-Key", p.apiToken)
 	req.Header.Set("Content-Type", "application/json")
 
 	resp, err := p.client.Do(req)
@@ -256,7 +261,8 @@ func (p *CloudflareProvider) updateRecord(zoneID string, recordID string, record
 		return fmt.Errorf("failed to create request: %w", err)
 	}
 
-	req.Header.Set("Authorization", "Bearer "+p.apiToken)
+	req.Header.Set("X-Auth-Email", p.email)
+	req.Header.Set("X-Auth-Key", p.apiToken)
 	req.Header.Set("Content-Type", "application/json")
 
 	resp, err := p.client.Do(req)
@@ -291,7 +297,8 @@ func (p *CloudflareProvider) getRecord(zoneID string, recordID string) (*Cloudfl
 		return nil, fmt.Errorf("failed to create request: %w", err)
 	}
 
-	req.Header.Set("Authorization", "Bearer "+p.apiToken)
+	req.Header.Set("X-Auth-Email", p.email)
+	req.Header.Set("X-Auth-Key", p.apiToken)
 	req.Header.Set("Content-Type", "application/json")
 
 	resp, err := p.client.Do(req)

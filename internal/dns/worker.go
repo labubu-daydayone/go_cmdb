@@ -165,7 +165,7 @@ func (w *Worker) processRecord(record *model.DomainDNSRecord) {
 	}
 
 	// Step 4: Create Cloudflare provider
-	cfProvider := cloudflare.NewCloudflareProvider(apiKey.APIToken)
+	cfProvider := cloudflare.NewCloudflareProvider(apiKey.Account, apiKey.APIToken)
 
 	// Step 5: Convert name to FQDN
 	fqdn := ToFQDN(domain.Domain, record.Name)
@@ -226,7 +226,7 @@ func (w *Worker) deleteRecord(record *model.DomainDNSRecord) {
 	}
 
 	// Step 3: Create Cloudflare provider
-	cfProvider := cloudflare.NewCloudflareProvider(apiKey.APIToken)
+	cfProvider := cloudflare.NewCloudflareProvider(apiKey.Account, apiKey.APIToken)
 
 	// Step 4: Delete from Cloudflare
 	if record.ProviderRecordID != "" {
