@@ -4,6 +4,7 @@ package model
 type DomainPurpose string
 
 const (
+	DomainPurposeUnset   DomainPurpose = "unset"
 	DomainPurposeCDN     DomainPurpose = "cdn"
 	DomainPurposeGeneral DomainPurpose = "general"
 )
@@ -20,7 +21,7 @@ const (
 type Domain struct {
 	BaseModel
 	Domain  string        `gorm:"type:varchar(255);uniqueIndex;not null" json:"domain"`
-	Purpose DomainPurpose `gorm:"type:enum('cdn','general');default:'cdn'" json:"purpose"`
+	Purpose DomainPurpose `gorm:"type:enum('unset','cdn','general');default:'unset'" json:"purpose"`
 	Status  DomainStatus  `gorm:"type:enum('active','inactive');default:'active'" json:"status"`
 }
 

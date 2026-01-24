@@ -9,6 +9,7 @@ import (
 	"go_cmdb/api/v1/certificate_renew"
 	configHandler "go_cmdb/api/v1/config"
 	dnsHandler "go_cmdb/api/v1/dns"
+	"go_cmdb/api/v1/domains"
 	"go_cmdb/api/v1/line_groups"
 	"go_cmdb/api/v1/middleware"
 	"go_cmdb/api/v1/node_groups"
@@ -205,6 +206,12 @@ func SetupRouter(r *gin.Engine, db *gorm.DB, cfg *config.Config) {
 				protected.GET("/releases", releasesHandlerInstance.ListReleases)
 				protected.POST("/releases", releasesHandlerInstance.CreateRelease)
 				protected.GET("/releases/:id", releasesHandlerInstance.GetRelease)
+
+				// Domain routes (T2-10-02)
+				domainsGroup := protected.Group("/domains")
+				{
+					domainsGroup.POST("/sync", domains.SyncDomains)
+				}
 				}
 		}
 	}
