@@ -29,7 +29,7 @@ type APIKeyInfo struct {
 
 // DomainListResult represents the result of domain list query
 type DomainListResult struct {
-	List     []DomainListItem `json:"list"`
+	Items    []DomainListItem `json:"items"`
 	Total    int64            `json:"total"`
 	Page     int              `json:"page"`
 	PageSize int              `json:"pageSize"`
@@ -180,7 +180,7 @@ func ListDomains(ctx context.Context, params ListDomainsParams) (*DomainListResu
 	}
 
 	return &DomainListResult{
-		List:     list,
+		Items:    list,
 		Total:    total,
 		Page:     params.Page,
 		PageSize: params.PageSize,
