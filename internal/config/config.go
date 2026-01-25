@@ -19,6 +19,7 @@ type Config struct {
 	MTLS            MTLSConfig
 	RiskScanner     RiskScannerConfig
 	ReleaseExecutor ReleaseExecutorConfig
+	DNSWorker       DNSWorkerConfig
 }
 
 // MySQLConfig holds MySQL configuration
@@ -63,6 +64,13 @@ type ReleaseExecutorConfig struct {
 	IntervalSec int
 }
 
+// DNSWorkerConfig holds DNS worker configuration
+type DNSWorkerConfig struct {
+	Enabled     bool
+	IntervalSec int
+	BatchSize   int
+}
+
 // Load loads configuration from environment variables
 func Load() (*Config, error) {
 	// Load .env file if exists (ignore error if not found)
@@ -98,11 +106,16 @@ func Load() (*Config, error) {
 				CertExpiringThreshold: getEnvInt("CERT_EXPIRING_WEBSITE_THRESHOLD", 2),
 				ACMEMaxAttempts:       getEnvInt("ACME_MAX_ATTEMPTS", 3),
 			},
-			ReleaseExecutor: ReleaseExecutorConfig{
-				Enabled:     getEnv("RELEASE_EXECUTOR_ENABLED", "1") == "1",
-				IntervalSec: getEnvInt("RELEASE_EXECUTOR_INTERVAL_SEC", 5),
-			},
-		}
+		ReleaseExecutor: ReleaseExecutorConfig{
+			Enabled:     getEnv("RELEASE_EXECUTOR_ENABLED", "1") == "1",
+			IntervalSec: getEnvInt("RELEASE_EXECUTOR_INTERVAL_SEC", 5),
+		},
+		DNSWorker: DNSWorkerConfig{
+			Enabled:     getEnv("DNS_WORKER_ENABLED", "1") == "1",
+			IntervalSec: getEnvInt("DNS_WORKER_INTERVAL_SEC", 30),
+			BatchSize:   getEnvInt("DNS_WORKER_BATCH_SIZE", 10),
+		},
+	}
 
 	// Validate required fields
 	if cfg.MySQL.DSN == "" {

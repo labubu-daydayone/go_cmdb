@@ -13,6 +13,7 @@ import (
 	"go_cmdb/internal/cache"
 	"go_cmdb/internal/config"
 	"go_cmdb/internal/db"
+	"go_cmdb/internal/dns"
 	"go_cmdb/internal/release"
 	"go_cmdb/internal/risk"
 	"go_cmdb/internal/ws"
@@ -100,14 +101,29 @@ func main() {
 		log.Println("✓ Release Executor disabled (RELEASE_EXECUTOR_ENABLED=0)")
 	}
 
-	// 7. Initialize Socket.IO server
+	// 7. Start DNS Worker
+	if cfg.DNSWorker.Enabled {
+		workerConfig := dns.WorkerConfig{
+			Enabled:     cfg.DNSWorker.Enabled,
+			IntervalSec: cfg.DNSWorker.IntervalSec,
+			BatchSize:   cfg.DNSWorker.BatchSize,
+		}
+		worker := dns.NewWorker(db.GetDB(), workerConfig)
+		worker.Start()
+		defer worker.Stop()
+		log.Println("✓ DNS Worker initialized")
+	} else {
+		log.Println("✓ DNS Worker disabled (DNS_WORKER_ENABLED=0)")
+	}
+
+	// 8. Initialize Socket.IO server
 	if err := ws.InitServer(); err != nil {
 		log.Fatalf("Failed to initialize Socket.IO server: %v", err)
 		os.Exit(1)
 	}
 	log.Println("✓ Socket.IO server initialized")
 
-	// 8. Initialize Gin router
+	// 9. Initialize Gin router
 	gin.SetMode(gin.ReleaseMode)
 	r := gin.Default()
 
