@@ -100,8 +100,11 @@ type DeleteRecordRequest struct {
 	IDs []int `json:"ids" binding:"required,min=1"`
 }
 
-// DeleteRecord marks DNS records for deletion (desired_state=absent)
+// DeleteRecord deletes DNS records
 // POST /api/v1/dns/records/delete
+// Rules:
+// - pending/error records: direct DELETE (no Cloudflare sync needed)
+// - active records: mark as absent, let Worker delete from Cloudflare first
 func (h *Handler) DeleteRecord(c *gin.Context) {
 	var req DeleteRecordRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -112,24 +115,79 @@ func (h *Handler) DeleteRecord(c *gin.Context) {
 		return
 	}
 
-	// Mark records as absent (worker will delete them)
-	result := h.db.Model(&model.DomainDNSRecord{}).
-		Where("id IN ?", req.IDs).
-		Update("desired_state", model.DNSRecordDesiredStateAbsent)
-
-	if result.Error != nil {
+	// Step 1: Query records to determine deletion strategy
+	var records []model.DomainDNSRecord
+	if err := h.db.Where("id IN ?", req.IDs).Find(&records).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"code":    500,
-			"message": "failed to mark records for deletion: " + result.Error.Error(),
+			"message": "failed to query records: " + err.Error(),
 		})
 		return
+	}
+
+	if len(records) == 0 {
+		c.JSON(http.StatusOK, gin.H{
+			"code":    0,
+			"message": "no records found",
+			"data": gin.H{
+				"deleted": 0,
+				"marked":  0,
+			},
+		})
+		return
+	}
+
+	// Step 2: Separate records by status
+	var directDeleteIDs []int   // pending/error: direct delete
+	var markAbsentIDs []int      // active: mark as absent for Worker
+
+	for _, record := range records {
+		if record.Status == model.DNSRecordStatusPending || record.Status == model.DNSRecordStatusError {
+			// pending/error: no need to sync to Cloudflare, direct delete
+			directDeleteIDs = append(directDeleteIDs, int(record.ID))
+		} else {
+			// active: need to delete from Cloudflare first
+			markAbsentIDs = append(markAbsentIDs, int(record.ID))
+		}
+	}
+
+	var deletedCount int64
+	var markedCount int64
+
+	// Step 3: Direct delete pending/error records
+	if len(directDeleteIDs) > 0 {
+		result := h.db.Where("id IN ?", directDeleteIDs).Delete(&model.DomainDNSRecord{})
+		if result.Error != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{
+				"code":    500,
+				"message": "failed to delete records: " + result.Error.Error(),
+			})
+			return
+		}
+		deletedCount = result.RowsAffected
+	}
+
+	// Step 4: Mark active records as absent (Worker will delete them)
+	if len(markAbsentIDs) > 0 {
+		result := h.db.Model(&model.DomainDNSRecord{}).
+			Where("id IN ?", markAbsentIDs).
+			Update("desired_state", model.DNSRecordDesiredStateAbsent)
+		if result.Error != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{
+				"code":    500,
+				"message": "failed to mark records for deletion: " + result.Error.Error(),
+			})
+			return
+		}
+		markedCount = result.RowsAffected
 	}
 
 	c.JSON(http.StatusOK, gin.H{
 		"code":    0,
 		"message": "success",
 		"data": gin.H{
-			"affected": result.RowsAffected,
+			"deleted": deletedCount,  // pending/error records deleted immediately
+			"marked":  markedCount,   // active records marked for deletion
 		},
 	})
 }

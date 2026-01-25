@@ -2,6 +2,7 @@ package dns
 
 import (
 	"fmt"
+	"log"
 	"math"
 	"time"
 
@@ -63,6 +64,12 @@ func (s *Service) GetDeletionRecords(limit int) ([]model.DomainDNSRecord, error)
 		Where("desired_state = ?", model.DNSRecordDesiredStateAbsent).
 		Limit(limit).
 		Find(&records).Error
+
+	log.Printf("[DNS Service] GetDeletionRecords: found %d records (limit=%d, error=%v)\n", len(records), limit, err)
+	for _, r := range records {
+		log.Printf("[DNS Service] Deletion candidate: id=%d, name=%s, status=%s, provider_record_id=%s\n", 
+			r.ID, r.Name, r.Status, r.ProviderRecordID)
+	}
 
 	return records, err
 }
