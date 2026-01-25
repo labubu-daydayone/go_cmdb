@@ -6,6 +6,7 @@ import (
 	"math"
 	"time"
 
+	"go_cmdb/internal/dns/providers/cloudflare"
 	"go_cmdb/internal/model"
 
 	"gorm.io/gorm"
@@ -181,4 +182,46 @@ func (s *Service) GetDomain(domainID int) (*model.Domain, error) {
 		return nil, err
 	}
 	return &domain, nil
+}
+
+// DeleteRecordFromCloudflare deletes a DNS record from Cloudflare
+// Returns (success, error)
+// - success=true: Cloudflare delete success or record not found
+// - success=false: Cloudflare delete failed (real error)
+func (s *Service) DeleteRecordFromCloudflare(recordID int) (bool, error) {
+	// Step 1: Get record
+	var record model.DomainDNSRecord
+	if err := s.db.First(&record, recordID).Error; err != nil {
+		return false, fmt.Errorf("record not found: %w", err)
+	}
+
+	// Step 2: Get domain and provider
+	provider, err := s.GetDomainProvider(record.DomainID)
+	if err != nil {
+		return false, fmt.Errorf("failed to get DNS provider: %w", err)
+	}
+
+	// Step 3: Get API token
+	var apiKey model.APIKey
+	if err := s.db.First(&apiKey, provider.APIKeyID).Error; err != nil {
+		return false, fmt.Errorf("failed to get API key: %w", err)
+	}
+
+	// Step 4: Create Cloudflare provider
+	cfProvider := cloudflare.NewCloudflareProvider(apiKey.Account, apiKey.APIToken)
+
+	// Step 5: Delete from Cloudflare
+	err = cfProvider.DeleteRecord(provider.ProviderZoneID, record.ProviderRecordID)
+	if err != nil {
+		// Check if record not found
+		if err == cloudflare.ErrNotFound {
+			log.Printf("[DNS Service] Record %d: not found in Cloudflare (already deleted)\n", recordID)
+			return true, nil
+		}
+		// Real error
+		return false, fmt.Errorf("cloudflare delete failed: %w", err)
+	}
+
+	log.Printf("[DNS Service] Record %d: deleted from Cloudflare\n", recordID)
+	return true, nil
 }

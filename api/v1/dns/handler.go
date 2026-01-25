@@ -137,29 +137,59 @@ func (h *Handler) DeleteRecord(c *gin.Context) {
 		return
 	}
 
-	// Step 2: Direct delete all records
-	// User requirement: All records (pending/error/active) should be deletable immediately
-	// Rationale: 
-	// - pending/error: Never synced to Cloudflare, safe to delete
-	// - active: User wants to force delete, will handle Cloudflare cleanup separately if needed
-	var directDeleteIDs []int
+	// Step 2: Delete records synchronously
+	// Logic:
+	// - provider_record_id empty: direct delete local (never synced)
+	// - provider_record_id exists: delete from Cloudflare first, then delete local
+	var successIDs []int
+	var failedRecords []map[string]interface{}
+
 	for _, record := range records {
-		directDeleteIDs = append(directDeleteIDs, int(record.ID))
+		if record.ProviderRecordID == "" {
+			// No provider_record_id: never synced to Cloudflare, safe to delete
+			successIDs = append(successIDs, int(record.ID))
+		} else {
+			// Has provider_record_id: delete from Cloudflare first
+			deleted, err := h.service.DeleteRecordFromCloudflare(int(record.ID))
+			if deleted {
+				// Cloudflare delete success or not found
+				successIDs = append(successIDs, int(record.ID))
+			} else {
+				// Cloudflare delete failed
+				failedRecords = append(failedRecords, map[string]interface{}{
+					"id":    record.ID,
+					"name":  record.Name,
+					"error": err.Error(),
+				})
+			}
+		}
 	}
 
+	// Step 3: Delete local records that were successfully deleted from Cloudflare
 	var deletedCount int64
-
-	// Step 3: Direct delete all records
-	if len(directDeleteIDs) > 0 {
-		result := h.db.Where("id IN ?", directDeleteIDs).Delete(&model.DomainDNSRecord{})
+	if len(successIDs) > 0 {
+		result := h.db.Where("id IN ?", successIDs).Delete(&model.DomainDNSRecord{})
 		if result.Error != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{
 				"code":    500,
-				"message": "failed to delete records: " + result.Error.Error(),
+				"message": "failed to delete local records: " + result.Error.Error(),
 			})
 			return
 		}
 		deletedCount = result.RowsAffected
+	}
+
+	// Step 4: Return result
+	if len(failedRecords) > 0 {
+		c.JSON(http.StatusOK, gin.H{
+			"code":    0,
+			"message": "partial success",
+			"data": gin.H{
+				"deleted": deletedCount,
+				"failed":  failedRecords,
+			},
+		})
+		return
 	}
 
 	c.JSON(http.StatusOK, gin.H{
