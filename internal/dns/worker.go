@@ -79,13 +79,50 @@ func (w *Worker) run() {
 func (w *Worker) tick() {
 	log.Println("[DNS Worker] Tick: processing DNS records...")
 
+	// Initialize counters
+	var stats struct {
+		presentCandidates int
+		absentCandidates  int
+		claimedRunning    int
+		claimSkipped      int
+		success           int
+		error             int
+		deleted           int
+	}
+
 	// Step 1: Process pending/error records (desired_state=present)
-	w.processPendingRecords()
+	presentRecords, err := w.service.GetPendingRecords(w.config.BatchSize)
+	if err != nil {
+		log.Printf("[DNS Worker] Failed to get pending records: %v\n", err)
+	} else {
+		stats.presentCandidates = len(presentRecords)
+		for _, record := range presentRecords {
+			if w.processRecordWithStats(&record, &stats) {
+				stats.claimedRunning++
+			} else {
+				stats.claimSkipped++
+			}
+		}
+	}
 
 	// Step 2: Process deletion records (desired_state=absent)
-	w.processDeletionRecords()
+	absentRecords, err := w.service.GetDeletionRecords(w.config.BatchSize)
+	if err != nil {
+		log.Printf("[DNS Worker] Failed to get deletion records: %v\n", err)
+	} else {
+		stats.absentCandidates = len(absentRecords)
+		for _, record := range absentRecords {
+			if w.deleteRecordWithStats(&record, &stats) {
+				stats.deleted++
+			} else {
+				stats.error++
+			}
+		}
+	}
 
-	log.Println("[DNS Worker] Tick: done")
+	// Log statistics
+	log.Printf("[DNS Worker] Tick done: present_candidates=%d, absent_candidates=%d, claimed_running=%d, claim_skipped=%d, success=%d, error=%d, deleted=%d\n",
+		stats.presentCandidates, stats.absentCandidates, stats.claimedRunning, stats.claimSkipped, stats.success, stats.error, stats.deleted)
 }
 
 // processPendingRecords processes pending/error records
@@ -126,15 +163,46 @@ func (w *Worker) processDeletionRecords() {
 	}
 }
 
+// processRecordWithStats processes a single DNS record with statistics tracking
+func (w *Worker) processRecordWithStats(record *model.DomainDNSRecord, stats *struct {
+	presentCandidates int
+	absentCandidates  int
+	claimedRunning    int
+	claimSkipped      int
+	success           int
+	error             int
+	deleted           int
+}) bool {
+	result := w.processRecord(record)
+	if result {
+		stats.success++
+	}
+	return result
+}
+
+// deleteRecordWithStats deletes a single DNS record with statistics tracking
+func (w *Worker) deleteRecordWithStats(record *model.DomainDNSRecord, stats *struct {
+	presentCandidates int
+	absentCandidates  int
+	claimedRunning    int
+	claimSkipped      int
+	success           int
+	error             int
+	deleted           int
+}) bool {
+	return w.deleteRecordInternal(record)
+}
+
 // processRecord processes a single DNS record (create/update)
-func (w *Worker) processRecord(record *model.DomainDNSRecord) {
+// Returns true if successfully claimed (marked as running), false if skipped
+func (w *Worker) processRecord(record *model.DomainDNSRecord) bool {
 	log.Printf("[DNS Worker] Processing record %d (type=%s, name=%s, value=%s)\n", 
 		record.ID, record.Type, record.Name, record.Value)
 
 	// Step 1: Mark as running (optimistic locking)
 	if err := w.service.MarkAsRunning(int(record.ID)); err != nil {
 		log.Printf("[DNS Worker] Record %d: already being processed, skipping\n", record.ID)
-		return
+		return false
 	}
 
 	// Step 2: Get domain and provider info
@@ -143,7 +211,7 @@ func (w *Worker) processRecord(record *model.DomainDNSRecord) {
 		errMsg := fmt.Sprintf("failed to get domain: %v", err)
 		log.Printf("[DNS Worker] Record %d: %s\n", record.ID, errMsg)
 		w.service.MarkAsError(int(record.ID), errMsg)
-		return
+		return true
 	}
 
 	provider, err := w.service.GetDomainProvider(record.DomainID)
@@ -151,7 +219,7 @@ func (w *Worker) processRecord(record *model.DomainDNSRecord) {
 		errMsg := fmt.Sprintf("failed to get DNS provider: %v", err)
 		log.Printf("[DNS Worker] Record %d: %s\n", record.ID, errMsg)
 		w.service.MarkAsError(int(record.ID), errMsg)
-		return
+		return true
 	}
 
 	// Step 3: Get API token (decrypt if needed)
@@ -161,14 +229,14 @@ func (w *Worker) processRecord(record *model.DomainDNSRecord) {
 		errMsg := fmt.Sprintf("failed to get API key: %v", err)
 		log.Printf("[DNS Worker] Record %d: %s\n", record.ID, errMsg)
 		w.service.MarkAsError(int(record.ID), errMsg)
-		return
+		return true
 	}
 
 	// Step 4: Create Cloudflare provider
 	cfProvider := cloudflare.NewCloudflareProvider(apiKey.Account, apiKey.APIToken)
 
-	// Step 5: Convert name to FQDN
-	fqdn := ToFQDN(domain.Domain, record.Name)
+	// Step 5: Convert name to FQDN for Cloudflare API
+	fqdn := ToFQDN(record.Name, domain.Domain)
 
 	// Step 6: Ensure record in Cloudflare
 	dnsRecord := dnstypes.DNSRecord{
@@ -184,13 +252,13 @@ func (w *Worker) processRecord(record *model.DomainDNSRecord) {
 		errMsg := fmt.Sprintf("cloudflare API error: %v", err)
 		log.Printf("[DNS Worker] Record %d: %s\n", record.ID, errMsg)
 		w.service.MarkAsError(int(record.ID), errMsg)
-		return
+		return true
 	}
 
 	// Step 7: Mark as active
 	if err := w.service.MarkAsActive(int(record.ID), providerRecordID); err != nil {
 		log.Printf("[DNS Worker] Record %d: failed to mark as active: %v\n", record.ID, err)
-		return
+		return true
 	}
 
 	if changed {
@@ -200,10 +268,18 @@ func (w *Worker) processRecord(record *model.DomainDNSRecord) {
 		log.Printf("[DNS Worker] Record %d: already in sync (provider_record_id=%s, changed=false)\n", 
 			record.ID, providerRecordID)
 	}
+
+	return true
 }
 
-// deleteRecord deletes a single DNS record from Cloudflare and local database
+// deleteRecord deletes a single DNS record from Cloudflare and local database (legacy)
 func (w *Worker) deleteRecord(record *model.DomainDNSRecord) {
+	w.deleteRecordInternal(record)
+}
+
+// deleteRecordInternal deletes a single DNS record from Cloudflare and local database
+// Returns true if successfully deleted, false if error
+func (w *Worker) deleteRecordInternal(record *model.DomainDNSRecord) bool {
 	log.Printf("[DNS Worker] Deleting record %d (type=%s, name=%s, provider_record_id=%s)\n", 
 		record.ID, record.Type, record.Name, record.ProviderRecordID)
 
@@ -213,7 +289,7 @@ func (w *Worker) deleteRecord(record *model.DomainDNSRecord) {
 		log.Printf("[DNS Worker] Record %d: failed to get DNS provider: %v, deleting local record anyway\n", 
 			record.ID, err)
 		w.service.DeleteRecord(int(record.ID))
-		return
+		return true
 	}
 
 	// Step 2: Get API token
@@ -222,7 +298,7 @@ func (w *Worker) deleteRecord(record *model.DomainDNSRecord) {
 		log.Printf("[DNS Worker] Record %d: failed to get API key: %v, deleting local record anyway\n", 
 			record.ID, err)
 		w.service.DeleteRecord(int(record.ID))
-		return
+		return true
 	}
 
 	// Step 3: Create Cloudflare provider
@@ -230,9 +306,15 @@ func (w *Worker) deleteRecord(record *model.DomainDNSRecord) {
 
 	// Step 4: Delete from Cloudflare
 	if record.ProviderRecordID != "" {
-		if err := cfProvider.DeleteRecord(provider.ProviderZoneID, record.ProviderRecordID); err != nil {
-			log.Printf("[DNS Worker] Record %d: failed to delete from Cloudflare: %v, deleting local record anyway\n", 
-				record.ID, err)
+		err := cfProvider.DeleteRecord(provider.ProviderZoneID, record.ProviderRecordID)
+		if err != nil {
+			// If record not found in Cloudflare, treat as success
+			if err == cloudflare.ErrNotFound {
+				log.Printf("[DNS Worker] Record %d: not found in Cloudflare (already deleted), proceeding with local deletion\n", record.ID)
+			} else {
+				log.Printf("[DNS Worker] Record %d: failed to delete from Cloudflare: %v, deleting local record anyway\n", 
+					record.ID, err)
+			}
 		} else {
 			log.Printf("[DNS Worker] Record %d: deleted from Cloudflare\n", record.ID)
 		}
@@ -241,8 +323,9 @@ func (w *Worker) deleteRecord(record *model.DomainDNSRecord) {
 	// Step 5: Delete from local database (hard delete)
 	if err := w.service.DeleteRecord(int(record.ID)); err != nil {
 		log.Printf("[DNS Worker] Record %d: failed to delete from database: %v\n", record.ID, err)
-		return
+		return false
 	}
 
 	log.Printf("[DNS Worker] Record %d: deleted from local database\n", record.ID)
+	return true
 }

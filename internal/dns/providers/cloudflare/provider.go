@@ -103,7 +103,8 @@ func (p *CloudflareProvider) EnsureRecord(zoneID string, record dnstypes.DNSReco
 	return recordID, true, nil
 }
 
-// DeleteRecord deletes a DNS record by its provider-specific ID
+	// DeleteRecord deletes a DNS record by its provider-specific ID
+// Returns ErrNotFound if the record doesn't exist (treated as success for deletion)
 func (p *CloudflareProvider) DeleteRecord(zoneID string, providerRecordID string) error {
 	url := fmt.Sprintf("%s/zones/%s/dns_records/%s", cloudflareAPIBase, zoneID, providerRecordID)
 
@@ -122,6 +123,11 @@ func (p *CloudflareProvider) DeleteRecord(zoneID string, providerRecordID string
 	}
 	defer resp.Body.Close()
 
+	// Check for 404 - record not found (treat as success)
+	if resp.StatusCode == http.StatusNotFound {
+		return ErrNotFound
+	}
+
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return fmt.Errorf("failed to read response: %w", err)
@@ -133,6 +139,12 @@ func (p *CloudflareProvider) DeleteRecord(zoneID string, providerRecordID string
 	}
 
 	if !cfResp.Success {
+		// Check for record not found error code (81044)
+		for _, e := range cfResp.Errors {
+			if e.Code == 81044 || e.Code == 81043 {
+				return ErrNotFound
+			}
+		}
 		return fmt.Errorf("cloudflare API error: %s", formatErrors(cfResp.Errors))
 	}
 
