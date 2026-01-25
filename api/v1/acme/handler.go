@@ -292,3 +292,443 @@ func (h *Handler) CreateAccount(c *gin.Context) {
 		"data":    account,
 	})
 }
+
+// ListProviders returns all ACME providers
+// GET /api/v1/acme/providers
+func (h *Handler) ListProviders(c *gin.Context) {
+	var providers []model.AcmeProvider
+	if err := h.db.Find(&providers).Error; err != nil {
+		httpx.FailErr(c, httpx.ErrInternalError("failed to query providers", err))
+		return
+	}
+
+	type ProviderItem struct {
+		ID           int64  `json:"id"`
+		Name         string `json:"name"`
+		DirectoryURL string `json:"directoryUrl"`
+		RequiresEAB  bool   `json:"requiresEab"`
+		Status       string `json:"status"`
+		CreatedAt    string `json:"createdAt"`
+		UpdatedAt    string `json:"updatedAt"`
+	}
+
+	items := make([]ProviderItem, 0, len(providers))
+	for _, p := range providers {
+		items = append(items, ProviderItem{
+			ID:           int64(p.ID),
+			Name:         p.Name,
+			DirectoryURL: p.DirectoryURL,
+			RequiresEAB:  p.RequiresEAB,
+			Status:       p.Status,
+			CreatedAt:    p.CreatedAt.Format("2006-01-02T15:04:05Z07:00"),
+			UpdatedAt:    p.UpdatedAt.Format("2006-01-02T15:04:05Z07:00"),
+		})
+	}
+
+	httpx.OKItems(c, items, int64(len(items)), 1, len(items))
+}
+
+// ListAccounts returns ACME accounts with filters and pagination
+// GET /api/v1/acme/accounts?page=&pageSize=&providerId=&status=&email=
+func (h *Handler) ListAccounts(c *gin.Context) {
+	// Parse query parameters
+	page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
+	pageSize, _ := strconv.Atoi(c.DefaultQuery("pageSize", "20"))
+	providerIDStr := c.Query("providerId")
+	status := c.Query("status")
+	email := c.Query("email")
+
+	// Build query
+	query := h.db.Table("acme_accounts a").
+		Select(`
+			a.id,
+			a.provider_id,
+			p.name as provider_name,
+			a.email,
+			a.status,
+			a.registration_uri,
+			a.eab_kid,
+			a.eab_expires_at,
+			a.last_error,
+			a.created_at,
+			a.updated_at
+		`).
+		Joins("LEFT JOIN acme_providers p ON p.id = a.provider_id")
+
+	// Apply filters
+	if providerIDStr != "" {
+		if providerID, err := strconv.ParseInt(providerIDStr, 10, 64); err == nil {
+			query = query.Where("a.provider_id = ?", providerID)
+		}
+	}
+	if status != "" {
+		query = query.Where("a.status = ?", status)
+	}
+	if email != "" {
+		query = query.Where("a.email LIKE ?", "%"+email+"%")
+	}
+
+	// Count total
+	var total int64
+	countQuery := h.db.Table("acme_accounts a")
+	if providerIDStr != "" {
+		if providerID, err := strconv.ParseInt(providerIDStr, 10, 64); err == nil {
+			countQuery = countQuery.Where("a.provider_id = ?", providerID)
+		}
+	}
+	if status != "" {
+		countQuery = countQuery.Where("a.status = ?", status)
+	}
+	if email != "" {
+		countQuery = countQuery.Where("a.email LIKE ?", "%"+email+"%")
+	}
+	if err := countQuery.Count(&total).Error; err != nil {
+		httpx.FailErr(c, httpx.ErrInternalError("failed to count accounts", err))
+		return
+	}
+
+	// Query with pagination
+	offset := (page - 1) * pageSize
+	query = query.Order("a.id DESC").Limit(pageSize).Offset(offset)
+
+	type QueryRow struct {
+		ID              int64   `gorm:"column:id"`
+		ProviderID      int64   `gorm:"column:provider_id"`
+		ProviderName    string  `gorm:"column:provider_name"`
+		Email           string  `gorm:"column:email"`
+		Status          string  `gorm:"column:status"`
+		RegistrationURI *string `gorm:"column:registration_uri"`
+		EABKid          *string `gorm:"column:eab_kid"`
+		EABExpiresAt    *string `gorm:"column:eab_expires_at"`
+		LastError       *string `gorm:"column:last_error"`
+		CreatedAt       string  `gorm:"column:created_at"`
+		UpdatedAt       string  `gorm:"column:updated_at"`
+	}
+
+	var rows []QueryRow
+	if err := query.Scan(&rows).Error; err != nil {
+		httpx.FailErr(c, httpx.ErrInternalError("failed to query accounts", err))
+		return
+	}
+
+	type AccountItem struct {
+		ID              int64   `json:"id"`
+		ProviderID      int64   `json:"providerId"`
+		ProviderName    string  `json:"providerName"`
+		Email           string  `json:"email"`
+		Status          string  `json:"status"`
+		RegistrationURI *string `json:"registrationUri"`
+		EABKid          *string `json:"eabKid"`
+		EABExpiresAt    *string `json:"eabExpiresAt"`
+		LastError       *string `json:"lastError"`
+		CreatedAt       string  `json:"createdAt"`
+		UpdatedAt       string  `json:"updatedAt"`
+	}
+
+	items := make([]AccountItem, 0, len(rows))
+	for _, row := range rows {
+		// Mask EAB Kid (show first 8 chars + ***)
+		var maskedEABKid *string
+		if row.EABKid != nil && *row.EABKid != "" {
+			kid := *row.EABKid
+			if len(kid) > 8 {
+				masked := kid[:8] + "***"
+				maskedEABKid = &masked
+			} else {
+				maskedEABKid = row.EABKid
+			}
+		}
+
+		items = append(items, AccountItem{
+			ID:              row.ID,
+			ProviderID:      row.ProviderID,
+			ProviderName:    row.ProviderName,
+			Email:           row.Email,
+			Status:          row.Status,
+			RegistrationURI: row.RegistrationURI,
+			EABKid:          maskedEABKid,
+			EABExpiresAt:    row.EABExpiresAt,
+			LastError:       row.LastError,
+			CreatedAt:       row.CreatedAt,
+			UpdatedAt:       row.UpdatedAt,
+		})
+	}
+
+	httpx.OKItems(c, items, total, page, pageSize)
+}
+
+// GetAccount returns a single ACME account by ID
+// GET /api/v1/acme/accounts/:id
+func (h *Handler) GetAccount(c *gin.Context) {
+	idStr := c.Param("id")
+	id, err := strconv.ParseInt(idStr, 10, 64)
+	if err != nil {
+		httpx.FailErr(c, httpx.ErrParamInvalid( "must be a valid integer"))
+		return
+	}
+
+	type QueryRow struct {
+		ID              int64   `gorm:"column:id"`
+		ProviderID      int64   `gorm:"column:provider_id"`
+		ProviderName    string  `gorm:"column:provider_name"`
+		Email           string  `gorm:"column:email"`
+		Status          string  `gorm:"column:status"`
+		RegistrationURI *string `gorm:"column:registration_uri"`
+		EABKid          *string `gorm:"column:eab_kid"`
+		EABExpiresAt    *string `gorm:"column:eab_expires_at"`
+		LastError       *string `gorm:"column:last_error"`
+		CreatedAt       string  `gorm:"column:created_at"`
+		UpdatedAt       string  `gorm:"column:updated_at"`
+	}
+
+	var row QueryRow
+	err = h.db.Table("acme_accounts a").
+		Select(`
+			a.id,
+			a.provider_id,
+			p.name as provider_name,
+			a.email,
+			a.status,
+			a.registration_uri,
+			a.eab_kid,
+			a.eab_expires_at,
+			a.last_error,
+			a.created_at,
+			a.updated_at
+		`).
+		Joins("LEFT JOIN acme_providers p ON p.id = a.provider_id").
+		Where("a.id = ?", id).
+		Scan(&row).Error
+
+	if err != nil {
+		if err == gorm.ErrRecordNotFound {
+			httpx.FailErr(c, httpx.ErrNotFound( idStr))
+			return
+		}
+		httpx.FailErr(c, httpx.ErrInternalError("failed to query account", err))
+		return
+	}
+
+	// Mask EAB Kid
+	var maskedEABKid *string
+	if row.EABKid != nil && *row.EABKid != "" {
+		kid := *row.EABKid
+		if len(kid) > 8 {
+			masked := kid[:8] + "***"
+			maskedEABKid = &masked
+		} else {
+			maskedEABKid = row.EABKid
+		}
+	}
+
+	result := gin.H{
+		"id":              row.ID,
+		"providerId":      row.ProviderID,
+		"providerName":    row.ProviderName,
+		"email":           row.Email,
+		"status":          row.Status,
+		"registrationUri": row.RegistrationURI,
+		"eabKid":          maskedEABKid,
+		"eabExpiresAt":    row.EABExpiresAt,
+		"lastError":       row.LastError,
+		"createdAt":       row.CreatedAt,
+		"updatedAt":       row.UpdatedAt,
+	}
+
+	httpx.OK(c, result)
+}
+
+// EnableAccountRequest represents enable account request
+type EnableAccountRequest struct {
+	ID int64 `json:"id" binding:"required"`
+}
+
+// EnableAccount enables an ACME account
+// POST /api/v1/acme/accounts/enable
+func (h *Handler) EnableAccount(c *gin.Context) {
+	var req EnableAccountRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		httpx.FailErr(c, httpx.ErrParamInvalid( "must be provided"))
+		return
+	}
+
+	// Update status to active (idempotent)
+	result := h.db.Model(&model.AcmeAccount{}).
+		Where("id = ?", req.ID).
+		Update("status", "active")
+
+	if result.Error != nil {
+		httpx.FailErr(c, httpx.ErrInternalError("failed to enable account", result.Error))
+		return
+	}
+
+	if result.RowsAffected == 0 {
+		httpx.FailErr(c, httpx.ErrNotFound( strconv.FormatInt(req.ID, 10)))
+		return
+	}
+
+	httpx.OK(c, gin.H{"id": req.ID, "status": "active"})
+}
+
+// DisableAccountRequest represents disable account request
+type DisableAccountRequest struct {
+	ID int64 `json:"id" binding:"required"`
+}
+
+// DisableAccount disables an ACME account
+// POST /api/v1/acme/accounts/disable
+func (h *Handler) DisableAccount(c *gin.Context) {
+	var req DisableAccountRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		httpx.FailErr(c, httpx.ErrParamInvalid( "must be provided"))
+		return
+	}
+
+	// Update status to disabled (idempotent)
+	result := h.db.Model(&model.AcmeAccount{}).
+		Where("id = ?", req.ID).
+		Update("status", "disabled")
+
+	if result.Error != nil {
+		httpx.FailErr(c, httpx.ErrInternalError("failed to disable account", result.Error))
+		return
+	}
+
+	if result.RowsAffected == 0 {
+		httpx.FailErr(c, httpx.ErrNotFound( strconv.FormatInt(req.ID, 10)))
+		return
+	}
+
+	httpx.OK(c, gin.H{"id": req.ID, "status": "disabled"})
+}
+
+// ListDefaults returns default ACME accounts for each provider
+// GET /api/v1/acme/accounts/defaults
+func (h *Handler) ListDefaults(c *gin.Context) {
+	type QueryRow struct {
+		ProviderID   int64  `gorm:"column:provider_id"`
+		ProviderName string `gorm:"column:provider_name"`
+		AccountID    int64  `gorm:"column:account_id"`
+		AccountEmail string `gorm:"column:account_email"`
+		UpdatedAt    string `gorm:"column:updated_at"`
+	}
+
+	var rows []QueryRow
+	err := h.db.Table("acme_provider_defaults d").
+		Select(`
+			d.provider_id,
+			p.name as provider_name,
+			d.account_id,
+			a.email as account_email,
+			d.updated_at
+		`).
+		Joins("LEFT JOIN acme_providers p ON p.id = d.provider_id").
+		Joins("LEFT JOIN acme_accounts a ON a.id = d.account_id").
+		Scan(&rows).Error
+
+	if err != nil {
+		httpx.FailErr(c, httpx.ErrInternalError("failed to query defaults", err))
+		return
+	}
+
+	type DefaultItem struct {
+		ProviderID   int64  `json:"providerId"`
+		ProviderName string `json:"providerName"`
+		AccountID    int64  `json:"accountId"`
+		AccountEmail string `json:"accountEmail"`
+		UpdatedAt    string `json:"updatedAt"`
+	}
+
+	items := make([]DefaultItem, 0, len(rows))
+	for _, row := range rows {
+		items = append(items, DefaultItem{
+			ProviderID:   row.ProviderID,
+			ProviderName: row.ProviderName,
+			AccountID:    row.AccountID,
+			AccountEmail: row.AccountEmail,
+			UpdatedAt:    row.UpdatedAt,
+		})
+	}
+
+	httpx.OKItems(c, items, int64(len(items)), 1, len(items))
+}
+
+// SetDefaultRequest represents set default account request
+type SetDefaultRequest struct {
+	ProviderID int64 `json:"providerId" binding:"required"`
+	AccountID  int64 `json:"accountId" binding:"required"`
+}
+
+// SetDefault sets the default ACME account for a provider
+// POST /api/v1/acme/accounts/set-default
+func (h *Handler) SetDefault(c *gin.Context) {
+	var req SetDefaultRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		httpx.FailErr(c, httpx.ErrParamInvalid( "must be provided"))
+		return
+	}
+
+	// Validate provider exists and is active
+	var provider model.AcmeProvider
+	if err := h.db.First(&provider, req.ProviderID).Error; err != nil {
+		if err == gorm.ErrRecordNotFound {
+			httpx.FailErr(c, httpx.ErrNotFound( strconv.FormatInt(req.ProviderID, 10)))
+			return
+		}
+		httpx.FailErr(c, httpx.ErrInternalError("failed to query provider", err))
+		return
+	}
+	if provider.Status != "active" {
+		httpx.FailErr(c, httpx.ErrStateConflict( "provider is not active"))
+		return
+	}
+
+	// Validate account exists, matches provider, and is active
+	var account model.AcmeAccount
+	if err := h.db.First(&account, req.AccountID).Error; err != nil {
+		if err == gorm.ErrRecordNotFound {
+			httpx.FailErr(c, httpx.ErrNotFound( strconv.FormatInt(req.AccountID, 10)))
+			return
+		}
+		httpx.FailErr(c, httpx.ErrInternalError("failed to query account", err))
+		return
+	}
+	if int64(account.ProviderID) != req.ProviderID {
+		httpx.FailErr(c, httpx.ErrStateConflict( "account does not belong to the specified provider"))
+		return
+	}
+	if account.Status != "active" {
+		httpx.FailErr(c, httpx.ErrStateConflict( "account is not active"))
+		return
+	}
+
+	// Upsert default (replace if exists)
+	var defaultRecord model.ACMEProviderDefault
+	result := h.db.Where("provider_id = ?", req.ProviderID).First(&defaultRecord)
+
+	if result.Error == gorm.ErrRecordNotFound {
+		// Insert new
+		defaultRecord = model.ACMEProviderDefault{
+			ProviderID: req.ProviderID,
+			AccountID:  req.AccountID,
+		}
+		if err := h.db.Create(&defaultRecord).Error; err != nil {
+			httpx.FailErr(c, httpx.ErrInternalError("failed to create default", err))
+			return
+		}
+	} else if result.Error != nil {
+		httpx.FailErr(c, httpx.ErrInternalError("failed to query default", result.Error))
+		return
+	} else {
+		// Update existing
+		if err := h.db.Model(&defaultRecord).Update("account_id", req.AccountID).Error; err != nil {
+			httpx.FailErr(c, httpx.ErrInternalError("failed to update default", err))
+			return
+		}
+	}
+
+	httpx.OK(c, gin.H{
+		"providerId": req.ProviderID,
+		"accountId":  req.AccountID,
+	})
+}

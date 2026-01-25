@@ -171,6 +171,16 @@ func SetupRouter(r *gin.Engine, db *gorm.DB, cfg *config.Config) {
 				acmeHandlerInstance := acme.NewHandler(db)
 				acmeGroup := protected.Group("/acme")
 				{
+					// Provider routes
+					acmeGroup.GET("/providers", acmeHandlerInstance.ListProviders)
+					// Account routes
+					acmeGroup.GET("/accounts", acmeHandlerInstance.ListAccounts)
+					acmeGroup.GET("/accounts/:id", acmeHandlerInstance.GetAccount)
+					acmeGroup.POST("/accounts/enable", acmeHandlerInstance.EnableAccount)
+					acmeGroup.POST("/accounts/disable", acmeHandlerInstance.DisableAccount)
+					acmeGroup.GET("/accounts/defaults", acmeHandlerInstance.ListDefaults)
+					acmeGroup.POST("/accounts/set-default", acmeHandlerInstance.SetDefault)
+					// Legacy routes
 					acmeGroup.POST("/account/create", acmeHandlerInstance.CreateAccount)
 					acmeGroup.POST("/certificate/request", acmeHandlerInstance.RequestCertificate)
 					acmeGroup.POST("/certificate/retry", acmeHandlerInstance.RetryRequest)
