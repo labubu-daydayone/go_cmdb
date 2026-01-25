@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"time"
 
 	"go_cmdb/internal/db"
 	"go_cmdb/internal/dns/providers/cloudflare"
@@ -14,11 +15,13 @@ import (
 type PullSyncResult struct {
 	Fetched int `json:"fetched"` // Total records fetched from Cloudflare
 	Created int `json:"created"` // New external records created
-	Updated int `json:"updated"` // Existing external records updated
-	Skipped int `json:"skipped"` // System-managed records skipped
+	Updated int `json:"updated"` // Existing records updated
+	Deleted int `json:"deleted"` // Local records deleted (not in Cloudflare)
 }
 
 // PullSyncRecords pulls DNS records from Cloudflare and syncs to local database
+// Core principle: Cloudflare is the source of truth
+// Sync unit: provider_record_id (not name/value)
 func PullSyncRecords(ctx context.Context, domainID int) (*PullSyncResult, error) {
 	// 1. Validate domain exists
 	var domain model.Domain
@@ -59,14 +62,23 @@ func PullSyncRecords(ctx context.Context, domainID int) (*PullSyncResult, error)
 		Fetched: len(records),
 	}
 
-	// 6. Sync each record
+	// 6. Record sync start time
+	syncStartedAt := time.Now()
+
+	// 7. Build map of Cloudflare record IDs for quick lookup
+	cfRecordIDs := make(map[string]bool)
+	for _, record := range records {
+		cfRecordIDs[record.ID] = true
+	}
+
+	// 8. Sync each Cloudflare record
 	for _, record := range records {
 		// Only sync A, AAAA, CNAME, TXT records
 		if !isSupportedRecordType(record.Type) {
 			continue
 		}
 
-		created, updated, skipped, err := syncSingleRecord(domainID, record)
+		created, updated, err := syncSingleRecord(domainID, domain.Domain, record, syncStartedAt)
 		if err != nil {
 			log.Printf("[DNSPullSync] Failed to sync record %s: %v", record.ID, err)
 			continue
@@ -76,8 +88,26 @@ func PullSyncRecords(ctx context.Context, domainID int) (*PullSyncResult, error)
 			result.Created++
 		} else if updated {
 			result.Updated++
-		} else if skipped {
-			result.Skipped++
+		}
+	}
+
+	// 9. Delete local records that are not in Cloudflare
+	// Rule: If local record has provider_record_id but not in Cloudflare, delete it
+	var localRecords []model.DomainDNSRecord
+	if err := db.DB.Where("domain_id = ? AND provider_record_id IS NOT NULL AND provider_record_id != ''", domainID).Find(&localRecords).Error; err != nil {
+		log.Printf("[DNSPullSync] Failed to query local records: %v", err)
+	} else {
+		for _, localRecord := range localRecords {
+			if !cfRecordIDs[localRecord.ProviderRecordID] {
+				// Record exists locally but not in Cloudflare, delete it
+				if err := db.DB.Delete(&localRecord).Error; err != nil {
+					log.Printf("[DNSPullSync] Failed to delete local record %d: %v", localRecord.ID, err)
+				} else {
+					log.Printf("[DNSPullSync] Deleted local record %d (provider_record_id=%s, not in Cloudflare)", 
+						localRecord.ID, localRecord.ProviderRecordID)
+					result.Deleted++
+				}
+			}
 		}
 	}
 
@@ -85,18 +115,24 @@ func PullSyncRecords(ctx context.Context, domainID int) (*PullSyncResult, error)
 }
 
 // syncSingleRecord syncs a single Cloudflare record to local database
-// Returns (created, updated, skipped, error)
-func syncSingleRecord(domainID int, record cloudflare.CloudflareRecord) (bool, bool, bool, error) {
-	// 1. Check if record exists by provider_record_id
+// Returns (created, updated, error)
+// Core principle: provider_record_id is the unique identity
+func syncSingleRecord(domainID int, zoneDomain string, record cloudflare.CloudflareRecord, syncStartedAt time.Time) (bool, bool, error) {
+	// 1. Normalize name from Cloudflare (may be FQDN) to relative name
+	normalizedName := NormalizeRelativeName(record.Name, zoneDomain)
+
+	// 2. Try to find existing record by provider_record_id
+	// Rule: record_id is the unique identity, not (name, type, value)
 	var existingRecord model.DomainDNSRecord
 	err := db.DB.Where("provider_record_id = ?", record.ID).First(&existingRecord).Error
 
 	if err != nil {
-		// Record does not exist, create new external record
+		// Record does not exist locally (new record in Cloudflare)
+		// Rule: Pull can INSERT new records from Cloudflare
 		newRecord := model.DomainDNSRecord{
 			DomainID:         domainID,
 			Type:             model.DNSRecordType(record.Type),
-			Name:             record.Name,
+			Name:             normalizedName,
 			Value:            record.Content,
 			TTL:              record.TTL,
 			Proxied:          record.Proxied,
@@ -109,48 +145,36 @@ func syncSingleRecord(domainID int, record cloudflare.CloudflareRecord) (bool, b
 		}
 
 		if err := db.DB.Create(&newRecord).Error; err != nil {
-			return false, false, false, fmt.Errorf("failed to create external record: %w", err)
+			return false, false, fmt.Errorf("failed to create record: %w", err)
 		}
 
-		log.Printf("[DNSPullSync] Created external record: %s %s %s", record.Type, record.Name, record.Content)
-		return true, false, false, nil
+		log.Printf("[DNSPullSync] Created record: %s %s %s (provider_record_id=%s)", 
+			record.Type, normalizedName, record.Content, record.ID)
+		return true, false, nil
 	}
 
-	// Record exists, check owner_type
-	if existingRecord.OwnerType != model.DNSRecordOwnerExternal {
-		// System-managed record, skip
-		log.Printf("[DNSPullSync] Skipped system-managed record: %s %s %s (owner_type=%s)", 
-			record.Type, record.Name, record.Content, existingRecord.OwnerType)
-		return false, false, true, nil
+	// 3. Record exists locally, UPDATE it
+	// Rule: Same record_id = UPDATE (not delete + insert)
+	// Update all fields from Cloudflare (Cloudflare is source of truth)
+	updates := map[string]interface{}{
+		"type":               model.DNSRecordType(record.Type),
+		"name":               normalizedName,
+		"value":              record.Content,
+		"ttl":                record.TTL,
+		"proxied":            record.Proxied,
+		"status":             model.DNSRecordStatusActive,
+		"desired_state":      model.DNSRecordDesiredStatePresent,
+		"last_error":         nil,
+		"provider_record_id": record.ID, // Ensure record_id is set
 	}
 
-	// External record exists, update if values changed
-	needsUpdate := false
-	updates := make(map[string]interface{})
-
-	if existingRecord.Value != record.Content {
-		updates["value"] = record.Content
-		needsUpdate = true
-	}
-	if existingRecord.TTL != record.TTL {
-		updates["ttl"] = record.TTL
-		needsUpdate = true
-	}
-	if existingRecord.Proxied != record.Proxied {
-		updates["proxied"] = record.Proxied
-		needsUpdate = true
+	if err := db.DB.Model(&existingRecord).Updates(updates).Error; err != nil {
+		return false, false, fmt.Errorf("failed to update record: %w", err)
 	}
 
-	if needsUpdate {
-		if err := db.DB.Model(&existingRecord).Updates(updates).Error; err != nil {
-			return false, false, false, fmt.Errorf("failed to update external record: %w", err)
-		}
-		log.Printf("[DNSPullSync] Updated external record: %s %s %s", record.Type, record.Name, record.Content)
-		return false, true, false, nil
-	}
-
-	// No update needed
-	return false, false, false, nil
+	log.Printf("[DNSPullSync] Updated record %d: %s %s %s (provider_record_id=%s)", 
+		existingRecord.ID, record.Type, normalizedName, record.Content, record.ID)
+	return false, true, nil
 }
 
 // isSupportedRecordType checks if the record type is supported

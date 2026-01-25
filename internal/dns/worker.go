@@ -224,16 +224,27 @@ func (w *Worker) processRecord(record *model.DomainDNSRecord) bool {
 		return true
 	}
 
-	// Step 4: Create Cloudflare provider
+	// Step 4: Get domain info to convert name to FQDN
+	domain, err := w.service.GetDomain(record.DomainID)
+	if err != nil {
+		errMsg := fmt.Sprintf("failed to get domain: %v", err)
+		log.Printf("[DNS Worker] Record %d: %s\n", record.ID, errMsg)
+		w.service.MarkAsError(int(record.ID), errMsg)
+		return true
+	}
+
+	// Step 5: Create Cloudflare provider
 	cfProvider := cloudflare.NewCloudflareProvider(apiKey.Account, apiKey.APIToken)
 
-	// Step 5: Use relative name directly (Cloudflare API accepts relative names)
-	// record.Name should already be normalized as relative name (@, www, a.b)
+	// Step 6: Convert relative name to FQDN for Cloudflare API
+	// record.Name is stored as relative name (@, www, a.b)
+	// Cloudflare API requires FQDN (example.com, www.example.com, a.b.example.com)
+	fqdn := ToFQDN(domain.Domain, record.Name)
 
-	// Step 6: Ensure record in Cloudflare
+	// Step 7: Ensure record in Cloudflare
 	dnsRecord := dnstypes.DNSRecord{
 		Type:    string(record.Type),
-		Name:    record.Name,
+		Name:    fqdn,
 		Value:   record.Value,
 		TTL:     record.TTL,
 		Proxied: record.Proxied,
@@ -241,6 +252,23 @@ func (w *Worker) processRecord(record *model.DomainDNSRecord) bool {
 
 	providerRecordID, changed, err := cfProvider.EnsureRecord(provider.ProviderZoneID, dnsRecord)
 	if err != nil {
+		// Step 6.1: EnsureRecord failed, try FindRecord to check if record exists
+		log.Printf("[DNS Worker] Record %d: EnsureRecord failed: %v, trying FindRecord...\n", record.ID, err)
+		
+		foundID, findErr := cfProvider.FindRecord(provider.ProviderZoneID, string(record.Type), fqdn, record.Value)
+		if findErr == nil && foundID != "" {
+			// Record exists in Cloudflare, bind it
+			log.Printf("[DNS Worker] Record %d: found in Cloudflare (provider_record_id=%s), binding...\n", record.ID, foundID)
+			if err := w.service.MarkAsActive(int(record.ID), foundID); err != nil {
+				log.Printf("[DNS Worker] Record %d: failed to mark as active: %v\n", record.ID, err)
+				return true
+			}
+			log.Printf("[DNS Worker] Record %d: synced to Cloudflare (provider_record_id=%s, recovered=true)\n", 
+				record.ID, foundID)
+			return true
+		}
+		
+		// Record not found in Cloudflare, mark as error
 		errMsg := fmt.Sprintf("cloudflare API error: %v", err)
 		log.Printf("[DNS Worker] Record %d: %s\n", record.ID, errMsg)
 		w.service.MarkAsError(int(record.ID), errMsg)

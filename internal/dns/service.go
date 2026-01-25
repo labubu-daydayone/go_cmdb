@@ -54,13 +54,13 @@ func (s *Service) GetPendingRecords(limit int) ([]model.DomainDNSRecord, error) 
 // GetDeletionRecords retrieves DNS records that need to be deleted
 // Filters:
 // - desired_state = 'absent'
-// - provider_record_id is not null (has been synced to Cloudflare)
+// - status in ('pending', 'error') OR provider_record_id is not null
+// Rule: Delete must be able to proceed even if record is pending
 func (s *Service) GetDeletionRecords(limit int) ([]model.DomainDNSRecord, error) {
 	var records []model.DomainDNSRecord
 
 	err := s.db.
 		Where("desired_state = ?", model.DNSRecordDesiredStateAbsent).
-		Where("provider_record_id IS NOT NULL AND provider_record_id != ''").
 		Limit(limit).
 		Find(&records).Error
 
