@@ -6,6 +6,7 @@ import (
 	"strconv"
 
 	"github.com/joho/godotenv"
+	"gopkg.in/ini.v1"
 )
 
 // Config holds all configuration
@@ -135,11 +136,113 @@ func getEnv(key, defaultValue string) string {
 	return defaultValue
 }
 
-func getEnvInt(key string, defaultValue int) int {
+	func getEnvInt(key string, defaultValue int) int {
 	if value := os.Getenv(key); value != "" {
 		if intValue, err := strconv.Atoi(value); err == nil {
 			return intValue
 		}
 	}
 	return defaultValue
+}
+
+// LoadFromINI loads configuration from INI file with environment variable override
+func LoadFromINI(iniPath string) (*Config, error) {
+	// Load INI file
+	cfgFile, err := ini.Load(iniPath)
+	if err != nil {
+		return nil, fmt.Errorf("failed to load INI file: %w", err)
+	}
+
+	// Helper function: get value with priority: ENV > INI > default
+	getValue := func(envKey, iniSection, iniKey, defaultValue string) string {
+		// Priority 1: Environment variable
+		if value := os.Getenv(envKey); value != "" {
+			return value
+		}
+		// Priority 2: INI file
+		if value := cfgFile.Section(iniSection).Key(iniKey).String(); value != "" {
+			return value
+		}
+		// Priority 3: Default value
+		return defaultValue
+	}
+
+	getValueInt := func(envKey, iniSection, iniKey string, defaultValue int) int {
+		// Priority 1: Environment variable
+		if value := os.Getenv(envKey); value != "" {
+			if intValue, err := strconv.Atoi(value); err == nil {
+				return intValue
+			}
+		}
+		// Priority 2: INI file
+		if value, err := cfgFile.Section(iniSection).Key(iniKey).Int(); err == nil && value != 0 {
+			return value
+		}
+		// Priority 3: Default value
+		return defaultValue
+	}
+
+	getValueBool := func(envKey, iniSection, iniKey string, defaultValue bool) bool {
+		// Priority 1: Environment variable
+		if value := os.Getenv(envKey); value != "" {
+			return value == "1" || value == "true"
+		}
+		// Priority 2: INI file
+		if value, err := cfgFile.Section(iniSection).Key(iniKey).Bool(); err == nil {
+			return value
+		}
+		// Priority 3: Default value
+		return defaultValue
+	}
+
+	cfg := &Config{
+		MySQL: MySQLConfig{
+			DSN: getValue("MYSQL_DSN", "mysql", "dsn", ""),
+		},
+		Redis: RedisConfig{
+			Addr:     getValue("REDIS_ADDR", "redis", "addr", "localhost:6379"),
+			Password: getValue("REDIS_PASS", "redis", "pass", ""),
+			DB:       getValueInt("REDIS_DB", "redis", "db", 0),
+		},
+		JWT: JWTConfig{
+			Secret:        getValue("JWT_SECRET", "jwt", "secret", ""),
+			ExpireMinutes: getValueInt("JWT_EXPIRE_MINUTES", "jwt", "expire_seconds", 86400) / 60,
+			Issuer:        getValue("JWT_ISSUER", "jwt", "issuer", "go_cmdb"),
+		},
+		Migrate:    getValueBool("MIGRATE", "app", "migrate", false),
+		HTTPAddr:   getValue("HTTP_ADDR", "http", "addr", ":8080"),
+		AgentToken: getValue("AGENT_TOKEN", "agent", "token", ""),
+		MTLS: MTLSConfig{
+			Enabled:    getValueBool("MTLS_ENABLED", "mtls", "enabled", false),
+			ClientCert: getValue("CONTROL_CERT", "mtls", "client_cert", ""),
+			ClientKey:  getValue("CONTROL_KEY", "mtls", "client_key", ""),
+			CACert:     getValue("CONTROL_CA", "mtls", "ca_cert", ""),
+		},
+		RiskScanner: RiskScannerConfig{
+			Enabled:               getValueBool("RISK_SCANNER_ENABLED", "risk_scanner", "enabled", true),
+			IntervalSec:           getValueInt("RISK_SCANNER_INTERVAL_SEC", "risk_scanner", "interval_sec", 300),
+			CertExpiringDays:      getValueInt("CERT_EXPIRING_DAYS", "risk_scanner", "cert_expiring_days", 15),
+			CertExpiringThreshold: getValueInt("CERT_EXPIRING_WEBSITE_THRESHOLD", "risk_scanner", "cert_expiring_threshold", 2),
+			ACMEMaxAttempts:       getValueInt("ACME_MAX_ATTEMPTS", "risk_scanner", "acme_max_attempts", 3),
+		},
+		ReleaseExecutor: ReleaseExecutorConfig{
+			Enabled:     getValueBool("RELEASE_EXECUTOR_ENABLED", "release_executor", "enabled", true),
+			IntervalSec: getValueInt("RELEASE_EXECUTOR_INTERVAL_SEC", "release_executor", "interval_sec", 5),
+		},
+		DNSWorker: DNSWorkerConfig{
+			Enabled:     getValueBool("DNS_WORKER_ENABLED", "dns", "worker_enabled", true),
+			IntervalSec: getValueInt("DNS_WORKER_INTERVAL_SEC", "dns", "interval_sec", 30),
+			BatchSize:   getValueInt("DNS_WORKER_BATCH_SIZE", "dns", "batch_size", 10),
+		},
+	}
+
+	// Validate required fields
+	if cfg.MySQL.DSN == "" {
+		return nil, fmt.Errorf("MYSQL_DSN is required")
+	}
+	if cfg.JWT.Secret == "" {
+		return nil, fmt.Errorf("JWT_SECRET is required")
+	}
+
+	return cfg, nil
 }

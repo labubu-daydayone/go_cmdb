@@ -205,15 +205,7 @@ func (w *Worker) processRecord(record *model.DomainDNSRecord) bool {
 		return false
 	}
 
-	// Step 2: Get domain and provider info
-	domain, err := w.service.GetDomain(record.DomainID)
-	if err != nil {
-		errMsg := fmt.Sprintf("failed to get domain: %v", err)
-		log.Printf("[DNS Worker] Record %d: %s\n", record.ID, errMsg)
-		w.service.MarkAsError(int(record.ID), errMsg)
-		return true
-	}
-
+	// Step 2: Get provider info
 	provider, err := w.service.GetDomainProvider(record.DomainID)
 	if err != nil {
 		errMsg := fmt.Sprintf("failed to get DNS provider: %v", err)
@@ -235,13 +227,13 @@ func (w *Worker) processRecord(record *model.DomainDNSRecord) bool {
 	// Step 4: Create Cloudflare provider
 	cfProvider := cloudflare.NewCloudflareProvider(apiKey.Account, apiKey.APIToken)
 
-	// Step 5: Convert name to FQDN for Cloudflare API
-	fqdn := ToFQDN(record.Name, domain.Domain)
+	// Step 5: Use relative name directly (Cloudflare API accepts relative names)
+	// record.Name should already be normalized as relative name (@, www, a.b)
 
 	// Step 6: Ensure record in Cloudflare
 	dnsRecord := dnstypes.DNSRecord{
 		Type:    string(record.Type),
-		Name:    fqdn,
+		Name:    record.Name,
 		Value:   record.Value,
 		TTL:     record.TTL,
 		Proxied: record.Proxied,

@@ -1,6 +1,7 @@
 package main
 
 import (
+	"flag"
 	"log"
 	"os"
 
@@ -22,13 +23,31 @@ import (
 )
 
 func main() {
+	// Parse command line flags
+	configPath := flag.String("config", "", "Path to config.ini file")
+	flag.Parse()
+
 	// 1. Load configuration
-	cfg, err := config.Load()
-	if err != nil {
-		log.Fatalf("Failed to load config: %v", err)
-		os.Exit(1)
+	var cfg *config.Config
+	var err error
+
+	if *configPath != "" {
+		log.Printf("Loading configuration from INI file: %s", *configPath)
+		cfg, err = config.LoadFromINI(*configPath)
+		if err != nil {
+			log.Fatalf("Failed to load config from INI: %v", err)
+			os.Exit(1)
+		}
+		log.Println("✓ Configuration loaded from INI file")
+	} else {
+		log.Println("Loading configuration from environment variables")
+		cfg, err = config.Load()
+		if err != nil {
+			log.Fatalf("Failed to load config: %v", err)
+			os.Exit(1)
+		}
+		log.Println("✓ Configuration loaded from environment")
 	}
-	log.Println("✓ Configuration loaded")
 
 	// 2. Initialize MySQL
 	if err := db.InitMySQL(cfg.MySQL.DSN); err != nil {

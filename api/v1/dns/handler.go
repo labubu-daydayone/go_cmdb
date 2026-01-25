@@ -53,11 +53,24 @@ func (h *Handler) CreateRecord(c *gin.Context) {
 		req.TTL = 120
 	}
 
+	// Get domain to normalize name
+	var domain model.Domain
+	if err := h.db.First(&domain, req.DomainID).Error; err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"code":    2001,
+			"message": "domain not found",
+		})
+		return
+	}
+
+	// Normalize name to relative format (@, www, a.b)
+	normalizedName := dns.NormalizeRelativeName(req.Name, domain.Domain)
+
 	// Create DNS record (status=pending, desired_state=present)
 	record := model.DomainDNSRecord{
 		DomainID:     req.DomainID,
 		Type:         req.Type,
-		Name:         req.Name,
+		Name:         normalizedName,
 		Value:        req.Value,
 		TTL:          req.TTL,
 		Proxied:      false, // Default to DNS only (not proxied)
