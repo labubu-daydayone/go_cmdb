@@ -137,24 +137,19 @@ func (h *Handler) DeleteRecord(c *gin.Context) {
 		return
 	}
 
-	// Step 2: Separate records by status
-	var directDeleteIDs []int   // pending/error: direct delete
-	var markAbsentIDs []int      // active: mark as absent for Worker
-
+	// Step 2: Direct delete all records
+	// User requirement: All records (pending/error/active) should be deletable immediately
+	// Rationale: 
+	// - pending/error: Never synced to Cloudflare, safe to delete
+	// - active: User wants to force delete, will handle Cloudflare cleanup separately if needed
+	var directDeleteIDs []int
 	for _, record := range records {
-		if record.Status == model.DNSRecordStatusPending || record.Status == model.DNSRecordStatusError {
-			// pending/error: no need to sync to Cloudflare, direct delete
-			directDeleteIDs = append(directDeleteIDs, int(record.ID))
-		} else {
-			// active: need to delete from Cloudflare first
-			markAbsentIDs = append(markAbsentIDs, int(record.ID))
-		}
+		directDeleteIDs = append(directDeleteIDs, int(record.ID))
 	}
 
 	var deletedCount int64
-	var markedCount int64
 
-	// Step 3: Direct delete pending/error records
+	// Step 3: Direct delete all records
 	if len(directDeleteIDs) > 0 {
 		result := h.db.Where("id IN ?", directDeleteIDs).Delete(&model.DomainDNSRecord{})
 		if result.Error != nil {
@@ -167,27 +162,11 @@ func (h *Handler) DeleteRecord(c *gin.Context) {
 		deletedCount = result.RowsAffected
 	}
 
-	// Step 4: Mark active records as absent (Worker will delete them)
-	if len(markAbsentIDs) > 0 {
-		result := h.db.Model(&model.DomainDNSRecord{}).
-			Where("id IN ?", markAbsentIDs).
-			Update("desired_state", model.DNSRecordDesiredStateAbsent)
-		if result.Error != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{
-				"code":    500,
-				"message": "failed to mark records for deletion: " + result.Error.Error(),
-			})
-			return
-		}
-		markedCount = result.RowsAffected
-	}
-
 	c.JSON(http.StatusOK, gin.H{
 		"code":    0,
 		"message": "success",
 		"data": gin.H{
-			"deleted": deletedCount,  // pending/error records deleted immediately
-			"marked":  markedCount,   // active records marked for deletion
+			"deleted": deletedCount,
 		},
 	})
 }
