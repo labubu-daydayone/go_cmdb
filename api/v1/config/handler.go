@@ -1,6 +1,7 @@
 package config
 
 import (
+	"go_cmdb/internal/httpx"
 	"encoding/json"
 	"log"
 	"strconv"
@@ -9,7 +10,6 @@ import (
 	"go_cmdb/internal/config"
 	"go_cmdb/internal/configgen"
 	"go_cmdb/internal/configver"
-	"go_cmdb/internal/httpx"
 	"go_cmdb/internal/model"
 
 	"github.com/gin-gonic/gin"
@@ -160,7 +160,7 @@ func (h *Handler) ListVersions(c *gin.Context) {
 	}
 
 	httpx.OK(c, gin.H{
-		"list":     versions,
+		"items":     versions,
 		"total":    total,
 		"page":     req.Page,
 		"pageSize": req.PageSize,

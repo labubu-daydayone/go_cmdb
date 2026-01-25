@@ -61,3 +61,25 @@ func FailErr(c *gin.Context, err *AppError) {
 		Data:    data,
 	})
 }
+
+// ListData represents the standard list response data structure
+type ListData struct {
+	Items    interface{} `json:"items"`
+	Total    int64       `json:"total"`
+	Page     int         `json:"page"`
+	PageSize int         `json:"pageSize"`
+}
+
+// OKItems sends a successful list response with pagination
+func OKItems(c *gin.Context, items interface{}, total int64, page, pageSize int) {
+	c.JSON(http.StatusOK, Response{
+		Code:    CodeSuccess,
+		Message: "success",
+		Data: ListData{
+			Items:    items,
+			Total:    total,
+			Page:     page,
+			PageSize: pageSize,
+		},
+	})
+}

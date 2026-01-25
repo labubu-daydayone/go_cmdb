@@ -6,6 +6,7 @@ import (
 	"strconv"
 
 	"go_cmdb/internal/acme"
+	"go_cmdb/internal/httpx"
 	"go_cmdb/internal/model"
 
 	"github.com/gin-gonic/gin"
@@ -160,16 +161,7 @@ func (h *Handler) ListRequests(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{
-		"code":    0,
-		"message": "success",
-		"data": gin.H{
-			"list":     requests,
-			"total":    total,
-			"page":     page,
-			"pageSize": pageSize,
-		},
-	})
+	httpx.OKItems(c, requests, total, page, pageSize)
 }
 
 // GetRequest gets a single certificate request

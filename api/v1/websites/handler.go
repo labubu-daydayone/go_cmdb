@@ -1,11 +1,11 @@
 package websites
 
 import (
+	"go_cmdb/internal/httpx"
 	"log"
 	"strconv"
 
 	"go_cmdb/internal/cert"
-	"go_cmdb/internal/httpx"
 	"go_cmdb/internal/model"
 	"go_cmdb/internal/ws"
 
@@ -37,7 +37,7 @@ type ListRequest struct {
 
 // ListResponse 列表响应
 type ListResponse struct {
-	List     []WebsiteItem `json:"list"`
+	Items    []WebsiteItem `json:"items"`
 	Total    int64         `json:"total"`
 	Page     int           `json:"page"`
 	PageSize int           `json:"pageSize"`
@@ -165,7 +165,7 @@ func (h *Handler) List(c *gin.Context) {
 	}
 
 	httpx.OK(c, ListResponse{
-		List:     list,
+		Items:    list,
 		Total:    total,
 		Page:     req.Page,
 		PageSize: req.PageSize,

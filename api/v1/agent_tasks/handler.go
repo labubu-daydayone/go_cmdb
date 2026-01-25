@@ -1,13 +1,13 @@
 package agent_tasks
 
 import (
+	"go_cmdb/internal/httpx"
 	"encoding/json"
 	"log"
 	"strconv"
 
 	"go_cmdb/internal/agent"
 	"go_cmdb/internal/config"
-	"go_cmdb/internal/httpx"
 	"go_cmdb/internal/model"
 
 	"github.com/gin-gonic/gin"
@@ -88,7 +88,7 @@ func (h *Handler) List(c *gin.Context) {
 
 	// Return response
 	httpx.OK(c, gin.H{
-		"list":     tasks,
+		"items":     tasks,
 		"total":    total,
 		"page":     page,
 		"pageSize": pageSize,

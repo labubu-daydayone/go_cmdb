@@ -5,6 +5,7 @@ import (
 	"strconv"
 
 	"go_cmdb/internal/dns"
+	"go_cmdb/internal/httpx"
 	"go_cmdb/internal/model"
 
 	"github.com/gin-gonic/gin"
@@ -300,16 +301,7 @@ func (h *Handler) ListRecords(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{
-		"code":    0,
-		"message": "success",
-		"data": gin.H{
-			"list":     records,
-			"total":    total,
-			"page":     query.Page,
-			"pageSize": query.PageSize,
-		},
-	})
+	httpx.OKItems(c, records, total, query.Page, query.PageSize)
 }
 
 // GetRecord retrieves a single DNS record by ID

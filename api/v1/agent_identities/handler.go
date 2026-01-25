@@ -1,9 +1,9 @@
 package agent_identities
 
 import (
+	"go_cmdb/internal/httpx"
 	"time"
 
-	"go_cmdb/internal/httpx"
 	"go_cmdb/internal/model"
 
 	"github.com/gin-gonic/gin"
@@ -64,7 +64,7 @@ func (h *Handler) List(c *gin.Context) {
 	}
 
 	httpx.OK(c, gin.H{
-		"list":  identities,
+		"items":  identities,
 		"total": len(identities),
 	})
 }
