@@ -14,6 +14,7 @@ import (
 
 // CertificateLifecycleItem represents a unified certificate lifecycle item
 type CertificateLifecycleItem struct {
+	ID              string     `json:"id"` // Unique string identifier: "cert:<id>" or "req:<id>" (display-only, not a business key)
 	ItemType        string     `json:"itemType"` // "certificate" | "request"
 	CertificateID   *int       `json:"certificateId"`
 	RequestID       *int       `json:"requestId"`
@@ -108,17 +109,27 @@ func (h *Handler) ListCertificatesLifecycle(c *gin.Context) {
 			mappedStatus = req.Status
 		}
 
-		items = append(items, CertificateLifecycleItem{
-			ItemType:      "request",
-			RequestID:     &req.ID,
-			CertificateID: req.ResultCertificateID,
-			Status:        mappedStatus,
-			Domains:       domains,
-			Fingerprint:   "",
-			LastError:     req.LastError,
-			CreatedAt:     req.CreatedAt,
-			UpdatedAt:     req.UpdatedAt,
-		})
+			// Generate string ID for request: "req:<requestId>"
+			item := CertificateLifecycleItem{
+				ID:            "req:" + strconv.Itoa(req.ID),
+				ItemType:      "request",
+				RequestID:     &req.ID,
+				Status:        mappedStatus,
+				Domains:       domains,
+				Fingerprint:   "",
+				LastError:     req.LastError,
+				CreatedAt:     req.CreatedAt,
+				UpdatedAt:     req.UpdatedAt,
+			}
+			
+			// Field mutual exclusion: request rows should have certificateId only if issued
+			if mappedStatus == "issued" && req.ResultCertificateID != nil {
+				item.CertificateID = req.ResultCertificateID
+			} else {
+				item.CertificateID = nil
+			}
+			
+			items = append(items, item)
 	}
 
 	// Add certificates
@@ -132,19 +143,21 @@ func (h *Handler) ListCertificatesLifecycle(c *gin.Context) {
 			domains[i] = cd.Domain
 		}
 
-		items = append(items, CertificateLifecycleItem{
-			ItemType:      "certificate",
-			CertificateID: &cert.ID,
-			RequestID:     nil,
-			Status:        cert.Status,
-			Domains:       domains,
-			Fingerprint:   cert.Fingerprint,
-			IssueAt:        cert.IssueAt,
-			ExpireAt:       cert.ExpireAt,
-			LastError:     cert.LastError,
-			CreatedAt:      cert.CreatedAt,
-			UpdatedAt:      cert.UpdatedAt,
-		})
+			// Generate string ID for certificate: "cert:<certificateId>"
+			items = append(items, CertificateLifecycleItem{
+				ID:            "cert:" + strconv.Itoa(cert.ID),
+				ItemType:      "certificate",
+				CertificateID: &cert.ID,
+				RequestID:     nil, // Field mutual exclusion: certificate rows must have requestId = null
+				Status:        cert.Status,
+				Domains:       domains,
+				Fingerprint:   cert.Fingerprint,
+				IssueAt:        cert.IssueAt,
+				ExpireAt:       cert.ExpireAt,
+				LastError:     cert.LastError,
+				CreatedAt:      cert.CreatedAt,
+				UpdatedAt:      cert.UpdatedAt,
+			})
 	}
 
 	// 4. Sort by createdAt DESC
