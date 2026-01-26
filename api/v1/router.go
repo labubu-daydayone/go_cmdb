@@ -187,6 +187,7 @@ func SetupRouter(r *gin.Engine, db *gorm.DB, cfg *config.Config) {
 					acmeGroup.POST("/certificate/retry", acmeHandlerInstance.RetryRequest)
 					acmeGroup.GET("/certificate/requests", acmeHandlerInstance.ListRequests)
 					acmeGroup.GET("/certificate/requests/:id", acmeHandlerInstance.GetRequest)
+					// T2-22: Delete failed certificate request (requires certHandlerInstance, so defined here)
 				}
 
 				// Certificate renewal routes
@@ -200,6 +201,8 @@ func SetupRouter(r *gin.Engine, db *gorm.DB, cfg *config.Config) {
 
 					// Certificate routes (T2-07, T2-18, T2-19)
 					certHandlerInstance := cert.NewHandler(db)
+					// T2-22: Delete failed certificate request (add to acmeGroup after certHandlerInstance is defined)
+					acmeGroup.POST("/certificate/requests/:requestId/delete", certHandlerInstance.DeleteFailedCertificateRequest)
 					// Certificate resource APIs (T2-18, T2-19)
 					protected.GET("/certificates", certHandlerInstance.ListCertificatesLifecycle) // T2-19: Unified lifecycle view
 					protected.GET("/certificates/:id", certHandlerInstance.GetCertificate)
