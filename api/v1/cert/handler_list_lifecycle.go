@@ -26,6 +26,7 @@ type CertificateLifecycleItem struct {
 	LastError       *string    `json:"lastError"`
 	CreatedAt       *time.Time `json:"createdAt"`
 	UpdatedAt       *time.Time `json:"updatedAt"`
+	Deletable       bool       `json:"deletable"` // Whether this item can be deleted
 }
 
 // ListCertificatesLifecycle lists all certificates and certificate requests (unified lifecycle view)
@@ -120,6 +121,7 @@ func (h *Handler) ListCertificatesLifecycle(c *gin.Context) {
 				LastError:     req.LastError,
 				CreatedAt:     req.CreatedAt,
 				UpdatedAt:     req.UpdatedAt,
+				Deletable:     mappedStatus == "failed", // Only failed requests can be deleted
 			}
 			
 			// Field mutual exclusion: request rows should have certificateId only if issued
@@ -143,21 +145,28 @@ func (h *Handler) ListCertificatesLifecycle(c *gin.Context) {
 			domains[i] = cd.Domain
 		}
 
-			// Generate string ID for certificate: "cert:<certificateId>"
-			items = append(items, CertificateLifecycleItem{
-				ID:            "cert:" + strconv.Itoa(cert.ID),
-				ItemType:      "certificate",
-				CertificateID: &cert.ID,
-				RequestID:     nil, // Field mutual exclusion: certificate rows must have requestId = null
-				Status:        cert.Status,
-				Domains:       domains,
-				Fingerprint:   cert.Fingerprint,
-				IssueAt:        cert.IssueAt,
-				ExpireAt:       cert.ExpireAt,
-				LastError:     cert.LastError,
-				CreatedAt:      cert.CreatedAt,
-				UpdatedAt:      cert.UpdatedAt,
-			})
+		// Check if certificate has active bindings
+		var activeBindingCount int64
+		h.db.Model(&model.CertificateBinding{}).
+			Where("certificate_id = ? AND is_active = ?", cert.ID, true).
+			Count(&activeBindingCount)
+
+		// Generate string ID for certificate: "cert:<certificateId>"
+		items = append(items, CertificateLifecycleItem{
+			ID:            "cert:" + strconv.Itoa(cert.ID),
+			ItemType:      "certificate",
+			CertificateID: &cert.ID,
+			RequestID:     nil, // Field mutual exclusion: certificate rows must have requestId = null
+			Status:        cert.Status,
+			Domains:       domains,
+			Fingerprint:   cert.Fingerprint,
+			IssueAt:        cert.IssueAt,
+			ExpireAt:       cert.ExpireAt,
+			LastError:     cert.LastError,
+			CreatedAt:      cert.CreatedAt,
+			UpdatedAt:      cert.UpdatedAt,
+			Deletable:     activeBindingCount == 0, // Only certificates without active bindings can be deleted
+		})
 	}
 
 	// 4. Sort by createdAt DESC
