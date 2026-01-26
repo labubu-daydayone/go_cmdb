@@ -118,7 +118,7 @@ func (h *Handler) ListCertificates(c *gin.Context) {
 	provider := c.Query("provider")   // acme provider name (for filtering acme certificates)
 	status := c.Query("status")       // pending|issued|expired|revoked|valid|expiring
 
-	// Build query with LEFT JOIN to get domain count
+	// Build query with subquery to get domain count
 	query := h.db.Table("certificates c").
 		Select(`
 			c.id,
@@ -135,10 +135,8 @@ func (h *Handler) ListCertificates(c *gin.Context) {
 			c.last_error,
 			c.created_at,
 			c.updated_at,
-			COUNT(DISTINCT cd.domain) as domain_count
-		`).
-		Joins("LEFT JOIN certificate_domains cd ON cd.certificate_id = c.id").
-		Group("c.id")
+			(SELECT COUNT(*) FROM certificate_domains WHERE certificate_id = c.id) as domain_count
+		`)
 
 	// Apply filters
 	if source != "" {
