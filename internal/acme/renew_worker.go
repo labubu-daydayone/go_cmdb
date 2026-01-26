@@ -124,14 +124,14 @@ func (w *RenewWorker) processRenewal(certID int) {
 	}
 
 	// Step 4: Validate acme_account_id
-	if cert.AcmeAccountID == 0 {
+	if cert.AcmeAccountID == nil || *cert.AcmeAccountID == 0 {
 		log.Printf("[RenewWorker] Certificate %d has no acme_account_id, skipping\n", certID)
 		w.renewService.ClearRenewing(certID)
 		return
 	}
 
 	// Step 5: Create renewal request
-	request, err := w.renewService.CreateRenewRequest(certID, cert.AcmeAccountID, domains)
+	request, err := w.renewService.CreateRenewRequest(certID, *cert.AcmeAccountID, domains)
 	if err != nil {
 		log.Printf("[RenewWorker] Failed to create renewal request for certificate %d: %v\n", certID, err)
 		w.renewService.ClearRenewing(certID)

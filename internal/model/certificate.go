@@ -4,23 +4,21 @@ import "time"
 
 // Certificate represents an SSL/TLS certificate
 type Certificate struct {
-	ID            int       `gorm:"primaryKey;autoIncrement" json:"id"`
-	Name          string    `gorm:"type:varchar(255);not null" json:"name"`
-	Fingerprint   string    `gorm:"type:varchar(64);uniqueIndex" json:"fingerprint"` // SHA256 fingerprint
-	Status        string    `gorm:"type:varchar(20);not null;default:pending" json:"status"` // pending|issued|expired|revoked|valid|expiring
-	CertPem       string    `gorm:"type:text;not null" json:"certPem"`
-	KeyPem        string    `gorm:"type:text;not null" json:"keyPem"`
-	ChainPem      string    `gorm:"type:text" json:"chainPem"` // Certificate chain (intermediate + root)
-	Issuer        string    `gorm:"type:varchar(255)" json:"issuer"` // Certificate issuer
-	IssueAt       time.Time `gorm:"" json:"issueAt"` // Certificate issue time
-	ExpireAt      time.Time `gorm:"not null" json:"expireAt"` // Certificate expiration time
-	Source        string    `gorm:"type:varchar(20);not null;default:manual" json:"source"` // manual|acme
-	RenewMode     string    `gorm:"type:varchar(20);not null;default:manual" json:"renewMode"` // manual|auto
-	AcmeAccountID int       `gorm:"index" json:"acmeAccountId"` // ACME account ID for renewal
-	Renewing      bool      `gorm:"type:tinyint(1);not null;default:0" json:"renewing"` // Renewal in progress flag
-	LastError     string    `gorm:"type:varchar(500)" json:"lastError"` // Last error message
-	CreatedAt     time.Time `gorm:"not null;default:CURRENT_TIMESTAMP" json:"createdAt"`
-	UpdatedAt     time.Time `gorm:"not null;default:CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP" json:"updatedAt"`
+	ID              int        `gorm:"primaryKey;autoIncrement;column:id" json:"id"`
+	Provider        string     `gorm:"column:provider;type:enum('letsencrypt','google_publicca','manual');not null" json:"provider"`
+	Source          string     `gorm:"column:source;type:enum('acme','manual');not null" json:"source"`
+	AcmeAccountID   *int       `gorm:"column:acme_account_id;index" json:"acmeAccountId"`
+	Status          string     `gorm:"column:status;type:enum('valid','expiring','expired','revoked');not null;default:valid" json:"status"`
+	IssueAt         *time.Time `gorm:"column:issue_at" json:"issueAt"`
+	ExpireAt        *time.Time `gorm:"column:expire_at" json:"expireAt"`
+	Fingerprint     string     `gorm:"column:fingerprint;type:varchar(128);uniqueIndex;not null" json:"fingerprint"`
+	CertificatePem  string     `gorm:"column:certificate_pem;type:longtext;not null" json:"certificatePem"`
+	PrivateKeyPem   string     `gorm:"column:private_key_pem;type:longtext;not null" json:"privateKeyPem"`
+	RenewMode       string     `gorm:"column:renew_mode;type:enum('auto','manual');not null;default:manual" json:"renewMode"`
+	RenewAt         *time.Time `gorm:"column:renew_at" json:"renewAt"`
+	LastError       *string    `gorm:"column:last_error;type:varchar(255)" json:"lastError"`
+	CreatedAt       *time.Time `gorm:"column:created_at" json:"createdAt"`
+	UpdatedAt       *time.Time `gorm:"column:updated_at" json:"updatedAt"`
 }
 
 // TableName specifies the table name for Certificate

@@ -1,9 +1,10 @@
 package certificate_renew
 
 import (
+	"fmt"
+	"strconv"
 	"go_cmdb/internal/acme"
 	"go_cmdb/internal/httpx"
-	"strconv"
 
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
@@ -98,18 +99,26 @@ func (h *Handler) GetRenewalCandidates(c *gin.Context) {
 			domains = []string{}
 		}
 
+		var acmeAccountID int
+		if cert.AcmeAccountID != nil {
+			acmeAccountID = *cert.AcmeAccountID
+		}
+		var lastError string
+		if cert.LastError != nil {
+			lastError = *cert.LastError
+		}
 		certInfos[i] = CertificateInfo{
 			ID:            cert.ID,
-			Name:          cert.Name,
+			Name:          fmt.Sprintf("Certificate #%d", cert.ID),
 			Status:        cert.Status,
 			Domains:       domains,
 			ExpireAt:      cert.ExpireAt.Format("2006-01-02 15:04:05"),
 			IssueAt:       cert.IssueAt.Format("2006-01-02 15:04:05"),
 			Source:        cert.Source,
 			RenewMode:     cert.RenewMode,
-			AcmeAccountID: cert.AcmeAccountID,
-			Renewing:      cert.Renewing,
-			LastError:     cert.LastError,
+			AcmeAccountID: acmeAccountID,
+			Renewing:      false,
+			LastError:     lastError,
 		}
 	}
 
@@ -142,7 +151,7 @@ func (h *Handler) TriggerRenewal(c *gin.Context) {
 		return
 	}
 
-	if cert.AcmeAccountID == 0 {
+	if cert.AcmeAccountID == nil || *cert.AcmeAccountID == 0 {
 		httpx.FailErr(c, httpx.ErrParamInvalid("Certificate has no acme_account_id"))
 		return
 	}
@@ -168,7 +177,7 @@ func (h *Handler) TriggerRenewal(c *gin.Context) {
 	}
 
 	// Create renewal request
-	request, err := h.renewService.CreateRenewRequest(req.CertificateID, cert.AcmeAccountID, domains)
+	request, err := h.renewService.CreateRenewRequest(req.CertificateID, *cert.AcmeAccountID, domains)
 	if err != nil {
 		h.renewService.ClearRenewing(req.CertificateID)
 		httpx.FailErr(c, httpx.ErrInternalError("Failed to create renewal request", err))

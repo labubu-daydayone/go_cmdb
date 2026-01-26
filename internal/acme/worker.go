@@ -230,19 +230,20 @@ func (w *Worker) processRequest(request *model.CertificateRequest) {
 	}
 
 	// Step 11: Create new certificate
+	expireAt := extractExpiresAt(result.CertPem)
+	issueAt := time.Now()
+	acmeAccountID := request.AccountID
 	certificate := &model.Certificate{
-		Name:          fmt.Sprintf("ACME Certificate %d", request.ID),
-		Fingerprint:   fingerprint,
-		Status:        model.CertificateStatusIssued,
-		CertPem:       result.CertPem,
-		KeyPem:        result.KeyPem,
-		ChainPem:      result.ChainPem,
-		Issuer:        result.Issuer,
-		ExpireAt:      extractExpiresAt(result.CertPem),
-		IssueAt:       time.Now(),
-		Source:        model.CertificateSourceAcme,
-		RenewMode:     model.CertificateRenewModeAuto,
-		AcmeAccountID: request.AccountID,
+		Fingerprint:    fingerprint,
+		Status:         "valid",
+		CertificatePem: result.CertPem,
+		PrivateKeyPem:  result.KeyPem,
+		ExpireAt:       &expireAt,
+		IssueAt:        &issueAt,
+		Source:         "acme",
+		Provider:       provider.Name,
+		RenewMode:      "auto",
+		AcmeAccountID:  &acmeAccountID,
 	}
 
 	if err := w.service.CreateCertificate(certificate); err != nil {

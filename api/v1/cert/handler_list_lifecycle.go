@@ -132,11 +132,6 @@ func (h *Handler) ListCertificatesLifecycle(c *gin.Context) {
 			domains[i] = cd.Domain
 		}
 
-		issueAt := cert.IssueAt
-		expireAt := cert.ExpireAt
-		createdAt := cert.CreatedAt
-		updatedAt := cert.UpdatedAt
-
 		items = append(items, CertificateLifecycleItem{
 			ItemType:      "certificate",
 			CertificateID: &cert.ID,
@@ -144,11 +139,11 @@ func (h *Handler) ListCertificatesLifecycle(c *gin.Context) {
 			Status:        cert.Status,
 			Domains:       domains,
 			Fingerprint:   cert.Fingerprint,
-			IssueAt:       &issueAt,
-			ExpireAt:      &expireAt,
-			LastError:     nil,
-			CreatedAt:     &createdAt,
-			UpdatedAt:     &updatedAt,
+			IssueAt:        cert.IssueAt,
+			ExpireAt:       cert.ExpireAt,
+			LastError:     cert.LastError,
+			CreatedAt:      cert.CreatedAt,
+			UpdatedAt:      cert.UpdatedAt,
 		})
 	}
 

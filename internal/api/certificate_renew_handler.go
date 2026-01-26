@@ -138,18 +138,26 @@ func (h *CertificateRenewHandler) GetRenewalCandidates(w http.ResponseWriter, r 
 			domains = []string{}
 		}
 
+		var acmeAccountID int
+		if cert.AcmeAccountID != nil {
+			acmeAccountID = *cert.AcmeAccountID
+		}
+		var lastError string
+		if cert.LastError != nil {
+			lastError = *cert.LastError
+		}
 		certInfos[i] = CertificateInfo{
 			ID:            cert.ID,
-			Name:          cert.Name,
+			Name:          fmt.Sprintf("Certificate #%d", cert.ID),
 			Status:        cert.Status,
 			Domains:       domains,
 			ExpireAt:      cert.ExpireAt.Format("2006-01-02 15:04:05"),
 			IssueAt:       cert.IssueAt.Format("2006-01-02 15:04:05"),
 			Source:        cert.Source,
 			RenewMode:     cert.RenewMode,
-			AcmeAccountID: cert.AcmeAccountID,
-			Renewing:      cert.Renewing,
-			LastError:     cert.LastError,
+			AcmeAccountID: acmeAccountID,
+			Renewing:      false,
+			LastError:     lastError,
 		}
 	}
 
@@ -195,7 +203,7 @@ func (h *CertificateRenewHandler) TriggerRenewal(w http.ResponseWriter, r *http.
 		return
 	}
 
-	if cert.AcmeAccountID == 0 {
+	if cert.AcmeAccountID == nil || *cert.AcmeAccountID == 0 {
 		respondJSON(w, http.StatusBadRequest, TriggerRenewalResponse{
 			Code:    400,
 			Message: "Certificate has no acme_account_id",
@@ -233,7 +241,7 @@ func (h *CertificateRenewHandler) TriggerRenewal(w http.ResponseWriter, r *http.
 	}
 
 	// Create renewal request
-	request, err := h.renewService.CreateRenewRequest(req.CertificateID, cert.AcmeAccountID, domains)
+	request, err := h.renewService.CreateRenewRequest(req.CertificateID, *cert.AcmeAccountID, domains)
 	if err != nil {
 		h.renewService.ClearRenewing(req.CertificateID)
 		respondJSON(w, http.StatusInternalServerError, TriggerRenewalResponse{

@@ -1,6 +1,7 @@
 package cert
 
 import (
+	"fmt"
 	"go_cmdb/internal/model"
 
 	"gorm.io/gorm"
@@ -162,15 +163,15 @@ func (s *Service) GetWebsiteCertificateCandidates(websiteID int) ([]CertificateC
 			provider = "ACME"
 		}
 
-		candidates = append(candidates, CertificateCandidate{
-			CertificateID:      cert.ID,
-			CertificateName:    cert.Name,
-			CertificateDomains: certDomains,
-			CoverageStatus:     coverage.Status,
-			MissingDomains:     coverage.MissingDomains,
-			ExpireAt:           cert.ExpireAt.Format("2006-01-02 15:04:05"),
-			Provider:           provider,
-		})
+			candidates = append(candidates, CertificateCandidate{
+				CertificateID:      cert.ID,
+				CertificateName:    fmt.Sprintf("Certificate #%d", cert.ID),
+				CertificateDomains: certDomains,
+				CoverageStatus:     coverage.Status,
+				MissingDomains:     coverage.MissingDomains,
+				ExpireAt:           cert.ExpireAt.Format("2006-01-02 15:04:05"),
+				Provider:           provider,
+			})
 	}
 
 	return candidates, nil

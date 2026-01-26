@@ -189,8 +189,8 @@ func (a *Aggregator) buildHTTPS(websiteID int) (*HTTPSConfig, error) {
 
 		config.Certificate = &CertificateConfig{
 			CertificateID: certificate.ID,
-			CertPem:       certificate.CertPem,
-			KeyPem:        certificate.KeyPem,
+			CertPem:       certificate.CertificatePem,
+			KeyPem:        certificate.PrivateKeyPem,
 		}
 	} else if websiteHTTPS.CertMode == model.CertModeACME {
 		// ACME mode: check if certificate is issued
@@ -219,8 +219,8 @@ func (a *Aggregator) buildHTTPS(websiteID int) (*HTTPSConfig, error) {
 
 		config.Certificate = &CertificateConfig{
 			CertificateID: certificate.ID,
-			CertPem:       certificate.CertPem,
-			KeyPem:        certificate.KeyPem,
+			CertPem:       certificate.CertificatePem,
+			KeyPem:        certificate.PrivateKeyPem,
 		}
 	}
 
