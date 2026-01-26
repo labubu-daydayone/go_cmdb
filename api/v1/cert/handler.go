@@ -122,16 +122,14 @@ func (h *Handler) ListCertificates(c *gin.Context) {
 	query := h.db.Table("certificates c").
 		Select(`
 			c.id,
-			c.name,
 			c.fingerprint,
 			c.status,
 			c.source,
+			c.provider,
 			c.renew_mode,
-			c.issuer,
 			c.issue_at,
 			c.expire_at,
 			c.acme_account_id,
-			c.renewing,
 			c.last_error,
 			c.created_at,
 			c.updated_at,
@@ -180,21 +178,19 @@ func (h *Handler) ListCertificates(c *gin.Context) {
 	query = query.Order("c.id DESC").Limit(pageSize).Offset(offset)
 
 	type QueryRow struct {
-		ID            int    `gorm:"column:id"`
-		Name          string `gorm:"column:name"`
-		Fingerprint   string `gorm:"column:fingerprint"`
-		Status        string `gorm:"column:status"`
-		Source        string `gorm:"column:source"`
-		RenewMode     string `gorm:"column:renew_mode"`
-		Issuer        string `gorm:"column:issuer"`
-		IssueAt       string `gorm:"column:issue_at"`
-		ExpireAt      string `gorm:"column:expire_at"`
-		AcmeAccountID int    `gorm:"column:acme_account_id"`
-		Renewing      bool   `gorm:"column:renewing"`
+		ID            int     `gorm:"column:id"`
+		Fingerprint   string  `gorm:"column:fingerprint"`
+		Status        string  `gorm:"column:status"`
+		Source        string  `gorm:"column:source"`
+		Provider      string  `gorm:"column:provider"`
+		RenewMode     string  `gorm:"column:renew_mode"`
+		IssueAt       *string `gorm:"column:issue_at"`
+		ExpireAt      *string `gorm:"column:expire_at"`
+		AcmeAccountID *int    `gorm:"column:acme_account_id"`
 		LastError     *string `gorm:"column:last_error"`
-		CreatedAt     string `gorm:"column:created_at"`
-		UpdatedAt     string `gorm:"column:updated_at"`
-		DomainCount   int    `gorm:"column:domain_count"`
+		CreatedAt     *string `gorm:"column:created_at"`
+		UpdatedAt     *string `gorm:"column:updated_at"`
+		DomainCount   int     `gorm:"column:domain_count"`
 	}
 
 	var rows []QueryRow
@@ -206,36 +202,32 @@ func (h *Handler) ListCertificates(c *gin.Context) {
 	// Build response items
 	type CertificateItem struct {
 		ID            int     `json:"id"`
-		Name          string  `json:"name"`
 		Fingerprint   string  `json:"fingerprint"`
 		Status        string  `json:"status"`
 		Source        string  `json:"source"`
+		Provider      string  `json:"provider"`
 		RenewMode     string  `json:"renewMode"`
-		Issuer        string  `json:"issuer"`
-		IssueAt       string  `json:"issueAt"`
-		ExpireAt      string  `json:"expireAt"`
-		AcmeAccountID int     `json:"acmeAccountId"`
-		Renewing      bool    `json:"renewing"`
+		IssueAt       *string `json:"issueAt"`
+		ExpireAt      *string `json:"expireAt"`
+		AcmeAccountID *int    `json:"acmeAccountId"`
 		LastError     *string `json:"lastError"`
 		DomainCount   int     `json:"domainCount"`
-		CreatedAt     string  `json:"createdAt"`
-		UpdatedAt     string  `json:"updatedAt"`
+		CreatedAt     *string `json:"createdAt"`
+		UpdatedAt     *string `json:"updatedAt"`
 	}
 
 	items := make([]CertificateItem, 0, len(rows))
 	for _, row := range rows {
 		items = append(items, CertificateItem{
 			ID:            row.ID,
-			Name:          row.Name,
 			Fingerprint:   row.Fingerprint,
 			Status:        row.Status,
 			Source:        row.Source,
+			Provider:      row.Provider,
 			RenewMode:     row.RenewMode,
-			Issuer:        row.Issuer,
 			IssueAt:       row.IssueAt,
 			ExpireAt:      row.ExpireAt,
 			AcmeAccountID: row.AcmeAccountID,
-			Renewing:      row.Renewing,
 			LastError:     row.LastError,
 			DomainCount:   row.DomainCount,
 			CreatedAt:     row.CreatedAt,
@@ -258,23 +250,20 @@ func (h *Handler) GetCertificate(c *gin.Context) {
 
 	// Query certificate with full details
 	type CertificateDetail struct {
-		ID            int     `gorm:"column:id" json:"id"`
-		Name          string  `gorm:"column:name" json:"name"`
-		Fingerprint   string  `gorm:"column:fingerprint" json:"fingerprint"`
-		Status        string  `gorm:"column:status" json:"status"`
-		CertPem       string  `gorm:"column:cert_pem" json:"certificatePem"`
-		KeyPem        string  `gorm:"column:key_pem" json:"privateKeyPem"`
-		ChainPem      string  `gorm:"column:chain_pem" json:"chainPem"`
-		Issuer        string  `gorm:"column:issuer" json:"issuer"`
-		IssueAt       string  `gorm:"column:issue_at" json:"issueAt"`
-		ExpireAt      string  `gorm:"column:expire_at" json:"expireAt"`
-		Source        string  `gorm:"column:source" json:"source"`
-		RenewMode     string  `gorm:"column:renew_mode" json:"renewMode"`
-		AcmeAccountID int     `gorm:"column:acme_account_id" json:"acmeAccountId"`
-		Renewing      bool    `gorm:"column:renewing" json:"renewing"`
-		LastError     *string `gorm:"column:last_error" json:"lastError"`
-		CreatedAt     string  `gorm:"column:created_at" json:"createdAt"`
-		UpdatedAt     string  `gorm:"column:updated_at" json:"updatedAt"`
+		ID              int     `gorm:"column:id" json:"id"`
+		Fingerprint     string  `gorm:"column:fingerprint" json:"fingerprint"`
+		Status          string  `gorm:"column:status" json:"status"`
+		CertificatePem  string  `gorm:"column:certificate_pem" json:"certificatePem"`
+		PrivateKeyPem   string  `gorm:"column:private_key_pem" json:"privateKeyPem"`
+		Provider        string  `gorm:"column:provider" json:"provider"`
+		IssueAt         *string `gorm:"column:issue_at" json:"issueAt"`
+		ExpireAt        *string `gorm:"column:expire_at" json:"expireAt"`
+		Source          string  `gorm:"column:source" json:"source"`
+		RenewMode       string  `gorm:"column:renew_mode" json:"renewMode"`
+		AcmeAccountID   *int    `gorm:"column:acme_account_id" json:"acmeAccountId"`
+		LastError       *string `gorm:"column:last_error" json:"lastError"`
+		CreatedAt       *string `gorm:"column:created_at" json:"createdAt"`
+		UpdatedAt       *string `gorm:"column:updated_at" json:"updatedAt"`
 	}
 
 	var cert CertificateDetail
