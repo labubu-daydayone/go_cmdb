@@ -198,8 +198,13 @@ func SetupRouter(r *gin.Engine, db *gorm.DB, cfg *config.Config) {
 					certificateRenewGroup.POST("/disable-auto", certificateRenewHandlerInstance.DisableAutoRenew)
 				}
 
-					// Certificate coverage routes (T2-07)
+					// Certificate routes (T2-07, T2-18)
 					certHandlerInstance := cert.NewHandler(db)
+					// Certificate resource APIs (T2-18)
+					protected.GET("/certificates", certHandlerInstance.ListCertificates)
+					protected.GET("/certificates/:id", certHandlerInstance.GetCertificate)
+					protected.POST("/certificates/upload", certHandlerInstance.UploadCertificate)
+					// Certificate coverage routes (T2-07)
 					protected.GET("/certificates/:id/websites", certHandlerInstance.GetCertificateWebsites)
 					protected.GET("/websites/:id/certificates/candidates", certHandlerInstance.GetWebsiteCertificateCandidates)
 

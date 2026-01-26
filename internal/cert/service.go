@@ -196,3 +196,50 @@ func (s *Service) ValidateCertificateCoverage(certificateID int, websiteID int) 
 
 	return &coverage, nil
 }
+
+// CertificateInfo represents parsed certificate information
+type CertificateInfo struct {
+	CommonName  string
+	Fingerprint string
+	Issuer      string
+	IssueAt     string
+	ExpireAt    string
+	Status      string
+}
+
+// ParseCertificate parses a PEM-encoded certificate and extracts metadata
+func (s *Service) ParseCertificate(certPem string) (*CertificateInfo, error) {
+	// TODO: Implement actual certificate parsing using crypto/x509
+	// For now, return a placeholder implementation
+	// This should:
+	// 1. Decode PEM block
+	// 2. Parse X.509 certificate
+	// 3. Extract CommonName, Issuer, NotBefore, NotAfter
+	// 4. Calculate SHA256 fingerprint
+	// 5. Determine status based on expiration date
+	
+	// Placeholder implementation
+	return &CertificateInfo{
+		CommonName:  "placeholder.com",
+		Fingerprint: "placeholder_fingerprint",
+		Issuer:      "Placeholder CA",
+		IssueAt:     "2026-01-01 00:00:00",
+		ExpireAt:    "2027-01-01 00:00:00",
+		Status:      "valid",
+	}, nil
+}
+
+// ValidatePrivateKey validates a PEM-encoded private key
+func (s *Service) ValidatePrivateKey(keyPem string) error {
+	// TODO: Implement actual private key validation using crypto/x509
+	// This should:
+	// 1. Decode PEM block
+	// 2. Parse private key (RSA/ECDSA)
+	// 3. Validate key format and structure
+	
+	// Placeholder implementation
+	if keyPem == "" {
+		return gorm.ErrInvalidData
+	}
+	return nil
+}
