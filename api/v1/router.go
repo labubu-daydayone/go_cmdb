@@ -178,6 +178,7 @@ func SetupRouter(r *gin.Engine, db *gorm.DB, cfg *config.Config) {
 					acmeGroup.GET("/accounts/:id", acmeHandlerInstance.GetAccount)
 					acmeGroup.POST("/accounts/enable", acmeHandlerInstance.EnableAccount)
 					acmeGroup.POST("/accounts/disable", acmeHandlerInstance.DisableAccount)
+					acmeGroup.POST("/accounts/delete", acmeHandlerInstance.DeleteAccount)
 					acmeGroup.GET("/accounts/defaults", acmeHandlerInstance.ListDefaults)
 					acmeGroup.POST("/accounts/set-default", acmeHandlerInstance.SetDefault)
 					// Legacy routes

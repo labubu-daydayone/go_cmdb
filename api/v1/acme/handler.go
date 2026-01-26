@@ -549,11 +549,13 @@ func (h *Handler) EnableAccount(c *gin.Context) {
 	}
 
 	if result.RowsAffected == 0 {
-		httpx.FailErr(c, httpx.ErrNotFound( strconv.FormatInt(req.ID, 10)))
+		httpx.FailErr(c, httpx.ErrNotFound("account not found"))
 		return
 	}
 
-	httpx.OK(c, gin.H{"id": req.ID, "status": "active"})
+	// Return as items array (T0-STD-01 compliance)
+	item := map[string]interface{}{"id": req.ID, "status": "active"}
+	httpx.OKItems(c, []interface{}{item}, 1, 1, 1)
 }
 
 // DisableAccountRequest represents disable account request
@@ -566,7 +568,21 @@ type DisableAccountRequest struct {
 func (h *Handler) DisableAccount(c *gin.Context) {
 	var req DisableAccountRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		httpx.FailErr(c, httpx.ErrParamInvalid( "must be provided"))
+		httpx.FailErr(c, httpx.ErrParamInvalid("id must be provided"))
+		return
+	}
+
+	// Check if account is default (禁止禁用default账号)
+	var defaultCount int64
+	if err := h.db.Table("acme_provider_defaults").
+		Where("account_id = ?", req.ID).
+		Count(&defaultCount).Error; err != nil {
+		httpx.FailErr(c, httpx.ErrInternalError("failed to check default status", err))
+		return
+	}
+
+	if defaultCount > 0 {
+		httpx.FailErr(c, httpx.ErrStateConflict("cannot disable default account, please set another account as default first"))
 		return
 	}
 
@@ -581,11 +597,13 @@ func (h *Handler) DisableAccount(c *gin.Context) {
 	}
 
 	if result.RowsAffected == 0 {
-		httpx.FailErr(c, httpx.ErrNotFound( strconv.FormatInt(req.ID, 10)))
+		httpx.FailErr(c, httpx.ErrNotFound("account not found"))
 		return
 	}
 
-	httpx.OK(c, gin.H{"id": req.ID, "status": "disabled"})
+	// Return as items array (T0-STD-01 compliance)
+	item := map[string]interface{}{"id": req.ID, "status": "disabled"}
+	httpx.OKItems(c, []interface{}{item}, 1, 1, 1)
 }
 
 // ListDefaults returns default ACME accounts for each provider
@@ -713,8 +731,84 @@ func (h *Handler) SetDefault(c *gin.Context) {
 		}
 	}
 
-	httpx.OK(c, gin.H{
+	// Return as items array (T0-STD-01 compliance)
+	item := map[string]interface{}{
 		"providerId": req.ProviderID,
 		"accountId":  req.AccountID,
-	})
+	}
+	httpx.OKItems(c, []interface{}{item}, 1, 1, 1)
+}
+
+// DeleteAccountRequest represents delete account request
+type DeleteAccountRequest struct {
+	ID int64 `json:"id" binding:"required"`
+}
+
+// DeleteAccount deletes an ACME account (with constraints)
+// POST /api/v1/acme/accounts/delete
+func (h *Handler) DeleteAccount(c *gin.Context) {
+	var req DeleteAccountRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		httpx.FailErr(c, httpx.ErrParamInvalid("id must be provided"))
+		return
+	}
+
+	// Check if account is default (禁止删除default账号)
+	var defaultCount int64
+	if err := h.db.Table("acme_provider_defaults").
+		Where("account_id = ?", req.ID).
+		Count(&defaultCount).Error; err != nil {
+		httpx.FailErr(c, httpx.ErrInternalError("failed to check default status", err))
+		return
+	}
+
+	if defaultCount > 0 {
+		httpx.FailErr(c, httpx.ErrStateConflict("cannot delete default account, please set another account as default first"))
+		return
+	}
+
+	// Check if account is referenced by certificate_requests
+	var certRequestCount int64
+	if err := h.db.Table("certificate_requests").
+		Where("acme_account_id = ?", req.ID).
+		Count(&certRequestCount).Error; err != nil {
+		httpx.FailErr(c, httpx.ErrInternalError("failed to check certificate request references", err))
+		return
+	}
+
+	if certRequestCount > 0 {
+		httpx.FailErr(c, httpx.ErrStateConflict("cannot delete account, it is referenced by certificate requests"))
+		return
+	}
+
+	// Check if account is referenced by certificates
+	var certCount int64
+	if err := h.db.Table("certificates").
+		Where("acme_account_id = ?", req.ID).
+		Count(&certCount).Error; err != nil {
+		httpx.FailErr(c, httpx.ErrInternalError("failed to check certificate references", err))
+		return
+	}
+
+	if certCount > 0 {
+		httpx.FailErr(c, httpx.ErrStateConflict("cannot delete account, it is referenced by certificates"))
+		return
+	}
+
+	// Delete account
+	result := h.db.Delete(&model.AcmeAccount{}, req.ID)
+
+	if result.Error != nil {
+		httpx.FailErr(c, httpx.ErrInternalError("failed to delete account", result.Error))
+		return
+	}
+
+	if result.RowsAffected == 0 {
+		httpx.FailErr(c, httpx.ErrNotFound("account not found"))
+		return
+	}
+
+	// Return as items array (T0-STD-01 compliance)
+	item := map[string]interface{}{"id": req.ID, "deleted": true}
+	httpx.OKItems(c, []interface{}{item}, 1, 1, 1)
 }
