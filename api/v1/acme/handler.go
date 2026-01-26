@@ -324,7 +324,7 @@ func (h *Handler) ListAccounts(c *gin.Context) {
 	status := c.Query("status")
 	email := c.Query("email")
 
-	// Build query
+	// Build query with LEFT JOIN to get default account info
 	query := h.db.Table("acme_accounts a").
 		Select(`
 			a.id,
@@ -337,9 +337,11 @@ func (h *Handler) ListAccounts(c *gin.Context) {
 			a.eab_expires_at,
 			a.last_error,
 			a.created_at,
-			a.updated_at
+			a.updated_at,
+			CASE WHEN d.account_id = a.id THEN 1 ELSE 0 END as is_default
 		`).
-		Joins("LEFT JOIN acme_providers p ON p.id = a.provider_id")
+		Joins("LEFT JOIN acme_providers p ON p.id = a.provider_id").
+		Joins("LEFT JOIN acme_provider_defaults d ON d.provider_id = a.provider_id")
 
 	// Apply filters
 	if providerIDStr != "" {
@@ -389,6 +391,7 @@ func (h *Handler) ListAccounts(c *gin.Context) {
 		LastError       *string `gorm:"column:last_error"`
 		CreatedAt       string  `gorm:"column:created_at"`
 		UpdatedAt       string  `gorm:"column:updated_at"`
+		IsDefault       int     `gorm:"column:is_default"`
 	}
 
 	var rows []QueryRow
@@ -409,6 +412,7 @@ func (h *Handler) ListAccounts(c *gin.Context) {
 		LastError       *string `json:"lastError"`
 		CreatedAt       string  `json:"createdAt"`
 		UpdatedAt       string  `json:"updatedAt"`
+		IsDefault       bool    `json:"isDefault"`
 	}
 
 	items := make([]AccountItem, 0, len(rows))
@@ -437,6 +441,7 @@ func (h *Handler) ListAccounts(c *gin.Context) {
 			LastError:       row.LastError,
 			CreatedAt:       row.CreatedAt,
 			UpdatedAt:       row.UpdatedAt,
+			IsDefault:       row.IsDefault == 1,
 		})
 	}
 
