@@ -214,57 +214,38 @@ type CreateAccountRequest struct {
 func (h *Handler) CreateAccount(c *gin.Context) {
 	var req CreateAccountRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"code":    1,
-			"message": err.Error(),
-		})
+		httpx.FailErr(c, httpx.ErrParamInvalid(err.Error()))
 		return
 	}
 
 	// Get provider
 	provider, err := h.service.GetProvider(req.ProviderName)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"code":    1,
-			"message": "Failed to get provider",
-		})
+		httpx.FailErr(c, httpx.ErrInternalError("failed to get provider", err))
 		return
 	}
 
 	if provider == nil {
-		c.JSON(http.StatusNotFound, gin.H{
-			"code":    1,
-			"message": "Provider not found",
-		})
+		httpx.FailErr(c, httpx.ErrNotFound("provider not found"))
 		return
 	}
 
 	// Check if account already exists
 	existingAccount, err := h.service.GetAccount(provider.ID, req.Email)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"code":    1,
-			"message": "Failed to check existing account",
-		})
+		httpx.FailErr(c, httpx.ErrInternalError("failed to check existing account", err))
 		return
 	}
 
 	if existingAccount != nil {
-		c.JSON(http.StatusOK, gin.H{
-			"code":    0,
-			"message": "Account already exists",
-			"data":    existingAccount,
-		})
+		httpx.FailErr(c, httpx.ErrStateConflict("account already exists for this provider and email"))
 		return
 	}
 
 	// Validate EAB credentials for providers that require them
 	if provider.RequiresEAB {
 		if req.EabKid == "" || req.EabHmacKey == "" {
-			c.JSON(http.StatusBadRequest, gin.H{
-				"code":    1,
-				"message": "EAB credentials required for this provider",
-			})
+			httpx.FailErr(c, httpx.ErrParamInvalid("EAB credentials required for this provider"))
 			return
 		}
 	}
@@ -279,18 +260,23 @@ func (h *Handler) CreateAccount(c *gin.Context) {
 	}
 
 	if err := h.service.CreateAccount(account); err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"code":    1,
-			"message": "Failed to create account",
-		})
+		httpx.FailErr(c, httpx.ErrInternalError("failed to create account", err))
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{
-		"code":    0,
-		"message": "success",
-		"data":    account,
-	})
+	// Prepare response item
+	item := map[string]interface{}{
+		"id":         account.ID,
+		"providerId": account.ProviderID,
+		"email":      account.Email,
+		"status":     account.Status,
+	}
+	if account.EabKid != "" {
+		item["eabKid"] = account.EabKid
+	}
+
+	// Return as items array (T0-STD-01 compliance)
+	httpx.OKItems(c, []interface{}{item}, 1, 1, 1)
 }
 
 // ListProviders returns all ACME providers
