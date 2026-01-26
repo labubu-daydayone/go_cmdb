@@ -77,8 +77,9 @@ func (h *Handler) RequestCertificate(c *gin.Context) {
 		AccountID:       req.AccountID,
 		Domains:         string(domainsJSON),
 		Status:          model.CertificateRequestStatusPending,
-		Attempts:        0,
+		PollIntervalSec: 40,
 		PollMaxAttempts: 10,
+		Attempts:        0,
 	}
 
 	if err := h.service.CreateRequest(certRequest); err != nil {
