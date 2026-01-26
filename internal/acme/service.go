@@ -344,3 +344,32 @@ func (s *Service) CleanupFailedChallenge(requestID int) error {
 	log.Printf("[ACME Service] Cleaned up %d challenge records for request %d\n", result.RowsAffected, requestID)
 	return nil
 }
+
+// EnsureAccountRegistered ensures an ACME account is registered with the CA
+// This method is idempotent: if account is already active, it returns immediately
+// If account is pending, it performs ACME registration and updates status to active
+func (s *Service) EnsureAccountRegistered(account *model.AcmeAccount, provider *model.AcmeProvider) error {
+	// If already active, skip registration
+	if account.Status == model.AcmeAccountStatusActive && account.RegistrationURI != "" {
+		return nil
+	}
+
+	// Create lego client for registration
+	legoClient := NewLegoClient(s.db, nil, provider, account, 0)
+
+	// Perform ACME registration
+	if err := legoClient.EnsureAccount(account); err != nil {
+		// Save error to last_error field
+		errorMsg := fmt.Sprintf("ACME registration failed: %v", err)
+		if len(errorMsg) > 500 {
+			errorMsg = errorMsg[:500]
+		}
+		s.db.Model(account).Update("last_error", errorMsg)
+		return fmt.Errorf("ACME registration failed: %w", err)
+	}
+
+	log.Printf("[ACME Service] Account %d registered successfully, status=%s, uri=%s\n",
+		account.ID, account.Status, account.RegistrationURI)
+
+	return nil
+}

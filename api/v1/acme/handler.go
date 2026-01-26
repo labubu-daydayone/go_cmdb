@@ -687,23 +687,38 @@ func (h *Handler) SetDefault(c *gin.Context) {
 		return
 	}
 
-	// Validate account exists, matches provider, and is active
+	// Validate account exists and matches provider
 	var account model.AcmeAccount
 	if err := h.db.First(&account, req.AccountID).Error; err != nil {
 		if err == gorm.ErrRecordNotFound {
-			httpx.FailErr(c, httpx.ErrNotFound( strconv.FormatInt(req.AccountID, 10)))
+			httpx.FailErr(c, httpx.ErrNotFound(strconv.FormatInt(req.AccountID, 10)))
 			return
 		}
 		httpx.FailErr(c, httpx.ErrInternalError("failed to query account", err))
 		return
 	}
 	if int64(account.ProviderID) != req.ProviderID {
-		httpx.FailErr(c, httpx.ErrStateConflict( "account does not belong to the specified provider"))
+		httpx.FailErr(c, httpx.ErrStateConflict("account does not belong to the specified provider"))
 		return
 	}
-	if account.Status != "active" {
-		httpx.FailErr(c, httpx.ErrStateConflict( "account is not active"))
+
+	// Reject disabled or invalid accounts
+	if account.Status == "disabled" || account.Status == "invalid" {
+		httpx.FailErr(c, httpx.ErrStateConflict("account is " + account.Status))
 		return
+	}
+
+	// If account is pending, automatically activate it
+	if account.Status == "pending" {
+		if err := h.service.EnsureAccountRegistered(&account, &provider); err != nil {
+			httpx.FailErr(c, httpx.ErrInternalError("failed to activate account", err))
+			return
+		}
+		// Reload account to get updated status
+		if err := h.db.First(&account, req.AccountID).Error; err != nil {
+			httpx.FailErr(c, httpx.ErrInternalError("failed to reload account", err))
+			return
+		}
 	}
 
 	// Upsert default (replace if exists)
