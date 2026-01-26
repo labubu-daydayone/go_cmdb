@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"go_cmdb/api/v1"
+	"go_cmdb/internal/acme"
 	"go_cmdb/internal/agentclient"
 	"go_cmdb/internal/auth"
 	"go_cmdb/internal/cache"
@@ -135,14 +136,30 @@ func main() {
 		log.Println("✓ DNS Worker disabled (DNS_WORKER_ENABLED=0)")
 	}
 
-	// 8. Initialize Socket.IO server
+	// 8. Start ACME Worker
+	if cfg.ACMEWorker.Enabled {
+		dnsService := dns.NewService(db.GetDB())
+		acmeWorkerConfig := acme.WorkerConfig{
+			Enabled:     cfg.ACMEWorker.Enabled,
+			IntervalSec: cfg.ACMEWorker.IntervalSec,
+			BatchSize:   cfg.ACMEWorker.BatchSize,
+		}
+		acmeWorker := acme.NewWorker(db.GetDB(), dnsService, acmeWorkerConfig)
+		acmeWorker.Start()
+		defer acmeWorker.Stop()
+		log.Println("✓ ACME Worker initialized")
+	} else {
+		log.Println("✓ ACME Worker disabled (ACME_WORKER_ENABLED=0)")
+	}
+
+	// 9. Initialize Socket.IO server
 	if err := ws.InitServer(); err != nil {
 		log.Fatalf("Failed to initialize Socket.IO server: %v", err)
 		os.Exit(1)
 	}
 	log.Println("✓ Socket.IO server initialized")
 
-	// 9. Initialize Gin router
+	// 10. Initialize Gin router
 	gin.SetMode(gin.ReleaseMode)
 	r := gin.Default()
 

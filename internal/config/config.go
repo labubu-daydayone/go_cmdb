@@ -21,6 +21,7 @@ type Config struct {
 	RiskScanner     RiskScannerConfig
 	ReleaseExecutor ReleaseExecutorConfig
 	DNSWorker       DNSWorkerConfig
+	ACMEWorker      ACMEWorkerConfig
 }
 
 // MySQLConfig holds MySQL configuration
@@ -67,6 +68,13 @@ type ReleaseExecutorConfig struct {
 
 // DNSWorkerConfig holds DNS worker configuration
 type DNSWorkerConfig struct {
+	Enabled     bool
+	IntervalSec int
+	BatchSize   int
+}
+
+// ACMEWorkerConfig holds ACME worker configuration
+type ACMEWorkerConfig struct {
 	Enabled     bool
 	IntervalSec int
 	BatchSize   int
@@ -233,6 +241,11 @@ func LoadFromINI(iniPath string) (*Config, error) {
 			Enabled:     getValueBool("DNS_WORKER_ENABLED", "dns", "worker_enabled", true),
 			IntervalSec: getValueInt("DNS_WORKER_INTERVAL_SEC", "dns", "interval_sec", 30),
 			BatchSize:   getValueInt("DNS_WORKER_BATCH_SIZE", "dns", "batch_size", 10),
+		},
+		ACMEWorker: ACMEWorkerConfig{
+			Enabled:     getValueBool("ACME_WORKER_ENABLED", "acme", "worker_enabled", true),
+			IntervalSec: getValueInt("ACME_WORKER_INTERVAL_SEC", "acme", "interval_sec", 40),
+			BatchSize:   getValueInt("ACME_WORKER_BATCH_SIZE", "acme", "batch_size", 50),
 		},
 	}
 
