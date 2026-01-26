@@ -13,6 +13,7 @@ import (
 	"go_cmdb/internal/agentclient"
 	"go_cmdb/internal/auth"
 	"go_cmdb/internal/cache"
+	"go_cmdb/internal/cert"
 	"go_cmdb/internal/config"
 	"go_cmdb/internal/db"
 	"go_cmdb/internal/dns"
@@ -150,6 +151,21 @@ func main() {
 		log.Println("✓ ACME Worker initialized")
 	} else {
 		log.Println("✓ ACME Worker disabled (ACME_WORKER_ENABLED=0)")
+	}
+
+	// 8.5 Initialize Certificate Cleaner
+	if cfg.CertCleaner.Enabled {
+		certCleanerConfig := cert.CleanerConfig{
+			Enabled:        cfg.CertCleaner.Enabled,
+			IntervalSec:    cfg.CertCleaner.IntervalSec,
+			FailedKeepDays: cfg.CertCleaner.FailedKeepDays,
+		}
+		certCleaner := cert.NewCleaner(db.GetDB(), certCleanerConfig)
+		certCleaner.Start()
+		defer certCleaner.Stop()
+		log.Println("✓ Certificate Cleaner initialized")
+	} else {
+		log.Println("✓ Certificate Cleaner disabled (CERT_FAILED_CLEANER_ENABLED=0)")
 	}
 
 	// 9. Initialize Socket.IO server

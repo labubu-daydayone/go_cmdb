@@ -203,6 +203,8 @@ func SetupRouter(r *gin.Engine, db *gorm.DB, cfg *config.Config) {
 					certHandlerInstance := cert.NewHandler(db)
 					// T2-22: Delete failed certificate request (add to acmeGroup after certHandlerInstance is defined)
 					acmeGroup.POST("/certificate/requests/:requestId/delete", certHandlerInstance.DeleteFailedCertificateRequest)
+					// T2-23: Unified certificate/request deletion
+					protected.POST("/certificate/:id/delete", certHandlerInstance.DeleteLifecycleItem)
 					// Certificate resource APIs (T2-18, T2-19)
 					protected.GET("/certificates", certHandlerInstance.ListCertificatesLifecycle) // T2-19: Unified lifecycle view
 					protected.GET("/certificates/:id", certHandlerInstance.GetCertificate)

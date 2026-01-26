@@ -22,6 +22,7 @@ type Config struct {
 	ReleaseExecutor ReleaseExecutorConfig
 	DNSWorker       DNSWorkerConfig
 	ACMEWorker      ACMEWorkerConfig
+	CertCleaner     CertCleanerConfig
 }
 
 // MySQLConfig holds MySQL configuration
@@ -78,6 +79,13 @@ type ACMEWorkerConfig struct {
 	Enabled     bool
 	IntervalSec int
 	BatchSize   int
+}
+
+// CertCleanerConfig holds certificate cleaner configuration
+type CertCleanerConfig struct {
+	Enabled        bool
+	IntervalSec    int
+	FailedKeepDays int
 }
 
 // Load loads configuration from environment variables
@@ -183,8 +191,10 @@ func LoadFromINI(iniPath string) (*Config, error) {
 			}
 		}
 		// Priority 2: INI file
-		if value, err := cfgFile.Section(iniSection).Key(iniKey).Int(); err == nil && value != 0 {
-			return value
+		if cfgFile.Section(iniSection).HasKey(iniKey) {
+			if value, err := cfgFile.Section(iniSection).Key(iniKey).Int(); err == nil {
+				return value
+			}
 		}
 		// Priority 3: Default value
 		return defaultValue
@@ -246,6 +256,11 @@ func LoadFromINI(iniPath string) (*Config, error) {
 			Enabled:     getValueBool("ACME_WORKER_ENABLED", "acme", "worker_enabled", true),
 			IntervalSec: getValueInt("ACME_WORKER_INTERVAL_SEC", "acme", "interval_sec", 40),
 			BatchSize:   getValueInt("ACME_WORKER_BATCH_SIZE", "acme", "batch_size", 50),
+		},
+		CertCleaner: CertCleanerConfig{
+			Enabled:        getValueBool("CERT_FAILED_CLEANER_ENABLED", "cert_cleaner", "enabled", true),
+			IntervalSec:    getValueInt("CERT_FAILED_CLEANER_INTERVAL_SEC", "cert_cleaner", "interval_sec", 40),
+			FailedKeepDays: getValueInt("CERT_FAILED_KEEP_DAYS", "cert_cleaner", "failed_keep_days", 3),
 		},
 	}
 
