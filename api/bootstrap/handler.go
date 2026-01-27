@@ -59,7 +59,13 @@ func (h *Handler) GetInstallScript(c *gin.Context) {
 		return
 	}
 
-	// 3. Validate node identity exists
+	// 3. Validate agentPort is set
+	if node.AgentPort == 0 {
+		c.String(http.StatusBadRequest, "node agentPort is not configured")
+		return
+	}
+
+	// 4. Validate node identity exists
 	var identity model.AgentIdentity
 	if err := h.db.Where("node_id = ? AND status = ?", tokenData.NodeID, "active").
 		First(&identity).Error; err != nil {
@@ -71,8 +77,8 @@ func (h *Handler) GetInstallScript(c *gin.Context) {
 		return
 	}
 
-	// 4. Generate install script
-	script := h.generateInstallScript(token, tokenData.NodeID)
+	// 5. Generate install script
+	script := h.generateInstallScript(token, &node)
 
 	// 5. Return script (token is NOT consumed, relies on Redis TTL)
 	// Token can be used multiple times within TTL period
@@ -80,7 +86,7 @@ func (h *Handler) GetInstallScript(c *gin.Context) {
 	c.String(http.StatusOK, script)
 }
 
-func (h *Handler) generateInstallScript(token string, nodeID int) string {
+func (h *Handler) generateInstallScript(token string, node *model.Node) string {
 	return fmt.Sprintf(`#!/bin/bash
 set -e
 
@@ -149,7 +155,7 @@ echo "Writing configuration..."
 cat > /etc/cdn-agent/config.ini <<'EOF'
 [agent]
 node_id = %d
-listen_addr = :8081
+listen_addr = :%d
 
 [control]
 endpoint = %s
@@ -194,7 +200,7 @@ systemctl restart cdn-agent || /usr/local/bin/cdn-agent --config /etc/cdn-agent/
 echo "=== Installation completed successfully ==="
 echo "Service status:"
 systemctl status cdn-agent --no-pager || echo "Agent started in background"
-`, token, nodeID, h.controlURL, h.controlURL, h.controlURL, nodeID, h.controlURL)
+`, token, node.ID, h.controlURL, h.controlURL, h.controlURL, node.ID, node.AgentPort, h.controlURL)
 }
 
 // GetCACert returns the CA certificate
