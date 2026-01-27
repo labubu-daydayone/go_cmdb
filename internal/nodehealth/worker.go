@@ -15,7 +15,8 @@ import (
 	"go_cmdb/internal/model"
 )
 
-// Worker for node health checks	ype Worker struct {
+// Worker for node health checks
+type Worker struct {
 	ctx                  context.Context
 	cancel               context.CancelFunc
 	db                   *gorm.DB
@@ -25,8 +26,8 @@ import (
 	offlineFailThreshold int
 	concurrency          int
 }
-
-// Config holds the configuration for the health check worker	ype Config struct {
+// Config holds the configuration for the health check worker
+type Config struct {
 	DB                   *gorm.DB
 	Client               *http.Client
 	Logger               *logrus.Entry
@@ -34,13 +35,13 @@ import (
 	OfflineFailThreshold int
 	Concurrency          int
 }
-
-// PingResponse is the expected response from the agent's ping endpoint	ype PingResponse struct {
+// PingResponse is the expected response from the agent's ping endpoint
+type PingResponse struct {
 	Code    int    `json:"code"`
 	Message string `json:"message"`
 }
-
-// CheckResult holds the result of a single manual health check	ype CheckResult struct {
+// CheckResult holds the result of a single manual health check
+type CheckResult struct {
 	NodeID     int        `json:"nodeId"`
 	OK         bool       `json:"ok"`
 	Status     string     `json:"status"`
