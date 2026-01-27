@@ -1,5 +1,3 @@
-package main
-
 import (
 	"flag"
 	"log"
@@ -18,12 +16,14 @@ import (
 	"go_cmdb/internal/config"
 	"go_cmdb/internal/db"
 	"go_cmdb/internal/dns"
+	"go_cmdb/internal/nodehealth"
 	"go_cmdb/internal/pki"
 	"go_cmdb/internal/release"
 	"go_cmdb/internal/risk"
 	"go_cmdb/internal/ws"
 
 	"github.com/gin-gonic/gin"
+	"github.com/sirupsen/logrus"
 )
 
 func main() {
@@ -194,8 +194,41 @@ func main() {
 	gin.SetMode(gin.ReleaseMode)
 	r := gin.Default()
 
+		// 9.5 Start Node Health Worker
+		var healthWorker *nodehealth.Worker
+		if cfg.NodeHealthWorker.Enabled {
+			if !cfg.MTLS.Enabled {
+				log.Println("⚠ Node Health Worker requires mTLS but mTLS is not enabled, skipping worker")
+			} else {
+				mtlsClient, err := nodehealth.NewMTLSClient(
+					cfg.MTLS.CACert,
+					cfg.MTLS.ClientCert,
+					cfg.MTLS.ClientKey,
+					time.Duration(cfg.NodeHealthWorker.TimeoutSec)*time.Second,
+				)
+				if err != nil {
+					log.Fatalf("Failed to create mTLS client for health worker: %v", err)
+				}
+
+				healthWorkerConfig := &nodehealth.Config{
+					DB:                   db.GetDB(),
+					Client:               mtlsClient,
+					Logger:               logrus.NewEntry(logrus.StandardLogger()),
+					IntervalSec:          cfg.NodeHealthWorker.IntervalSec,
+					OfflineFailThreshold: cfg.NodeHealthWorker.OfflineFailThreshold,
+					Concurrency:          cfg.NodeHealthWorker.Concurrency,
+				}
+				healthWorker = nodehealth.NewWorker(healthWorkerConfig)
+				healthWorker.Start()
+				defer healthWorker.Stop()
+				log.Println("✓ Node Health Worker initialized")
+			}
+		} else {
+			log.Println("✓ Node Health Worker disabled")
+		}
+
 	// Setup API v1 routes
-	v1.SetupRouter(r, db.GetDB(), cfg, acmeWorker, tokenStore, caManager)
+	v1.SetupRouter(r, db.GetDB(), cfg, acmeWorker, tokenStore, caManager, healthWorker)
 
 	log.Printf("✓ Server starting on %s", cfg.HTTPAddr)
 

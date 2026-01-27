@@ -26,6 +26,7 @@ import (
 	bootstrapPkg "go_cmdb/internal/bootstrap"
 	"go_cmdb/internal/config"
 	"go_cmdb/internal/httpx"
+	"go_cmdb/internal/nodehealth"
 	"go_cmdb/internal/pki"
 	"go_cmdb/internal/ws"
 
@@ -34,7 +35,7 @@ import (
 )
 
 	// SetupRouter sets up the API v1 routes
-func SetupRouter(r *gin.Engine, db *gorm.DB, cfg *config.Config, acmeWorker *acmePkg.Worker, tokenStore *bootstrapPkg.TokenStore, caManager *pki.CAManager) {
+func SetupRouter(r *gin.Engine, db *gorm.DB, cfg *config.Config, acmeWorker *acmePkg.Worker, tokenStore *bootstrapPkg.TokenStore, caManager *pki.CAManager, healthWorker *nodehealth.Worker) {
 	// Mount Socket.IO server with JWT authentication
 	// Socket.IO will be available at /socket.io/ (default path)
 	if ws.Server != nil {
@@ -78,7 +79,7 @@ func SetupRouter(r *gin.Engine, db *gorm.DB, cfg *config.Config, acmeWorker *acm
 			protected.GET("/me", meHandler)
 
 			// Nodes routes
-			nodesHandler := nodes.NewHandler(db, caManager)
+			nodesHandler := nodes.NewHandler(db, caManager, healthWorker)
 			nodesGroup := protected.Group("/nodes")
 			{
 				nodesGroup.GET("", nodesHandler.List)
@@ -86,6 +87,7 @@ func SetupRouter(r *gin.Engine, db *gorm.DB, cfg *config.Config, acmeWorker *acm
 				nodesGroup.POST("/create", nodesHandler.Create)
 				nodesGroup.POST("/update", nodesHandler.Update)
 				nodesGroup.POST("/delete", nodesHandler.Delete)
+					nodesGroup.POST("/health/check", nodesHandler.CheckHealth)
 
 				// Sub IPs routes
 				nodesGroup.POST("/sub-ips/add", nodesHandler.AddSubIPs)

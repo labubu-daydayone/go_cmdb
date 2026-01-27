@@ -7,6 +7,7 @@ import (
 	"go_cmdb/internal/dto"
 	"go_cmdb/internal/httpx"
 	"go_cmdb/internal/model"
+	"go_cmdb/internal/nodehealth"
 	"go_cmdb/internal/nodes"
 	"go_cmdb/internal/pki"
 
@@ -87,13 +88,15 @@ type ToggleSubIPRequest struct {
 type Handler struct {
 	db              *gorm.DB
 	identityService *nodes.IdentityService
+	healthWorker    *nodehealth.Worker
 }
 
 // NewHandler creates a new nodes handler
-func NewHandler(db *gorm.DB, caManager *pki.CAManager) *Handler {
+func NewHandler(db *gorm.DB, caManager *pki.CAManager, healthWorker *nodehealth.Worker) *Handler {
 	return &Handler{
 		db:              db,
 		identityService: nodes.NewIdentityService(db, caManager),
+		healthWorker:    healthWorker,
 	}
 }
 
@@ -162,16 +165,19 @@ func (h *Handler) List(c *gin.Context) {
 	// Convert to DTO
 	items := make([]dto.NodeDTO, len(nodes))
 	for i, node := range nodes {
-		items[i] = dto.NodeDTO{
-			ID:        node.ID,
-			Name:      node.Name,
-			MainIp:    node.MainIP,
-			AgentPort: node.AgentPort,
-			Enabled:   node.Enabled,
-			Status:    string(node.Status),
-			CreatedAt: node.CreatedAt,
-			UpdatedAt: node.UpdatedAt,
-		}
+items[i] = dto.NodeDTO{
+				ID:              node.ID,
+				Name:            node.Name,
+				MainIp:          node.MainIP,
+				AgentPort:       node.AgentPort,
+				Enabled:         node.Enabled,
+				Status:          string(node.Status),
+				LastSeenAt:      node.LastSeenAt,
+				LastHealthError: node.LastHealthError,
+				HealthFailCount: node.HealthFailCount,
+				CreatedAt:       node.CreatedAt,
+				UpdatedAt:       node.UpdatedAt,
+			}
 	}
 
 	httpx.OK(c, ListResponse{
@@ -269,20 +275,23 @@ func (h *Handler) Create(c *gin.Context) {
 	}
 
 	// Build DTO response
-	response := dto.NodeWithIdentityDTO{
-		ID:        node.ID,
-		Name:      node.Name,
-		MainIp:    node.MainIP,
-		AgentPort: node.AgentPort,
-		Enabled:   node.Enabled,
-		Status:    string(node.Status),
-		Identity: &dto.IdentityDTO{
-			ID:          identity.ID,
-			Fingerprint: identity.Fingerprint,
-		},
-		CreatedAt: node.CreatedAt,
-		UpdatedAt: node.UpdatedAt,
-	}
+response := dto.NodeWithIdentityDTO{
+			ID:              node.ID,
+			Name:            node.Name,
+			MainIp:          node.MainIP,
+			AgentPort:       node.AgentPort,
+			Enabled:         node.Enabled,
+			Status:          string(node.Status),
+			LastSeenAt:      node.LastSeenAt,
+			LastHealthError: node.LastHealthError,
+			HealthFailCount: node.HealthFailCount,
+			Identity: &dto.IdentityDTO{
+				ID:          identity.ID,
+				Fingerprint: identity.Fingerprint,
+			},
+			CreatedAt: node.CreatedAt,
+			UpdatedAt: node.UpdatedAt,
+		}
 
 	httpx.OK(c, response)
 }
@@ -382,8 +391,16 @@ func (h *Handler) Update(c *gin.Context) {
 	}
 
 	// Build DTO response
-	response := dto.NodeDTO{
-		ID:        node.ID,
+response := dto.NodeDTO{
+			ID:              node.ID,
+			Name:            node.Name,
+			MainIp:          node.MainIP,
+			AgentPort:       node.AgentPort,
+			Enabled:         node.Enabled,
+			Status:          string(node.Status),
+			LastSeenAt:      node.LastSeenAt,
+			LastHealthError: node.LastHealthError,
+			HealthFailCount: node.HealthFailCount,
 		Name:      node.Name,
 		MainIp:    node.MainIP,
 		AgentPort: node.AgentPort,
@@ -397,6 +414,29 @@ func (h *Handler) Update(c *gin.Context) {
 }
 
 // Get handles GET /api/v1/nodes/:id
+// CheckHealthRequest represents the request for manual health check
+type CheckHealthRequest struct {
+	NodeIDs []int `json:"nodeIds" binding:"required,min=1"`
+}
+
+// CheckHealth handles POST /api/v1/nodes/health/check
+func (h *Handler) CheckHealth(c *gin.Context) {
+	var req CheckHealthRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		httpx.FailErr(c, httpx.ErrParamInvalid(err.Error()))
+		return
+	}
+
+	if h.healthWorker == nil {
+		httpx.FailErr(c, httpx.ErrServiceUnavailable("health worker is not enabled"))
+		return
+	}
+
+	results := h.healthWorker.CheckNodes(req.NodeIDs)
+
+	httpx.OK(c, gin.H{"items": results})
+}
+
 func (h *Handler) Get(c *gin.Context) {
 	id := c.Param("id")
 	if id == "" {

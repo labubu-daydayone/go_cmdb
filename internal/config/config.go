@@ -11,18 +11,19 @@ import (
 
 // Config holds all configuration
 type Config struct {
-	MySQL       MySQLConfig
-	Redis       RedisConfig
-	JWT         JWTConfig
-	Migrate     bool
-	HTTPAddr    string
-	AgentToken  string // Deprecated: use mTLS instead
-	MTLS            MTLSConfig
-	RiskScanner     RiskScannerConfig
-	ReleaseExecutor ReleaseExecutorConfig
-	DNSWorker       DNSWorkerConfig
-	ACMEWorker      ACMEWorkerConfig
-	CertCleaner     CertCleanerConfig
+	MySQL            MySQLConfig
+	Redis            RedisConfig
+	JWT              JWTConfig
+	Migrate          bool
+	HTTPAddr         string
+	AgentToken       string // Deprecated: use mTLS instead
+	MTLS             MTLSConfig
+	RiskScanner      RiskScannerConfig
+	ReleaseExecutor  ReleaseExecutorConfig
+	DNSWorker        DNSWorkerConfig
+	ACMEWorker       ACMEWorkerConfig
+	CertCleaner      CertCleanerConfig
+	NodeHealthWorker NodeHealthWorkerConfig
 }
 
 // MySQLConfig holds MySQL configuration
@@ -86,6 +87,15 @@ type CertCleanerConfig struct {
 	Enabled        bool
 	IntervalSec    int
 	FailedKeepDays int
+}
+
+// NodeHealthWorkerConfig holds node health worker configuration
+type NodeHealthWorkerConfig struct {
+	Enabled              bool
+	IntervalSec          int
+	TimeoutSec           int
+	Concurrency          int
+	OfflineFailThreshold int
 }
 
 // Load loads configuration from environment variables
@@ -252,17 +262,24 @@ func LoadFromINI(iniPath string) (*Config, error) {
 			IntervalSec: getValueInt("DNS_WORKER_INTERVAL_SEC", "dns", "interval_sec", 30),
 			BatchSize:   getValueInt("DNS_WORKER_BATCH_SIZE", "dns", "batch_size", 10),
 		},
-		ACMEWorker: ACMEWorkerConfig{
-			Enabled:     getValueBool("ACME_WORKER_ENABLED", "acme", "worker_enabled", true),
-			IntervalSec: getValueInt("ACME_WORKER_INTERVAL_SEC", "acme", "interval_sec", 40),
-			BatchSize:   getValueInt("ACME_WORKER_BATCH_SIZE", "acme", "batch_size", 50),
-		},
-		CertCleaner: CertCleanerConfig{
-			Enabled:        getValueBool("CERT_FAILED_CLEANER_ENABLED", "cert_cleaner", "enabled", true),
-			IntervalSec:    getValueInt("CERT_FAILED_CLEANER_INTERVAL_SEC", "cert_cleaner", "interval_sec", 40),
-			FailedKeepDays: getValueInt("CERT_FAILED_KEEP_DAYS", "cert_cleaner", "failed_keep_days", 3),
-		},
-	}
+ACMEWorker: ACMEWorkerConfig{
+				Enabled:     getValueBool("ACME_WORKER_ENABLED", "acme", "worker_enabled", true),
+				IntervalSec: getValueInt("ACME_WORKER_INTERVAL_SEC", "acme", "interval_sec", 40),
+				BatchSize:   getValueInt("ACME_WORKER_BATCH_SIZE", "acme", "batch_size", 50),
+			},
+			CertCleaner: CertCleanerConfig{
+				Enabled:        getValueBool("CERT_FAILED_CLEANER_ENABLED", "cert_cleaner", "enabled", true),
+				IntervalSec:    getValueInt("CERT_FAILED_CLEANER_INTERVAL_SEC", "cert_cleaner", "interval_sec", 40),
+				FailedKeepDays: getValueInt("CERT_FAILED_KEEP_DAYS", "cert_cleaner", "failed_keep_days", 3),
+			},
+			NodeHealthWorker: NodeHealthWorkerConfig{
+				Enabled:              getValueBool("NODE_HEALTH_WORKER_ENABLED", "nodeHealthWorker", "enabled", true),
+				IntervalSec:          getValueInt("NODE_HEALTH_WORKER_INTERVAL_SEC", "nodeHealthWorker", "intervalSec", 10),
+				TimeoutSec:           getValueInt("NODE_HEALTH_WORKER_TIMEOUT_SEC", "nodeHealthWorker", "timeoutSec", 3),
+				Concurrency:          getValueInt("NODE_HEALTH_WORKER_CONCURRENCY", "nodeHealthWorker", "concurrency", 10),
+				OfflineFailThreshold: getValueInt("NODE_HEALTH_WORKER_OFFLINE_THRESHOLD", "nodeHealthWorker", "offlineFailThreshold", 2),
+			},
+		}
 
 	// Validate required fields
 	if cfg.MySQL.DSN == "" {
