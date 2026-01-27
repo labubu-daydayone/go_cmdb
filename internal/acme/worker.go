@@ -30,6 +30,7 @@ type Worker struct {
 	config      WorkerConfig
 	stopChan    chan struct{}
 	stoppedChan chan struct{}
+	kickChan    chan struct{} // Channel for immediate execution trigger
 }
 
 // NewWorker creates a new ACME worker
@@ -41,6 +42,7 @@ func NewWorker(db *gorm.DB, dnsService *dns.Service, config WorkerConfig) *Worke
 		config:      config,
 		stopChan:    make(chan struct{}),
 		stoppedChan: make(chan struct{}),
+		kickChan:    make(chan struct{}, 1), // Buffered channel to prevent blocking
 	}
 }
 
@@ -69,6 +71,17 @@ func (w *Worker) Stop() {
 	log.Println("[ACME Worker] Stopped")
 }
 
+// Kick triggers an immediate execution of the worker (non-blocking)
+func (w *Worker) Kick() {
+	select {
+	case w.kickChan <- struct{}{}:
+		log.Println("[ACME Worker] Kick signal sent")
+	default:
+		// Channel is full, kick already pending
+		log.Println("[ACME Worker] Kick signal already pending, skipping")
+	}
+}
+
 // run is the main worker loop
 func (w *Worker) run() {
 	defer close(w.stoppedChan)
@@ -82,6 +95,10 @@ func (w *Worker) run() {
 	for {
 		select {
 		case <-ticker.C:
+			w.tick()
+		case <-w.kickChan:
+			// Immediate execution triggered by Kick()
+			log.Println("[ACME Worker] Kick received, processing immediately")
 			w.tick()
 		case <-w.stopChan:
 			return

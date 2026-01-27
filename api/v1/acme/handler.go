@@ -17,13 +17,15 @@ import (
 type Handler struct {
 	db      *gorm.DB
 	service *acme.Service
+	worker  *acme.Worker // ACME worker for Kick mechanism
 }
 
 // NewHandler creates a new ACME handler
-func NewHandler(db *gorm.DB) *Handler {
+func NewHandler(db *gorm.DB, worker *acme.Worker) *Handler {
 	return &Handler{
 		db:      db,
 		service: acme.NewService(db),
+		worker:  worker,
 	}
 }
 
@@ -90,6 +92,11 @@ func (h *Handler) RequestCertificate(c *gin.Context) {
 		return
 	}
 
+	// Kick worker for immediate processing (T2-25 optimization)
+	if h.worker != nil {
+		h.worker.Kick()
+	}
+
 	c.JSON(http.StatusOK, gin.H{
 		"code":    0,
 		"message": "success",
@@ -119,6 +126,11 @@ func (h *Handler) RetryRequest(c *gin.Context) {
 			"message": "Failed to reset retry",
 		})
 		return
+	}
+
+	// Kick worker for immediate processing
+	if h.worker != nil {
+		h.worker.Kick()
 	}
 
 	c.JSON(http.StatusOK, gin.H{

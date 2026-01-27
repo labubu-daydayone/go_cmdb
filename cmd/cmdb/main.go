@@ -138,6 +138,7 @@ func main() {
 	}
 
 	// 8. Start ACME Worker
+	var acmeWorker *acme.Worker
 	if cfg.ACMEWorker.Enabled {
 		dnsService := dns.NewService(db.GetDB())
 		acmeWorkerConfig := acme.WorkerConfig{
@@ -145,7 +146,7 @@ func main() {
 			IntervalSec: cfg.ACMEWorker.IntervalSec,
 			BatchSize:   cfg.ACMEWorker.BatchSize,
 		}
-		acmeWorker := acme.NewWorker(db.GetDB(), dnsService, acmeWorkerConfig)
+		acmeWorker = acme.NewWorker(db.GetDB(), dnsService, acmeWorkerConfig)
 		acmeWorker.Start()
 		defer acmeWorker.Stop()
 		log.Println("✓ ACME Worker initialized")
@@ -180,7 +181,7 @@ func main() {
 	r := gin.Default()
 
 	// Setup API v1 routes
-	v1.SetupRouter(r, db.GetDB(), cfg)
+	v1.SetupRouter(r, db.GetDB(), cfg, acmeWorker)
 
 	log.Printf("✓ Server starting on %s", cfg.HTTPAddr)
 

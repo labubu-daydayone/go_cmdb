@@ -1,6 +1,7 @@
 package v1
 
 import (
+	acmePkg "go_cmdb/internal/acme"
 	"go_cmdb/api/v1/acme"
 	"go_cmdb/api/v1/agent_identities"
 	"go_cmdb/api/v1/agent_tasks"
@@ -29,7 +30,7 @@ import (
 )
 
 	// SetupRouter sets up the API v1 routes
-func SetupRouter(r *gin.Engine, db *gorm.DB, cfg *config.Config) {
+func SetupRouter(r *gin.Engine, db *gorm.DB, cfg *config.Config, acmeWorker *acmePkg.Worker) {
 	// Mount Socket.IO server with JWT authentication
 	// Socket.IO will be available at /socket.io/ (default path)
 	if ws.Server != nil {
@@ -167,8 +168,8 @@ func SetupRouter(r *gin.Engine, db *gorm.DB, cfg *config.Config) {
 					dnsGroup.POST("/records/sync", dnsHandlerInstance.SyncRecords)
 				}
 
-				// ACME routes
-				acmeHandlerInstance := acme.NewHandler(db)
+			// ACME routes
+			acmeHandlerInstance := acme.NewHandler(db, acmeWorker)
 				acmeGroup := protected.Group("/acme")
 				{
 					// Provider routes
