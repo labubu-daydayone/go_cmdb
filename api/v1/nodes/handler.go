@@ -401,14 +401,9 @@ response := dto.NodeDTO{
 			LastSeenAt:      node.LastSeenAt,
 			LastHealthError: node.LastHealthError,
 			HealthFailCount: node.HealthFailCount,
-		Name:      node.Name,
-		MainIp:    node.MainIP,
-		AgentPort: node.AgentPort,
-		Enabled:   node.Enabled,
-		Status:    string(node.Status),
-		CreatedAt: node.CreatedAt,
-		UpdatedAt: node.UpdatedAt,
-	}
+			CreatedAt:       node.CreatedAt,
+			UpdatedAt:       node.UpdatedAt,
+		}
 
 	httpx.OK(c, response)
 }
@@ -428,7 +423,7 @@ func (h *Handler) CheckHealth(c *gin.Context) {
 	}
 
 	if h.healthWorker == nil {
-		httpx.FailErr(c, httpx.ErrServiceUnavailable("health worker is not enabled"))
+		httpx.FailErr(c, httpx.ErrInternalError("health worker is not enabled", nil))
 		return
 	}
 
