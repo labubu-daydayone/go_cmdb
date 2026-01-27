@@ -29,7 +29,7 @@ func NewHandler(db *gorm.DB, tokenStore *bootstrap.TokenStore, controlURL string
 // CreateBootstrapTokenRequest represents the request to create a bootstrap token
 type CreateBootstrapTokenRequest struct {
 	NodeID int `json:"nodeId" binding:"required"`
-	TTLSec int `json:"ttlSec" binding:"required,min=60,max=86400"` // 1 minute to 24 hours
+	TTLSec int `json:"ttlSec" binding:"omitempty,min=60,max=86400"` // Optional, defaults to 600 (10 minutes)
 }
 
 // CreateBootstrapToken creates a new bootstrap token for agent installation
@@ -39,6 +39,11 @@ func (h *Handler) CreateBootstrapToken(c *gin.Context) {
 	if err := c.ShouldBindJSON(&req); err != nil {
 		httpx.FailErr(c, httpx.ErrParamInvalid(err.Error()))
 		return
+	}
+
+	// Set default TTL if not provided
+	if req.TTLSec == 0 {
+		req.TTLSec = 600 // Default 10 minutes
 	}
 
 	// Validate node exists

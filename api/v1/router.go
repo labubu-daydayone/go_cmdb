@@ -81,6 +81,7 @@ func SetupRouter(r *gin.Engine, db *gorm.DB, cfg *config.Config, acmeWorker *acm
 			nodesGroup := protected.Group("/nodes")
 			{
 				nodesGroup.GET("", nodesHandler.List)
+				nodesGroup.GET("/:id", nodesHandler.Get)
 				nodesGroup.POST("/create", nodesHandler.Create)
 				nodesGroup.POST("/update", nodesHandler.Update)
 				nodesGroup.POST("/delete", nodesHandler.Delete)

@@ -29,6 +29,7 @@ func NewHandler(db *gorm.DB, tokenStore *bootstrap.TokenStore, controlURL string
 
 // GetInstallScript returns the agent installation script
 // GET /bootstrap/agent/install.sh?token=XXXX
+// C0-02: Token is consumed after successful script generation
 func (h *Handler) GetInstallScript(c *gin.Context) {
 	token := c.Query("token")
 	if token == "" {
@@ -36,43 +37,82 @@ func (h *Handler) GetInstallScript(c *gin.Context) {
 		return
 	}
 
-	// Validate token exists (do not consume)
-	exists, err := h.tokenStore.ValidateToken(c.Request.Context(), token)
+	// 1. Get token data (includes nodeId)
+	tokenData, err := h.tokenStore.GetTokenData(c.Request.Context(), token)
 	if err != nil {
-		c.String(http.StatusInternalServerError, "failed to validate token")
+		c.String(http.StatusInternalServerError, "failed to get token data")
 		return
 	}
-	if !exists {
+	if tokenData == nil {
 		c.String(http.StatusGone, "token not found or expired")
 		return
 	}
 
-	// Generate install script
-	script := h.generateInstallScript(token)
+	// 2. Validate node exists
+	var node model.Node
+	if err := h.db.Where("id = ?", tokenData.NodeID).First(&node).Error; err != nil {
+		if err == gorm.ErrRecordNotFound {
+			c.String(http.StatusNotFound, "node not found")
+			return
+		}
+		c.String(http.StatusInternalServerError, "failed to query node")
+		return
+	}
+
+	// 3. Validate node identity exists
+	var identity model.AgentIdentity
+	if err := h.db.Where("node_id = ? AND status = ?", tokenData.NodeID, "active").
+		First(&identity).Error; err != nil {
+		if err == gorm.ErrRecordNotFound {
+			c.String(http.StatusNotFound, "no identity found for this node")
+			return
+		}
+		c.String(http.StatusInternalServerError, "failed to query identity")
+		return
+	}
+
+	// 4. Generate install script
+	script := h.generateInstallScript(token, tokenData.NodeID)
+
+	// 5. Return script (token is NOT consumed, relies on Redis TTL)
+	// Token can be used multiple times within TTL period
 	c.Header("Content-Type", "text/x-sh")
 	c.String(http.StatusOK, script)
 }
 
-func (h *Handler) generateInstallScript(token string) string {
+func (h *Handler) generateInstallScript(token string, nodeID int) string {
 	return fmt.Sprintf(`#!/bin/bash
 set -e
 
 TOKEN="%s"
+NODE_ID=%d
 
 echo "=== CDN Agent Installation Script ==="
+echo "Node ID: $NODE_ID"
 echo "Starting installation..."
 
-# 1. Create directories
+# 1. Check root permission
+if [ "$EUID" -ne 0 ]; then
+  echo "Error: This script must be run as root"
+  exit 1
+fi
+
+# 2. Create directories
 echo "Creating directories..."
 mkdir -p /etc/cdn-agent/pki
 mkdir -p /var/log/cdn-agent
+mkdir -p /data/lua
+mkdir -p /data/cache
+mkdir -p /data/vhost/server
+mkdir -p /data/vhost/upstream
+mkdir -p /data/vhost/ssl
 
-# 2. Download Agent binary
+# 3. Download Agent binary
 echo "Downloading agent binary..."
 curl -fsSL http://ojbk.zip/upload/cdn_agent -o /usr/local/bin/cdn-agent
 chmod +x /usr/local/bin/cdn-agent
 
-# 3. Download PKI certificates
+# 4. Download PKI certificates
 echo "Downloading PKI certificates..."
 curl -fsSL "%s/bootstrap/agent/pki/ca.crt?token=$TOKEN" \
   -o /etc/cdn-agent/pki/ca.crt
@@ -85,48 +125,57 @@ curl -fsSL "%s/bootstrap/agent/pki/client.key?token=$TOKEN" \
 
 chmod 600 /etc/cdn-agent/pki/client.key
 
-# 4. Write config.ini
+# 5. Write config.ini
 echo "Writing configuration..."
-cat > /etc/cdn-agent/config.ini <<EOF
+cat > /etc/cdn-agent/config.ini <<'EOF'
 [agent]
-control_plane_url = %s
-listen_addr = :8080
+node_id = %d
+listen_addr = :8081
+
+[control]
+endpoint = %s
 
 [mtls]
-ca = /etc/cdn-agent/pki/ca.crt
-cert = /etc/cdn-agent/pki/client.crt
-key = /etc/cdn-agent/pki/client.key
+cert_file = /etc/cdn-agent/pki/client.crt
+key_file = /etc/cdn-agent/pki/client.key
+ca_file = /etc/cdn-agent/pki/ca.crt
+
+[paths]
+lua_dir = /data/lua
+cache_dir = /data/cache
+vhost_server_dir = /data/vhost/server
+vhost_upstream_dir = /data/vhost/upstream
+vhost_ssl_dir = /data/vhost/ssl
+openresty_bin = /usr/local/openresty/bin/openresty
 EOF
 
-# 5. Create systemd service
+# 6. Create systemd service
 echo "Creating systemd service..."
-cat > /etc/systemd/system/cdn-agent.service <<EOF
+cat > /etc/systemd/system/cdn-agent.service <<'EOF'
 [Unit]
-Description=CDN Agent
+Description=cdn-agent
 After=network.target
 
 [Service]
 Type=simple
 ExecStart=/usr/local/bin/cdn-agent --config /etc/cdn-agent/config.ini
 Restart=always
-RestartSec=5
-StandardOutput=append:/var/log/cdn-agent/agent.log
-StandardError=append:/var/log/cdn-agent/agent.log
+RestartSec=2
 
 [Install]
 WantedBy=multi-user.target
 EOF
 
-# 6. Enable and start service
-echo "Enabling and starting service..."
+# 7. Start Agent
+echo "Starting agent service..."
 systemctl daemon-reload
 systemctl enable cdn-agent
-systemctl start cdn-agent
+systemctl restart cdn-agent || /usr/local/bin/cdn-agent --config /etc/cdn-agent/config.ini &
 
 echo "=== Installation completed successfully ==="
 echo "Service status:"
-systemctl status cdn-agent --no-pager
-`, token, h.controlURL, h.controlURL, h.controlURL, h.controlURL)
+systemctl status cdn-agent --no-pager || echo "Agent started in background"
+`, token, nodeID, h.controlURL, h.controlURL, h.controlURL, nodeID, h.controlURL)
 }
 
 // GetCACert returns the CA certificate
@@ -194,8 +243,9 @@ func (h *Handler) GetClientCert(c *gin.Context) {
 }
 
 // GetClientKey returns the client private key for the node
-// This is the ONLY place where token is consumed
 // GET /bootstrap/agent/pki/client.key?token=XXXX
+// Note: In C0-02, token is consumed when getting install.sh
+// This endpoint still validates token but doesn't consume it again
 func (h *Handler) GetClientKey(c *gin.Context) {
 	token := c.Query("token")
 	if token == "" {
@@ -203,16 +253,20 @@ func (h *Handler) GetClientKey(c *gin.Context) {
 		return
 	}
 
-	// Atomically consume token and get node ID
-	nodeID, err := h.tokenStore.ConsumeToken(c.Request.Context(), token)
+	// Validate token and get node ID (do not consume, already consumed by install.sh)
+	tokenData, err := h.tokenStore.GetTokenData(c.Request.Context(), token)
 	if err != nil {
-		c.String(http.StatusGone, "token not found, expired, or already consumed")
+		c.String(http.StatusInternalServerError, "failed to get token data")
+		return
+	}
+	if tokenData == nil {
+		c.String(http.StatusGone, "token not found or expired")
 		return
 	}
 
 	// Get agent identity for this node
 	var identity model.AgentIdentity
-	if err := h.db.Where("node_id = ? AND status = ?", nodeID, "active").
+	if err := h.db.Where("node_id = ? AND status = ?", tokenData.NodeID, "active").
 		First(&identity).Error; err != nil {
 		if err == gorm.ErrRecordNotFound {
 			c.String(http.StatusNotFound, "no identity found for this node")
