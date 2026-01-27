@@ -4,6 +4,8 @@ import (
 	acmePkg "go_cmdb/internal/acme"
 	"go_cmdb/api/v1/acme"
 	"go_cmdb/api/v1/agent_identities"
+	"go_cmdb/api/v1/agents"
+	bootstrapHandler "go_cmdb/api/bootstrap"
 	"go_cmdb/api/v1/agent_tasks"
 	"go_cmdb/api/v1/api_keys"
 	"go_cmdb/api/v1/auth"
@@ -21,6 +23,7 @@ import (
 	"go_cmdb/api/v1/releases"
 	"go_cmdb/api/v1/risks"
 	"go_cmdb/api/v1/websites"
+	bootstrapPkg "go_cmdb/internal/bootstrap"
 	"go_cmdb/internal/config"
 	"go_cmdb/internal/httpx"
 	"go_cmdb/internal/ws"
@@ -30,11 +33,23 @@ import (
 )
 
 	// SetupRouter sets up the API v1 routes
-func SetupRouter(r *gin.Engine, db *gorm.DB, cfg *config.Config, acmeWorker *acmePkg.Worker) {
+func SetupRouter(r *gin.Engine, db *gorm.DB, cfg *config.Config, acmeWorker *acmePkg.Worker, tokenStore *bootstrapPkg.TokenStore) {
 	// Mount Socket.IO server with JWT authentication
 	// Socket.IO will be available at /socket.io/ (default path)
 	if ws.Server != nil {
 		r.Any("/socket.io/*any", gin.WrapH(ws.WrapWithAuth(ws.Server)))
+	}
+
+	// Bootstrap routes (public, no JWT authentication)
+	// These routes are for agent installation
+	controlURL := "http://20.2.140.226:8080"
+	bootstrapHandlerInstance := bootstrapHandler.NewHandler(db, tokenStore, controlURL)
+	bootstrapGroup := r.Group("/bootstrap/agent")
+	{
+		bootstrapGroup.GET("/install.sh", bootstrapHandlerInstance.GetInstallScript)
+		bootstrapGroup.GET("/pki/ca.crt", bootstrapHandlerInstance.GetCACert)
+		bootstrapGroup.GET("/pki/client.crt", bootstrapHandlerInstance.GetClientCert)
+		bootstrapGroup.GET("/pki/client.key", bootstrapHandlerInstance.GetClientKey)
 	}
 	v1 := r.Group("/api/v1")
 	{
@@ -253,7 +268,14 @@ func SetupRouter(r *gin.Engine, db *gorm.DB, cfg *config.Config, acmeWorker *acm
 					apiKeysGroup.POST("/delete", api_keys.Delete)
 					apiKeysGroup.POST("/toggle-status", api_keys.ToggleStatus)
 				}
+
+				// Agents bootstrap token routes (T0-C0-01)
+				agentsHandler := agents.NewHandler(db, tokenStore, controlURL)
+				agentsGroup := protected.Group("/agents/bootstrap")
+				{
+					agentsGroup.POST("/token/create", agentsHandler.CreateBootstrapToken)
 				}
+			}
 		}
 	}
 

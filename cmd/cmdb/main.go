@@ -12,6 +12,7 @@ import (
 	"go_cmdb/internal/acme"
 	"go_cmdb/internal/agentclient"
 	"go_cmdb/internal/auth"
+	"go_cmdb/internal/bootstrap"
 	"go_cmdb/internal/cache"
 	"go_cmdb/internal/cert"
 	"go_cmdb/internal/config"
@@ -81,6 +82,10 @@ func main() {
 	}
 	defer cache.Close()
 	log.Println("✓ Redis connected successfully")
+
+	// Initialize Bootstrap Token Store
+	tokenStore := bootstrap.NewTokenStore(cache.Client)
+	log.Println("✓ Bootstrap Token Store initialized")
 
 	// 5. Start Risk Scanner
 	scannerConfig := risk.ScannerConfig{
@@ -181,7 +186,7 @@ func main() {
 	r := gin.Default()
 
 	// Setup API v1 routes
-	v1.SetupRouter(r, db.GetDB(), cfg, acmeWorker)
+	v1.SetupRouter(r, db.GetDB(), cfg, acmeWorker, tokenStore)
 
 	log.Printf("✓ Server starting on %s", cfg.HTTPAddr)
 
