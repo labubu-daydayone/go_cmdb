@@ -225,6 +225,16 @@ func (h *Handler) Create(c *gin.Context) {
 		return
 	}
 
+	// Check mainIp uniqueness
+	if err := h.db.Model(&model.Node{}).Where("main_ip = ?", req.MainIP).Count(&count).Error; err != nil {
+		httpx.FailErr(c, httpx.ErrDatabaseError("failed to check mainIp uniqueness", err))
+		return
+	}
+	if count > 0 {
+		httpx.FailErr(c, httpx.ErrAlreadyExists("mainIp already exists"))
+		return
+	}
+
 	// Check subIPs uniqueness within request
 	ipMap := make(map[string]bool)
 	for _, subIP := range req.SubIPs {
@@ -282,6 +292,17 @@ func (h *Handler) Create(c *gin.Context) {
 	})
 
 	if err != nil {
+		// Check for duplicate key error
+		if strings.Contains(err.Error(), "Duplicate entry") || strings.Contains(err.Error(), "duplicate key") {
+			if strings.Contains(err.Error(), "uk_nodes_main_ip") {
+				httpx.FailErr(c, httpx.ErrAlreadyExists("mainIp already exists"))
+				return
+			}
+			if strings.Contains(err.Error(), "uk_node_sub_ips_ip") {
+				httpx.FailErr(c, httpx.ErrAlreadyExists("subIp already exists"))
+				return
+			}
+		}
 		httpx.FailErr(c, httpx.ErrDatabaseError("failed to create node with identity", err))
 		return
 	}
@@ -347,6 +368,18 @@ func (h *Handler) Update(c *gin.Context) {
 	}
 
 	if req.MainIP != nil {
+		// Check mainIp uniqueness (exclude current node)
+		var count int64
+		if err := h.db.Model(&model.Node{}).
+			Where("main_ip = ? AND id != ?", *req.MainIP, req.ID).
+			Count(&count).Error; err != nil {
+			httpx.FailErr(c, httpx.ErrDatabaseError("failed to check mainIp uniqueness", err))
+			return
+		}
+		if count > 0 {
+			httpx.FailErr(c, httpx.ErrAlreadyExists("mainIp already exists"))
+			return
+		}
 		updates["main_ip"] = *req.MainIP
 	}
 
@@ -365,6 +398,13 @@ func (h *Handler) Update(c *gin.Context) {
 	// Update node
 	if len(updates) > 0 {
 		if err := h.db.Model(&node).Updates(updates).Error; err != nil {
+			// Check for duplicate key error
+			if strings.Contains(err.Error(), "Duplicate entry") || strings.Contains(err.Error(), "duplicate key") {
+				if strings.Contains(err.Error(), "uk_nodes_main_ip") {
+					httpx.FailErr(c, httpx.ErrAlreadyExists("mainIp already exists"))
+					return
+				}
+			}
 			httpx.FailErr(c, httpx.ErrDatabaseError("failed to update node", err))
 			return
 		}
@@ -557,6 +597,19 @@ func (h *Handler) AddSubIPs(c *gin.Context) {
 		ipMap[subIP.IP] = true
 	}
 
+	// Check subIPs global uniqueness
+	for _, subIP := range req.SubIPs {
+		var count int64
+		if err := h.db.Model(&model.NodeSubIP{}).Where("ip = ?", subIP.IP).Count(&count).Error; err != nil {
+			httpx.FailErr(c, httpx.ErrDatabaseError("failed to check subIp uniqueness", err))
+			return
+		}
+		if count > 0 {
+			httpx.FailErr(c, httpx.ErrAlreadyExists("subIp already exists"))
+			return
+		}
+	}
+
 	// Create sub IPs
 	for _, subIP := range req.SubIPs {
 		enabled := true
@@ -569,6 +622,13 @@ func (h *Handler) AddSubIPs(c *gin.Context) {
 			Enabled: enabled,
 		}
 		if err := h.db.Create(&newSubIP).Error; err != nil {
+			// Check for duplicate key error
+			if strings.Contains(err.Error(), "Duplicate entry") || strings.Contains(err.Error(), "duplicate key") {
+				if strings.Contains(err.Error(), "uk_node_sub_ips_ip") {
+					httpx.FailErr(c, httpx.ErrAlreadyExists("subIp already exists"))
+					return
+				}
+			}
 			httpx.FailErr(c, httpx.ErrDatabaseError("failed to create sub IP", err))
 			return
 		}
