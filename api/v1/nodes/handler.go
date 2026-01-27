@@ -261,7 +261,7 @@ func (h *Handler) Create(c *gin.Context) {
 
 		// Generate identity
 		var err error
-		identity, err = h.identityService.CreateIdentity(tx, node.ID, node.Name)
+			identity, err = h.identityService.CreateIdentity(tx, node.ID, node.Name, node.MainIP)
 		if err != nil {
 			return fmt.Errorf("failed to create identity: %w", err)
 		}

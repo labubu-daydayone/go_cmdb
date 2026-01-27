@@ -12,6 +12,7 @@ import (
 	"go_cmdb/internal/model"
 	"go_cmdb/internal/pki"
 	"math/big"
+	"net"
 	"time"
 
 	"gorm.io/gorm"
@@ -33,7 +34,7 @@ func NewIdentityService(db *gorm.DB, caManager *pki.CAManager) *IdentityService 
 
 // GenerateCertificate generates a new mTLS client certificate for a node
 // Returns cert PEM, key PEM, and fingerprint
-func (s *IdentityService) GenerateCertificate(nodeID int, nodeName string) (certPEM, keyPEM, fingerprint string, err error) {
+func (s *IdentityService) GenerateCertificate(nodeID int, nodeName string, mainIP string) (certPEM, keyPEM, fingerprint string, err error) {
 	// Generate RSA private key
 	privateKey, err := rsa.GenerateKey(rand.Reader, 2048)
 	if err != nil {
@@ -49,12 +50,21 @@ func (s *IdentityService) GenerateCertificate(nodeID int, nodeName string) (cert
 	notBefore := time.Now()
 	notAfter := notBefore.Add(3650 * 24 * time.Hour) // 10 years
 
+	// Parse mainIP to add as SAN
+	var ipAddresses []net.IP
+	if mainIP != "" {
+		if ip := net.ParseIP(mainIP); ip != nil {
+			ipAddresses = append(ipAddresses, ip)
+		}
+	}
+
 	template := x509.Certificate{
 		SerialNumber: serialNumber,
 		Subject: pkix.Name{
 			CommonName:   fmt.Sprintf("node-%d-%s", nodeID, nodeName),
 			Organization: []string{"CDN Control Plane"},
 		},
+		IPAddresses:           ipAddresses,
 		NotBefore:             notBefore,
 		NotAfter:              notAfter,
 		KeyUsage:              x509.KeyUsageDigitalSignature | x509.KeyUsageKeyEncipherment,
@@ -91,7 +101,7 @@ func (s *IdentityService) GenerateCertificate(nodeID int, nodeName string) (cert
 }
 
 // CreateIdentity creates a new agent identity for a node
-func (s *IdentityService) CreateIdentity(tx *gorm.DB, nodeID int, nodeName string) (*model.AgentIdentity, error) {
+func (s *IdentityService) CreateIdentity(tx *gorm.DB, nodeID int, nodeName string, mainIP string) (*model.AgentIdentity, error) {
 	// Check if identity already exists
 	var existing model.AgentIdentity
 	if err := tx.Where("node_id = ?", nodeID).First(&existing).Error; err == nil {
@@ -101,7 +111,7 @@ func (s *IdentityService) CreateIdentity(tx *gorm.DB, nodeID int, nodeName strin
 	}
 
 	// Generate certificate
-	certPEM, keyPEM, fingerprint, err := s.GenerateCertificate(nodeID, nodeName)
+	certPEM, keyPEM, fingerprint, err := s.GenerateCertificate(nodeID, nodeName, mainIP)
 	if err != nil {
 		return nil, fmt.Errorf("failed to generate certificate: %w", err)
 	}
