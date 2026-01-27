@@ -10,6 +10,7 @@ import (
 	"encoding/pem"
 	"fmt"
 	"go_cmdb/internal/model"
+	"go_cmdb/internal/pki"
 	"math/big"
 	"time"
 
@@ -18,12 +19,16 @@ import (
 
 // IdentityService handles agent identity certificate generation and management
 type IdentityService struct {
-	db *gorm.DB
+	db        *gorm.DB
+	caManager *pki.CAManager
 }
 
 // NewIdentityService creates a new identity service
-func NewIdentityService(db *gorm.DB) *IdentityService {
-	return &IdentityService{db: db}
+func NewIdentityService(db *gorm.DB, caManager *pki.CAManager) *IdentityService {
+	return &IdentityService{
+		db:        db,
+		caManager: caManager,
+	}
 }
 
 // GenerateCertificate generates a new mTLS client certificate for a node
@@ -58,10 +63,10 @@ func (s *IdentityService) GenerateCertificate(nodeID int, nodeName string) (cert
 		IsCA:                  false,
 	}
 
-	// Self-sign the certificate (for client auth, CA validation happens on server side)
-	derBytes, err := x509.CreateCertificate(rand.Reader, &template, &template, &privateKey.PublicKey, privateKey)
+	// Sign the certificate with CA
+	derBytes, err := s.caManager.SignCertificate(&template, &privateKey.PublicKey)
 	if err != nil {
-		return "", "", "", fmt.Errorf("failed to create certificate: %w", err)
+		return "", "", "", fmt.Errorf("failed to sign certificate: %w", err)
 	}
 
 	// Calculate fingerprint (SHA256 of DER bytes)

@@ -18,6 +18,7 @@ import (
 	"go_cmdb/internal/config"
 	"go_cmdb/internal/db"
 	"go_cmdb/internal/dns"
+	"go_cmdb/internal/pki"
 	"go_cmdb/internal/release"
 	"go_cmdb/internal/risk"
 	"go_cmdb/internal/ws"
@@ -86,6 +87,14 @@ func main() {
 	// Initialize Bootstrap Token Store
 	tokenStore := bootstrap.NewTokenStore(cache.Client)
 	log.Println("✓ Bootstrap Token Store initialized")
+
+	// Initialize CA Manager
+	caManager, err := pki.NewCAManager("/opt/go_cmdb/pki")
+	if err != nil {
+		log.Fatalf("Failed to initialize CA Manager: %v", err)
+		os.Exit(1)
+	}
+	log.Println("✓ CA Manager initialized")
 
 	// 5. Start Risk Scanner
 	scannerConfig := risk.ScannerConfig{
@@ -186,7 +195,7 @@ func main() {
 	r := gin.Default()
 
 	// Setup API v1 routes
-	v1.SetupRouter(r, db.GetDB(), cfg, acmeWorker, tokenStore)
+	v1.SetupRouter(r, db.GetDB(), cfg, acmeWorker, tokenStore, caManager)
 
 	log.Printf("✓ Server starting on %s", cfg.HTTPAddr)
 

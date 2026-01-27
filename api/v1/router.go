@@ -26,6 +26,7 @@ import (
 	bootstrapPkg "go_cmdb/internal/bootstrap"
 	"go_cmdb/internal/config"
 	"go_cmdb/internal/httpx"
+	"go_cmdb/internal/pki"
 	"go_cmdb/internal/ws"
 
 	"github.com/gin-gonic/gin"
@@ -33,7 +34,7 @@ import (
 )
 
 	// SetupRouter sets up the API v1 routes
-func SetupRouter(r *gin.Engine, db *gorm.DB, cfg *config.Config, acmeWorker *acmePkg.Worker, tokenStore *bootstrapPkg.TokenStore) {
+func SetupRouter(r *gin.Engine, db *gorm.DB, cfg *config.Config, acmeWorker *acmePkg.Worker, tokenStore *bootstrapPkg.TokenStore, caManager *pki.CAManager) {
 	// Mount Socket.IO server with JWT authentication
 	// Socket.IO will be available at /socket.io/ (default path)
 	if ws.Server != nil {
@@ -43,7 +44,7 @@ func SetupRouter(r *gin.Engine, db *gorm.DB, cfg *config.Config, acmeWorker *acm
 	// Bootstrap routes (public, no JWT authentication)
 	// These routes are for agent installation
 	controlURL := "http://20.2.140.226:8080"
-	bootstrapHandlerInstance := bootstrapHandler.NewHandler(db, tokenStore, controlURL)
+	bootstrapHandlerInstance := bootstrapHandler.NewHandler(db, tokenStore, controlURL, caManager)
 	bootstrapGroup := r.Group("/bootstrap/agent")
 	{
 		bootstrapGroup.GET("/install.sh", bootstrapHandlerInstance.GetInstallScript)
@@ -77,7 +78,7 @@ func SetupRouter(r *gin.Engine, db *gorm.DB, cfg *config.Config, acmeWorker *acm
 			protected.GET("/me", meHandler)
 
 			// Nodes routes
-			nodesHandler := nodes.NewHandler(db)
+			nodesHandler := nodes.NewHandler(db, caManager)
 			nodesGroup := protected.Group("/nodes")
 			{
 				nodesGroup.GET("", nodesHandler.List)

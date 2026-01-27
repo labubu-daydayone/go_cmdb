@@ -8,6 +8,7 @@ import (
 	"go_cmdb/internal/httpx"
 	"go_cmdb/internal/model"
 	"go_cmdb/internal/nodes"
+	"go_cmdb/internal/pki"
 
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
@@ -89,10 +90,10 @@ type Handler struct {
 }
 
 // NewHandler creates a new nodes handler
-func NewHandler(db *gorm.DB) *Handler {
+func NewHandler(db *gorm.DB, caManager *pki.CAManager) *Handler {
 	return &Handler{
 		db:              db,
-		identityService: nodes.NewIdentityService(db),
+		identityService: nodes.NewIdentityService(db, caManager),
 	}
 }
 

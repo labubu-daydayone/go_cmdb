@@ -6,6 +6,7 @@ import (
 
 	"go_cmdb/internal/bootstrap"
 	"go_cmdb/internal/model"
+	"go_cmdb/internal/pki"
 
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
@@ -16,14 +17,16 @@ type Handler struct {
 	db         *gorm.DB
 	tokenStore *bootstrap.TokenStore
 	controlURL string // Control plane URL for install script
+	caManager  *pki.CAManager
 }
 
 // NewHandler creates a new bootstrap handler
-func NewHandler(db *gorm.DB, tokenStore *bootstrap.TokenStore, controlURL string) *Handler {
+func NewHandler(db *gorm.DB, tokenStore *bootstrap.TokenStore, controlURL string, caManager *pki.CAManager) *Handler {
 	return &Handler{
 		db:         db,
 		tokenStore: tokenStore,
 		controlURL: controlURL,
+		caManager:  caManager,
 	}
 }
 
@@ -246,9 +249,10 @@ func (h *Handler) GetCACert(c *gin.Context) {
 		return
 	}
 
-	// Return the client certificate as CA (for self-signed certificates)
+	// Return the real CA certificate
+	caCertPEM := h.caManager.GetCACertPEM()
 	c.Header("Content-Type", "application/x-pem-file")
-	c.String(http.StatusOK, identity.CertPEM)
+	c.String(http.StatusOK, caCertPEM)
 }
 
 // GetClientCert returns the client certificate for the node
