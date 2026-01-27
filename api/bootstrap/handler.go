@@ -125,7 +125,26 @@ curl -fsSL "%s/bootstrap/agent/pki/client.key?token=$TOKEN" \
 
 chmod 600 /etc/cdn-agent/pki/client.key
 
-# 5. Write config.ini
+# 5. Verify certificates (fail-fast)
+echo "Verifying certificates..."
+if ! openssl x509 -in /etc/cdn-agent/pki/ca.crt -noout; then
+  echo "Error: ca.crt is not a valid certificate"
+  exit 1
+fi
+
+if ! openssl x509 -in /etc/cdn-agent/pki/client.crt -noout; then
+  echo "Error: client.crt is not a valid certificate"
+  exit 1
+fi
+
+if ! openssl verify -CAfile /etc/cdn-agent/pki/ca.crt /etc/cdn-agent/pki/client.crt; then
+  echo "Error: certificate verification failed"
+  exit 1
+fi
+
+echo "Certificate verification passed"
+
+# 6. Write config.ini
 echo "Writing configuration..."
 cat > /etc/cdn-agent/config.ini <<'EOF'
 [agent]
@@ -198,12 +217,32 @@ func (h *Handler) GetCACert(c *gin.Context) {
 		return
 	}
 
-	// TODO: Return actual CA certificate
-	// For now, return a placeholder
-	caCert := "-----BEGIN CERTIFICATE-----\nPlaceholder CA Certificate\n-----END CERTIFICATE-----\n"
-	
+	// Get token data to retrieve node ID
+	tokenData, err := h.tokenStore.GetTokenData(c.Request.Context(), token)
+	if err != nil {
+		c.String(http.StatusInternalServerError, "failed to get token data")
+		return
+	}
+	if tokenData == nil {
+		c.String(http.StatusGone, "token not found or expired")
+		return
+	}
+
+	// Get agent identity for this node
+	var identity model.AgentIdentity
+	if err := h.db.Where("node_id = ? AND status = ?", tokenData.NodeID, "active").
+		First(&identity).Error; err != nil {
+		if err == gorm.ErrRecordNotFound {
+			c.String(http.StatusNotFound, "no identity found for this node")
+			return
+		}
+		c.String(http.StatusInternalServerError, "failed to query identity")
+		return
+	}
+
+	// Return the client certificate as CA (for self-signed certificates)
 	c.Header("Content-Type", "application/x-pem-file")
-	c.String(http.StatusOK, caCert)
+	c.String(http.StatusOK, identity.CertPEM)
 }
 
 // GetClientCert returns the client certificate for the node
