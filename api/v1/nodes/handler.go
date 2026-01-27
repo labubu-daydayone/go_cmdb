@@ -154,6 +154,7 @@ func (h *Handler) List(c *gin.Context) {
 	var nodes []model.Node
 	offset := (req.Page - 1) * req.PageSize
 	if err := query.
+		Preload("SubIPs").
 		Offset(offset).
 		Limit(req.PageSize).
 		Order("id DESC").
@@ -165,19 +166,30 @@ func (h *Handler) List(c *gin.Context) {
 	// Convert to DTO
 	items := make([]dto.NodeDTO, len(nodes))
 	for i, node := range nodes {
-items[i] = dto.NodeDTO{
-				ID:              node.ID,
-				Name:            node.Name,
-				MainIp:          node.MainIP,
-				AgentPort:       node.AgentPort,
-				Enabled:         node.Enabled,
-				Status:          string(node.Status),
-				LastSeenAt:      node.LastSeenAt,
-				LastHealthError: node.LastHealthError,
-				HealthFailCount: node.HealthFailCount,
-				CreatedAt:       node.CreatedAt,
-				UpdatedAt:       node.UpdatedAt,
+		// Convert SubIPs
+		subIps := make([]dto.SubIpDTO, len(node.SubIPs))
+		for j, subIP := range node.SubIPs {
+			subIps[j] = dto.SubIpDTO{
+				ID:      subIP.ID,
+				IP:      subIP.IP,
+				Enabled: subIP.Enabled,
 			}
+		}
+
+		items[i] = dto.NodeDTO{
+			ID:              node.ID,
+			Name:            node.Name,
+			MainIp:          node.MainIP,
+			AgentPort:       node.AgentPort,
+			Enabled:         node.Enabled,
+			AgentStatus:     string(node.Status),
+			LastSeenAt:      node.LastSeenAt,
+			LastHealthError: node.LastHealthError,
+			HealthFailCount: node.HealthFailCount,
+			SubIps:          subIps,
+			CreatedAt:       node.CreatedAt,
+			UpdatedAt:       node.UpdatedAt,
+		}
 	}
 
 	httpx.OK(c, ListResponse{
@@ -277,21 +289,21 @@ func (h *Handler) Create(c *gin.Context) {
 	// Build DTO response
 response := dto.NodeWithIdentityDTO{
 			ID:              node.ID,
-			Name:            node.Name,
-			MainIp:          node.MainIP,
-			AgentPort:       node.AgentPort,
-			Enabled:         node.Enabled,
-			Status:          string(node.Status),
-			LastSeenAt:      node.LastSeenAt,
-			LastHealthError: node.LastHealthError,
-			HealthFailCount: node.HealthFailCount,
-			Identity: &dto.IdentityDTO{
-				ID:          identity.ID,
-				Fingerprint: identity.Fingerprint,
-			},
-			CreatedAt: node.CreatedAt,
-			UpdatedAt: node.UpdatedAt,
-		}
+				Name:            node.Name,
+				MainIp:          node.MainIP,
+				AgentPort:       node.AgentPort,
+				Enabled:         node.Enabled,
+				AgentStatus:     string(node.Status),
+				LastSeenAt:      node.LastSeenAt,
+				LastHealthError: node.LastHealthError,
+				HealthFailCount: node.HealthFailCount,
+				Identity: &dto.IdentityDTO{
+					ID:          identity.ID,
+					Fingerprint: identity.Fingerprint,
+				},
+				CreatedAt: node.CreatedAt,
+				UpdatedAt: node.UpdatedAt,
+			}
 
 	httpx.OK(c, response)
 }
@@ -392,18 +404,19 @@ func (h *Handler) Update(c *gin.Context) {
 
 	// Build DTO response
 response := dto.NodeDTO{
-			ID:              node.ID,
-			Name:            node.Name,
-			MainIp:          node.MainIP,
-			AgentPort:       node.AgentPort,
-			Enabled:         node.Enabled,
-			Status:          string(node.Status),
-			LastSeenAt:      node.LastSeenAt,
-			LastHealthError: node.LastHealthError,
-			HealthFailCount: node.HealthFailCount,
-			CreatedAt:       node.CreatedAt,
-			UpdatedAt:       node.UpdatedAt,
-		}
+				ID:              node.ID,
+				Name:            node.Name,
+				MainIp:          node.MainIP,
+				AgentPort:       node.AgentPort,
+				Enabled:         node.Enabled,
+				AgentStatus:     string(node.Status),
+				LastSeenAt:      node.LastSeenAt,
+				LastHealthError: node.LastHealthError,
+				HealthFailCount: node.HealthFailCount,
+				SubIps:          []dto.SubIpDTO{},
+				CreatedAt:       node.CreatedAt,
+				UpdatedAt:       node.UpdatedAt,
+			}
 
 	httpx.OK(c, response)
 }
@@ -471,15 +484,18 @@ func (h *Handler) Get(c *gin.Context) {
 
 	// Build DTO response
 	response := dto.NodeDetailDTO{
-		ID:        node.ID,
-		Name:      node.Name,
-		MainIp:    node.MainIP,
-		AgentPort: node.AgentPort,
-		Enabled:   node.Enabled,
-		Status:    string(node.Status),
-		SubIps:    subIps,
-		CreatedAt: node.CreatedAt,
-		UpdatedAt: node.UpdatedAt,
+		ID:              node.ID,
+		Name:            node.Name,
+		MainIp:          node.MainIP,
+		AgentPort:       node.AgentPort,
+		Enabled:         node.Enabled,
+		AgentStatus:     string(node.Status),
+		LastSeenAt:      node.LastSeenAt,
+		LastHealthError: node.LastHealthError,
+		HealthFailCount: node.HealthFailCount,
+		SubIps:          subIps,
+		CreatedAt:       node.CreatedAt,
+		UpdatedAt:       node.UpdatedAt,
 	}
 
 	if identity.ID != 0 {
@@ -680,4 +696,71 @@ func (h *Handler) RevokeIdentity(c *gin.Context) {
 	}
 
 	httpx.OK(c, gin.H{"message": "identity revoked"})
+}
+
+
+// EnableRequest represents enable node request
+type EnableRequest struct {
+	ID int `json:"id" binding:"required"`
+}
+
+// DisableRequest represents disable node request
+type DisableRequest struct {
+	ID int `json:"id" binding:"required"`
+}
+
+// Enable handles POST /api/v1/nodes/enable
+func (h *Handler) Enable(c *gin.Context) {
+	var req EnableRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		httpx.FailErr(c, httpx.ErrParamMissing(err.Error()))
+		return
+	}
+
+	// Check if node exists
+	var node model.Node
+	if err := h.db.First(&node, req.ID).Error; err != nil {
+		if err == gorm.ErrRecordNotFound {
+			httpx.FailErr(c, httpx.ErrNotFound("node not found"))
+			return
+		}
+		httpx.FailErr(c, httpx.ErrDatabaseError("failed to find node", err))
+		return
+	}
+
+	// Update enabled status (idempotent)
+	if err := h.db.Model(&node).Update("enabled", true).Error; err != nil {
+		httpx.FailErr(c, httpx.ErrDatabaseError("failed to enable node", err))
+		return
+	}
+
+	httpx.OK(c, nil)
+}
+
+// Disable handles POST /api/v1/nodes/disable
+func (h *Handler) Disable(c *gin.Context) {
+	var req DisableRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		httpx.FailErr(c, httpx.ErrParamMissing(err.Error()))
+		return
+	}
+
+	// Check if node exists
+	var node model.Node
+	if err := h.db.First(&node, req.ID).Error; err != nil {
+		if err == gorm.ErrRecordNotFound {
+			httpx.FailErr(c, httpx.ErrNotFound("node not found"))
+			return
+		}
+		httpx.FailErr(c, httpx.ErrDatabaseError("failed to find node", err))
+		return
+	}
+
+	// Update enabled status (idempotent)
+	if err := h.db.Model(&node).Update("enabled", false).Error; err != nil {
+		httpx.FailErr(c, httpx.ErrDatabaseError("failed to disable node", err))
+		return
+	}
+
+	httpx.OK(c, nil)
 }

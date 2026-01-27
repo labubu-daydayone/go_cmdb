@@ -9,10 +9,11 @@ type NodeDTO struct {
 	MainIp          string     `json:"mainIp"`
 	AgentPort       int        `json:"agentPort"`
 	Enabled         bool       `json:"enabled"`
-	Status          string     `json:"status"`
+	AgentStatus     string     `json:"agentStatus"`
 	LastSeenAt      *time.Time `json:"lastSeenAt"`
 	LastHealthError *string    `json:"lastHealthError"`
 	HealthFailCount int        `json:"healthFailCount"`
+	SubIps          []SubIpDTO `json:"subIps"`
 	CreatedAt       time.Time  `json:"createdAt"`
 	UpdatedAt       time.Time  `json:"updatedAt"`
 }
@@ -24,7 +25,7 @@ type NodeWithIdentityDTO struct {
 	MainIp          string       `json:"mainIp"`
 	AgentPort       int          `json:"agentPort"`
 	Enabled         bool         `json:"enabled"`
-	Status          string       `json:"status"`
+	AgentStatus     string       `json:"agentStatus"`
 	LastSeenAt      *time.Time   `json:"lastSeenAt"`
 	LastHealthError *string      `json:"lastHealthError"`
 	HealthFailCount int          `json:"healthFailCount"`
@@ -53,7 +54,7 @@ type NodeDetailDTO struct {
 	MainIp          string       `json:"mainIp"`
 	AgentPort       int          `json:"agentPort"`
 	Enabled         bool         `json:"enabled"`
-	Status          string       `json:"status"`
+	AgentStatus     string       `json:"agentStatus"`
 	LastSeenAt      *time.Time   `json:"lastSeenAt"`
 	LastHealthError *string      `json:"lastHealthError"`
 	HealthFailCount int          `json:"healthFailCount"`

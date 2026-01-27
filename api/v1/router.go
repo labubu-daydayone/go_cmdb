@@ -87,7 +87,9 @@ func SetupRouter(r *gin.Engine, db *gorm.DB, cfg *config.Config, acmeWorker *acm
 				nodesGroup.POST("/create", nodesHandler.Create)
 				nodesGroup.POST("/update", nodesHandler.Update)
 				nodesGroup.POST("/delete", nodesHandler.Delete)
-					nodesGroup.POST("/health/check", nodesHandler.CheckHealth)
+				nodesGroup.POST("/enable", nodesHandler.Enable)
+				nodesGroup.POST("/disable", nodesHandler.Disable)
+				nodesGroup.POST("/health/check", nodesHandler.CheckHealth)
 
 				// Sub IPs routes
 				nodesGroup.POST("/sub-ips/add", nodesHandler.AddSubIPs)
