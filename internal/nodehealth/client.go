@@ -17,7 +17,8 @@ func NewMTLSClient(caCertPath, clientCertPath, clientKeyPath string, timeout tim
 	if err != nil {
 		return nil, fmt.Errorf("failed to read CA certificate: %w", err)
 	}
-	if ok := pem.Decode(caCert); ok == nil {
+	block, _ := pem.Decode(caCert)
+	if block == nil {
 		return nil, fmt.Errorf("failed to decode CA certificate PEM block from %s", caCertPath)
 	}
 
