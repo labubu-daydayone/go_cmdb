@@ -102,11 +102,14 @@ func (h *Handler) Create(c *gin.Context) {
 	}
 
 	// Create identity
+	now := time.Now()
 	identity := model.AgentIdentity{
-		NodeID:          req.NodeID,
-		CertFingerprint: req.CertFingerprint,
-		Status:          model.AgentIdentityStatusActive,
-		IssuedAt:        time.Now(),
+		NodeID:      req.NodeID,
+		Fingerprint: req.CertFingerprint,
+		CertPEM:     "", // Empty for manual creation
+		KeyPEM:      "", // Empty for manual creation
+		Status:      model.AgentIdentityStatusActive,
+		IssuedAt:    &now,
 	}
 
 	if err := h.db.Create(&identity).Error; err != nil {

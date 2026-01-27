@@ -1,0 +1,160 @@
+=========================================
+T2-18 Certificate Resource APIs Test
+=========================================
+
+Step 0: Login to get token
+POST http://20.2.140.226:8080/api/v1/auth/login
+✓ Token obtained
+
+=========================================
+Test 1: Upload certificate (success)
+=========================================
+POST http://20.2.140.226:8080/api/v1/certificates/upload
+
+Response:
+{
+    "code": 2002,
+    "message": "Invalid request: invalid character '\\n' in string literal",
+    "data": null
+}
+
+✗ Test 1 failed: Upload failed (code=2002)
+
+=========================================
+Test 2: Upload same fingerprint (should fail)
+=========================================
+POST http://20.2.140.226:8080/api/v1/certificates/upload
+
+Response:
+{
+    "code": 2002,
+    "message": "Invalid request: invalid character '\\n' in string literal",
+    "data": null
+}
+
+✓ Test 2 passed: Duplicate fingerprint rejected (code=2002)
+
+=========================================
+Test 3: List certificates (pagination)
+=========================================
+GET http://20.2.140.226:8080/api/v1/certificates?page=1&pageSize=5
+
+Response:
+{
+    "code": 5001,
+    "message": "failed to query certificates",
+    "data": null
+}
+
+✗ Test 3 failed: List format incorrect
+
+=========================================
+Test 4: List certificates (filter: source=manual)
+=========================================
+GET http://20.2.140.226:8080/api/v1/certificates?source=manual
+
+Response (truncated):
+{"code":5001,"message":"failed to query certificates","data":null}
+
+✗ Test 4 failed
+
+=========================================
+Test 5: List certificates (filter: status=valid)
+=========================================
+GET http://20.2.140.226:8080/api/v1/certificates?status=valid
+
+Response (truncated):
+{"code":5001,"message":"failed to query certificates","data":null}
+
+✗ Test 5 failed
+
+=========================================
+Test 6: Get certificate detail (with PEM/KEY)
+=========================================
+GET http://20.2.140.226:8080/api/v1/certificates/
+
+✗ Test 6 skipped: No certificate ID from upload
+
+=========================================
+Test 7: Get non-existent certificate (404)
+=========================================
+GET http://20.2.140.226:8080/api/v1/certificates/999999
+
+Response:
+{
+    "code": 3001,
+    "message": "Certificate not found",
+    "data": null
+}
+
+✓ Test 7 passed: Non-existent certificate returns error (code=3001)
+
+=========================================
+Test 8: Unauthorized access (no token)
+=========================================
+GET http://20.2.140.226:8080/api/v1/certificates (without Authorization header)
+
+Response:
+{
+    "code": 1001,
+    "message": "missing authorization header",
+    "data": null
+}
+
+✓ Test 8 passed: Unauthorized access rejected (code=1001)
+
+=========================================
+Test 9: Upload with invalid provider (should fail)
+=========================================
+POST http://20.2.140.226:8080/api/v1/certificates/upload (provider=acme)
+
+Response:
+{
+    "code": 2002,
+    "message": "Invalid request: invalid character '\\n' in string literal",
+    "data": null
+}
+
+✓ Test 9 passed: Invalid provider rejected (code=2002)
+
+=========================================
+Test 10: Upload with missing domains (should fail)
+=========================================
+POST http://20.2.140.226:8080/api/v1/certificates/upload (empty domains)
+
+Response:
+{
+    "code": 2002,
+    "message": "Invalid request: invalid character '\\n' in string literal",
+    "data": null
+}
+
+✓ Test 10 passed: Empty domains rejected (code=2002)
+
+=========================================
+Test 11: List with multiple filters
+=========================================
+GET http://20.2.140.226:8080/api/v1/certificates?source=manual&status=valid&page=1&pageSize=10
+
+Response (truncated):
+{"code":5001,"message":"failed to query certificates","data":null}
+
+✗ Test 11 failed
+
+=========================================
+Test 12: Verify domainCount in list response
+=========================================
+GET http://20.2.140.226:8080/api/v1/certificates?page=1&pageSize=1
+
+Response:
+{
+    "code": 5001,
+    "message": "failed to query certificates",
+    "data": null
+}
+
+✗ Test 12 failed: domainCount field missing
+
+=========================================
+All 12 tests completed
+=========================================

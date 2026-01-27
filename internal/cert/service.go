@@ -1,7 +1,6 @@
 package cert
 
 import (
-	"fmt"
 	"go_cmdb/internal/model"
 
 	"gorm.io/gorm"
@@ -163,15 +162,15 @@ func (s *Service) GetWebsiteCertificateCandidates(websiteID int) ([]CertificateC
 			provider = "ACME"
 		}
 
-			candidates = append(candidates, CertificateCandidate{
-				CertificateID:      cert.ID,
-				CertificateName:    fmt.Sprintf("Certificate #%d", cert.ID),
-				CertificateDomains: certDomains,
-				CoverageStatus:     coverage.Status,
-				MissingDomains:     coverage.MissingDomains,
-				ExpireAt:           cert.ExpireAt.Format("2006-01-02 15:04:05"),
-				Provider:           provider,
-			})
+		candidates = append(candidates, CertificateCandidate{
+			CertificateID:      cert.ID,
+			CertificateName:    cert.Name,
+			CertificateDomains: certDomains,
+			CoverageStatus:     coverage.Status,
+			MissingDomains:     coverage.MissingDomains,
+			ExpireAt:           cert.ExpireAt.Format("2006-01-02 15:04:05"),
+			Provider:           provider,
+		})
 	}
 
 	return candidates, nil
@@ -198,49 +197,43 @@ func (s *Service) ValidateCertificateCoverage(certificateID int, websiteID int) 
 	return &coverage, nil
 }
 
-// CertificateInfo represents parsed certificate information
-type CertificateInfo struct {
-	CommonName  string
-	Fingerprint string
-	Issuer      string
-	IssueAt     string
-	ExpireAt    string
-	Status      string
+// DeleteCertificate deletes a certificate and all related records
+// This includes:
+// - certificate_domains records
+// - certificate_bindings records (if any)
+// - certificate_requests where result_certificate_id matches
+// - the certificate itself
+func (s *Service) DeleteCertificate(certificateID int) error {
+	return s.db.Transaction(func(tx *gorm.DB) error {
+		// 1. Delete certificate_domains
+		if err := tx.Where("certificate_id = ?", certificateID).Delete(&model.CertificateDomain{}).Error; err != nil {
+			return err
+		}
+
+		// 2. Delete certificate_bindings
+		if err := tx.Where("certificate_id = ?", certificateID).Delete(&model.CertificateBinding{}).Error; err != nil {
+			return err
+		}
+
+		// 3. Delete certificate_requests where result_certificate_id matches
+		if err := tx.Where("result_certificate_id = ?", certificateID).Delete(&model.CertificateRequest{}).Error; err != nil {
+			return err
+		}
+
+		// 4. Delete the certificate itself
+		if err := tx.Delete(&model.Certificate{}, certificateID).Error; err != nil {
+			return err
+		}
+
+		return nil
+	})
 }
 
-// ParseCertificate parses a PEM-encoded certificate and extracts metadata
-func (s *Service) ParseCertificate(certPem string) (*CertificateInfo, error) {
-	// TODO: Implement actual certificate parsing using crypto/x509
-	// For now, return a placeholder implementation
-	// This should:
-	// 1. Decode PEM block
-	// 2. Parse X.509 certificate
-	// 3. Extract CommonName, Issuer, NotBefore, NotAfter
-	// 4. Calculate SHA256 fingerprint
-	// 5. Determine status based on expiration date
-	
-	// Placeholder implementation
-	return &CertificateInfo{
-		CommonName:  "placeholder.com",
-		Fingerprint: "placeholder_fingerprint",
-		Issuer:      "Placeholder CA",
-		IssueAt:     "2026-01-01 00:00:00",
-		ExpireAt:    "2027-01-01 00:00:00",
-		Status:      "valid",
-	}, nil
-}
-
-// ValidatePrivateKey validates a PEM-encoded private key
-func (s *Service) ValidatePrivateKey(keyPem string) error {
-	// TODO: Implement actual private key validation using crypto/x509
-	// This should:
-	// 1. Decode PEM block
-	// 2. Parse private key (RSA/ECDSA)
-	// 3. Validate key format and structure
-	
-	// Placeholder implementation
-	if keyPem == "" {
-		return gorm.ErrInvalidData
-	}
-	return nil
+// HasActiveBindings checks if a certificate has any active bindings
+func (s *Service) HasActiveBindings(certificateID int) (bool, error) {
+	var count int64
+	err := s.db.Model(&model.CertificateBinding{}).
+		Where("certificate_id = ? AND status = ?", certificateID, "active").
+		Count(&count).Error
+	return count > 0, err
 }

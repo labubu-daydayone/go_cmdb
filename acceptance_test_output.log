@@ -1,0 +1,42 @@
+Login to get authentication token...
+Token obtained: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1aWQiOjEsI...
+
+=========================================
+T2-17 ACME Set-Default Auto-Activation
+Acceptance Test
+=========================================
+
+Step 1: Create first ACME account
+POST http://20.2.140.226:8080/api/v1/acme/account/create
+Response:
+{
+  "code": 0,
+  "message": "success",
+  "data": {
+    "items": [
+      {
+        "email": "test-t2-17-1769451092-account1@example.com",
+        "id": 4,
+        "providerId": 1,
+        "status": "pending"
+      }
+    ],
+    "total": 1,
+    "page": 1,
+    "pageSize": 1
+  }
+}
+
+Account 1 created: ID=4, Status=pending
+
+Step 2: Set pending account as default (auto-activate)
+POST http://20.2.140.226:8080/api/v1/acme/accounts/set-default
+Response:
+{
+  "code": 5001,
+  "message": "failed to activate account",
+  "data": null
+}
+
+ERROR: Set-default failed with code=5001
+Message: failed to activate account

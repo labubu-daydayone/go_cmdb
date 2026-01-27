@@ -6,6 +6,7 @@ import (
 
 	"go_cmdb/internal/httpx"
 	"go_cmdb/internal/model"
+	"go_cmdb/internal/nodes"
 
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
@@ -82,12 +83,16 @@ type ToggleSubIPRequest struct {
 
 // Handler handles nodes API
 type Handler struct {
-	db *gorm.DB
+	db              *gorm.DB
+	identityService *nodes.IdentityService
 }
 
 // NewHandler creates a new nodes handler
 func NewHandler(db *gorm.DB) *Handler {
-	return &Handler{db: db}
+	return &Handler{
+		db:              db,
+		identityService: nodes.NewIdentityService(db),
+	}
 }
 
 // List handles GET /api/v1/nodes
@@ -224,9 +229,26 @@ func (h *Handler) Create(c *gin.Context) {
 		})
 	}
 
-	// Save to database
-	if err := h.db.Create(&node).Error; err != nil {
-		httpx.FailErr(c, httpx.ErrDatabaseError("failed to create node", err))
+	// Use transaction to ensure atomicity of node creation and identity generation
+	var identity *model.AgentIdentity
+	err := h.db.Transaction(func(tx *gorm.DB) error {
+		// Create node
+		if err := tx.Create(&node).Error; err != nil {
+			return fmt.Errorf("failed to create node: %w", err)
+		}
+
+		// Generate identity
+		var err error
+		identity, err = h.identityService.CreateIdentity(tx, node.ID, node.Name)
+		if err != nil {
+			return fmt.Errorf("failed to create identity: %w", err)
+		}
+
+		return nil
+	})
+
+	if err != nil {
+		httpx.FailErr(c, httpx.ErrDatabaseError("failed to create node with identity", err))
 		return
 	}
 
@@ -236,7 +258,23 @@ func (h *Handler) Create(c *gin.Context) {
 		return
 	}
 
-	httpx.OK(c, node)
+	// Build response with identity summary (without key_pem)
+	response := gin.H{
+		"id":        node.ID,
+		"name":      node.Name,
+		"mainIp":    node.MainIP,
+		"agentPort": node.AgentPort,
+		"enabled":   node.Enabled,
+		"status":    node.Status,
+		"identity": gin.H{
+			"id":          identity.ID,
+			"fingerprint": identity.Fingerprint,
+		},
+		"createdAt": node.CreatedAt,
+		"updatedAt": node.UpdatedAt,
+	}
+
+	httpx.OK(c, response)
 }
 
 // Update handles POST /api/v1/nodes/update
@@ -505,4 +543,75 @@ func (h *Handler) ToggleSubIP(c *gin.Context) {
 	}
 
 	httpx.OK(c, subIP)
+}
+
+// GetIdentity handles GET /api/v1/nodes/:id/identity
+func (h *Handler) GetIdentity(c *gin.Context) {
+	nodeID := c.Param("id")
+	if nodeID == "" {
+		httpx.FailErr(c, httpx.ErrParamInvalid("node ID is required"))
+		return
+	}
+
+	// Convert to int
+	var id int
+	if _, err := fmt.Sscanf(nodeID, "%d", &id); err != nil {
+		httpx.FailErr(c, httpx.ErrParamInvalid("invalid node ID"))
+		return
+	}
+
+	// Check if node exists
+	var node model.Node
+	if err := h.db.First(&node, id).Error; err != nil {
+		if err == gorm.ErrRecordNotFound {
+			httpx.FailErr(c, httpx.ErrNotFound("node not found"))
+			return
+		}
+		httpx.FailErr(c, httpx.ErrDatabaseError("failed to find node", err))
+		return
+	}
+
+	// Get identity
+	identity, err := h.identityService.GetIdentityByNodeID(id)
+	if err != nil {
+		httpx.FailErr(c, httpx.ErrNotFound("identity not found"))
+		return
+	}
+
+	httpx.OK(c, identity)
+}
+
+// RevokeIdentity handles POST /api/v1/nodes/:id/identity/revoke
+func (h *Handler) RevokeIdentity(c *gin.Context) {
+	nodeID := c.Param("id")
+	if nodeID == "" {
+		httpx.FailErr(c, httpx.ErrParamInvalid("node ID is required"))
+		return
+	}
+
+	// Convert to int
+	var id int
+	if _, err := fmt.Sscanf(nodeID, "%d", &id); err != nil {
+		httpx.FailErr(c, httpx.ErrParamInvalid("invalid node ID"))
+		return
+	}
+
+	// Check if node exists
+	var node model.Node
+	if err := h.db.First(&node, id).Error; err != nil {
+		if err == gorm.ErrRecordNotFound {
+			httpx.FailErr(c, httpx.ErrNotFound("node not found"))
+			return
+		}
+		httpx.FailErr(c, httpx.ErrDatabaseError("failed to find node", err))
+		return
+	}
+
+	// Revoke identity
+	if err := h.identityService.RevokeIdentity(id); err != nil {
+		httpx.FailErr(c, httpx.ErrDatabaseError("failed to revoke identity", err))
+		return
+	}
+
+	httpx.OK(c, gin.H{"message": "identity revoked"})
 }
