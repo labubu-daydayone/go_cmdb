@@ -1,15 +1,17 @@
 package model
 
-// OriginSet 网站回源快照（不可复用）
-// 一个 origin_set 只能属于一个网站
+// OriginSet 回源快照
 type OriginSet struct {
 	BaseModel
+	Name          string `gorm:"type:varchar(255);not null" json:"name"`
+	Description   string `gorm:"type:text" json:"description"`
+	Status        string `gorm:"type:varchar(32);not null;default:active" json:"status"`
 	Source        string `gorm:"type:enum('group','manual');not null" json:"source"`
-	OriginGroupID int    `gorm:"default:0;not null" json:"origin_group_id"` // source=group时有值
+	OriginGroupID int64  `gorm:"default:0;not null" json:"originGroupId"`
 
 	// 关联
-	Addresses   []OriginAddress `gorm:"foreignKey:OriginSetID;constraint:OnDelete:CASCADE" json:"addresses,omitempty"`
-	OriginGroup *OriginGroup    `gorm:"foreignKey:OriginGroupID" json:"origin_group,omitempty"`
+	Items       []OriginSetItem `gorm:"foreignKey:OriginSetID;constraint:OnDelete:CASCADE" json:"items,omitempty"`
+	OriginGroup *OriginGroup    `gorm:"foreignKey:OriginGroupID" json:"originGroup,omitempty"`
 }
 
 // TableName 指定表名

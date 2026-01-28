@@ -20,6 +20,7 @@ import (
 	"go_cmdb/api/v1/node_ips"
 	"go_cmdb/api/v1/nodes"
 	"go_cmdb/api/v1/origin_groups"
+	"go_cmdb/api/v1/origin_sets"
 	"go_cmdb/api/v1/origins"
 	"go_cmdb/api/v1/releases"
 	"go_cmdb/api/v1/risks"
@@ -153,6 +154,16 @@ func SetupRouter(r *gin.Engine, db *gorm.DB, cfg *config.Config, acmeWorker *acm
 				originsGroup.POST("/create-manual", originsHandler.CreateManual)
 				originsGroup.POST("/update", originsHandler.Update)
 				originsGroup.POST("/delete", originsHandler.Delete)
+			}
+
+			// Origin Sets routes (snapshots)
+			originSetsHandler := origin_sets.NewHandler(db)
+			originSetsGroup := protected.Group("/origin-sets")
+			{
+				originSetsGroup.POST("/create", originSetsHandler.Create)
+				originSetsGroup.GET("", originSetsHandler.List)
+				originSetsGroup.GET("/:id", originSetsHandler.Detail)
+				originSetsGroup.POST("/bind-website", originSetsHandler.BindWebsite)
 			}
 
 			// Websites routes
