@@ -34,7 +34,7 @@ type NodeGroupItem struct {
 	Name        string `json:"name"`
 	Description string `json:"description"`
 	CNAMEPrefix string `json:"cnamePrefix"`
-	CNAME       string `json:"cname"`
+
 	Status      string `json:"status"`
 	IPCount     int    `json:"ipCount"`
 	CreatedAt   string `json:"createdAt"`
@@ -45,7 +45,7 @@ type NodeGroupItem struct {
 type CreateRequest struct {
 	Name        string `json:"name" binding:"required"`
 	Description string `json:"description"`
-	IPIDs       []int  `json:"ipIds" binding:"required,min=1"`
+	IpIds       []int  `json:"ipIds" binding:"required,min=1"`
 }
 
 // UpdateRequest represents update node group request
@@ -54,7 +54,7 @@ type UpdateRequest struct {
 	Name        *string `json:"name"`
 	Description *string `json:"description"`
 	Status      *string `json:"status"`
-	IPIDs       []int   `json:"ipIds"`
+	IpIds       []int   `json:"ipIds"`
 }
 
 // DeleteRequest represents delete node groups request
@@ -110,7 +110,12 @@ func (h *Handler) createDNSRecordsForAllCDNDomains(tx *gorm.DB, nodeGroup *model
 				DesiredState: model.DNSRecordDesiredStatePresent,
 			}
 
-			if err := tx.Create(&dnsRecord).Error; err != nil {
+			// Use raw SQL for upsert to handle unique constraint properly
+			sql := `INSERT INTO domain_dns_records (domain_id, type, name, value, ttl, owner_type, owner_id, status, desired_state, created_at, updated_at)
+				VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())
+				ON DUPLICATE KEY UPDATE desired_state = VALUES(desired_state), status = VALUES(status), updated_at = NOW()`
+			if err := tx.Exec(sql, dnsRecord.DomainID, dnsRecord.Type, dnsRecord.Name, dnsRecord.Value, dnsRecord.TTL,
+				dnsRecord.OwnerType, dnsRecord.OwnerID, dnsRecord.Status, dnsRecord.DesiredState).Error; err != nil {
 				return fmt.Errorf("failed to create DNS record for domain %s, IP %s: %w", domain.Domain, ip.IP, err)
 			}
 		}
@@ -193,7 +198,6 @@ func (h *Handler) List(c *gin.Context) {
 			Name:        ng.Name,
 			Description: ng.Description,
 			CNAMEPrefix: ng.CNAMEPrefix,
-			CNAME:       ng.CNAME,
 			Status:      string(ng.Status),
 			IPCount:     int(count),
 			CreatedAt:   ng.CreatedAt.Format("2006-01-02T15:04:05Z07:00"),
@@ -281,8 +285,8 @@ func (h *Handler) Create(c *gin.Context) {
 		return
 	}
 
-	if len(req.IPIDs) > 0 {
-		for _, ipID := range req.IPIDs {
+	if len(req.IpIds) > 0 {
+		for _, ipID := range req.IpIds {
 			mapping := model.NodeGroupIP{
 				NodeGroupID: nodeGroup.ID,
 				IPID:        ipID,
@@ -295,7 +299,7 @@ func (h *Handler) Create(c *gin.Context) {
 		}
 
 		// Create DNS records for all CDN domains × all available IPs
-		if err := h.createDNSRecordsForAllCDNDomains(tx, &nodeGroup, cdnDomains, req.IPIDs); err != nil {
+		if err := h.createDNSRecordsForAllCDNDomains(tx, &nodeGroup, cdnDomains, req.IpIds); err != nil {
 			tx.Rollback()
 			httpx.FailErr(c, httpx.ErrDatabaseError("failed to create DNS records", err))
 			return
@@ -320,7 +324,6 @@ func (h *Handler) Create(c *gin.Context) {
 			"name":        nodeGroup.Name,
 			"description": nodeGroup.Description,
 			"cnamePrefix": nodeGroup.CNAMEPrefix,
-			"cname":       nodeGroup.CNAME,
 			"status":      nodeGroup.Status,
 			"createdAt":   nodeGroup.CreatedAt.Format("2006-01-02T15:04:05Z07:00"),
 			"updatedAt":   nodeGroup.UpdatedAt.Format("2006-01-02T15:04:05Z07:00"),
@@ -387,7 +390,7 @@ func (h *Handler) Update(c *gin.Context) {
 	}
 
 	// Handle IP updates
-	if req.IPIDs != nil {
+	if req.IpIds != nil {
 		// Mark old DNS records as absent
 		if err := h.markDNSRecordsAsAbsent(tx, req.ID); err != nil {
 			tx.Rollback()
@@ -403,8 +406,8 @@ func (h *Handler) Update(c *gin.Context) {
 		}
 
 		// Create new IP mappings and DNS records
-		if len(req.IPIDs) > 0 {
-			for _, ipID := range req.IPIDs {
+		if len(req.IpIds) > 0 {
+			for _, ipID := range req.IpIds {
 				mapping := model.NodeGroupIP{
 					NodeGroupID: req.ID,
 					IPID:        ipID,
@@ -425,7 +428,7 @@ func (h *Handler) Update(c *gin.Context) {
 			}
 
 			// Create new DNS records for all CDN domains
-			if err := h.createDNSRecordsForAllCDNDomains(tx, &nodeGroup, cdnDomains, req.IPIDs); err != nil {
+			if err := h.createDNSRecordsForAllCDNDomains(tx, &nodeGroup, cdnDomains, req.IpIds); err != nil {
 				tx.Rollback()
 				httpx.FailErr(c, httpx.ErrDatabaseError("failed to create DNS records", err))
 				return
@@ -451,7 +454,6 @@ func (h *Handler) Update(c *gin.Context) {
 			"name":        nodeGroup.Name,
 			"description": nodeGroup.Description,
 			"cnamePrefix": nodeGroup.CNAMEPrefix,
-			"cname":       nodeGroup.CNAME,
 			"status":      nodeGroup.Status,
 			"createdAt":   nodeGroup.CreatedAt.Format("2006-01-02T15:04:05Z07:00"),
 			"updatedAt":   nodeGroup.UpdatedAt.Format("2006-01-02T15:04:05Z07:00"),

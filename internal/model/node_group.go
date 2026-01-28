@@ -14,7 +14,7 @@ type NodeGroup struct {
 	Name        string          `gorm:"type:varchar(128);uniqueIndex;not null" json:"name"`
 	Description string          `gorm:"type:varchar(255)" json:"description"`
 	CNAMEPrefix string          `gorm:"type:varchar(128);uniqueIndex;not null" json:"cnamePrefix"`
-	CNAME       string          `gorm:"type:varchar(255);uniqueIndex;not null" json:"cname"`
+	CNAME       string          `gorm:"type:varchar(255);uniqueIndex;not null" json:"-"`
 	Status      NodeGroupStatus `gorm:"type:enum('active','inactive');default:'active'" json:"status"`
 	
 	// Relations
