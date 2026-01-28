@@ -269,8 +269,9 @@ func (h *Handler) Create(c *gin.Context) {
 		return
 	}
 
-	// Create DNS CNAME record
-	if err := h.createDNSRecordForLineGroup(tx, &lineGroup, nodeGroup.CNAMEPrefix); err != nil {
+	// Create DNS CNAME record with full FQDN
+	nodeGroupCNAME := nodeGroup.CNAMEPrefix + "." + domain.Domain
+	if err := h.createDNSRecordForLineGroup(tx, &lineGroup, nodeGroupCNAME); err != nil {
 		tx.Rollback()
 		httpx.FailErr(c, httpx.ErrDatabaseError("failed to create DNS record", err))
 		return
@@ -376,9 +377,18 @@ func (h *Handler) Update(c *gin.Context) {
 
 		updates["node_group_id"] = *req.NodeGroupID
 
-		// Create new DNS CNAME record
+		// Load domain to construct full FQDN
+		var domain model.Domain
+		if err := tx.First(&domain, lineGroup.DomainID).Error; err != nil {
+			tx.Rollback()
+			httpx.FailErr(c, httpx.ErrDatabaseError("failed to find domain", err))
+			return
+		}
+
+		// Create new DNS CNAME record with full FQDN
 		lineGroup.NodeGroupID = int64(*req.NodeGroupID)
-		if err := h.createDNSRecordForLineGroup(tx, &lineGroup, nodeGroup.CNAMEPrefix); err != nil {
+		nodeGroupCNAME := nodeGroup.CNAMEPrefix + "." + domain.Domain
+		if err := h.createDNSRecordForLineGroup(tx, &lineGroup, nodeGroupCNAME); err != nil {
 			tx.Rollback()
 			httpx.FailErr(c, httpx.ErrDatabaseError("failed to create DNS record", err))
 			return
@@ -443,5 +453,108 @@ func (h *Handler) Delete(c *gin.Context) {
 
 	httpx.OK(c, gin.H{
 		"deletedCount": result.RowsAffected,
+	})
+}
+
+// RepairCNAMERequest represents repair CNAME request
+type RepairCNAMERequest struct {
+	LineGroupID int `json:"lineGroupId" binding:"required"`
+}
+
+// RepairCNAMEResponse represents repair CNAME response
+type RepairCNAMEResponse struct {
+	LineGroupID   int    `json:"lineGroupId"`
+	DomainID      int    `json:"domainId"`
+	Domain        string `json:"domain"`
+	ExpectedValue string `json:"expectedValue"`
+	Affected      int    `json:"affected"`
+}
+
+// RepairCNAME handles POST /api/v1/line-groups/dns/repair-cname
+func (h *Handler) RepairCNAME(c *gin.Context) {
+	var req RepairCNAMERequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		httpx.FailErr(c, httpx.ErrParamMissing(err.Error()))
+		return
+	}
+
+	// Load line group
+	var lineGroup model.LineGroup
+	if err := h.db.First(&lineGroup, req.LineGroupID).Error; err != nil {
+		if err == gorm.ErrRecordNotFound {
+			httpx.FailErr(c, httpx.ErrNotFound("line group not found"))
+			return
+		}
+		httpx.FailErr(c, httpx.ErrDatabaseError("failed to find line group", err))
+		return
+	}
+
+	// Load node group
+	var nodeGroup model.NodeGroup
+	if err := h.db.First(&nodeGroup, lineGroup.NodeGroupID).Error; err != nil {
+		httpx.FailErr(c, httpx.ErrDatabaseError("failed to find node group", err))
+		return
+	}
+
+	// Load domain
+	var domain model.Domain
+	if err := h.db.First(&domain, lineGroup.DomainID).Error; err != nil {
+		httpx.FailErr(c, httpx.ErrDatabaseError("failed to find domain", err))
+		return
+	}
+
+	// Calculate expected CNAME value
+	expectedValue := nodeGroup.CNAMEPrefix + "." + domain.Domain
+
+	// Find and update incorrect DNS records
+	tx := h.db.Begin()
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+		}
+	}()
+
+	var dnsRecords []model.DomainDNSRecord
+	if err := tx.Where("owner_type = ? AND owner_id = ? AND type = ?", 
+		"line_group", lineGroup.ID, model.DNSRecordTypeCNAME).
+		Find(&dnsRecords).Error; err != nil {
+		tx.Rollback()
+		httpx.FailErr(c, httpx.ErrDatabaseError("failed to query DNS records", err))
+		return
+	}
+
+	affected := 0
+	for _, record := range dnsRecords {
+		// Check if value is incorrect (missing domain suffix or ends with just ".")
+		if record.Value != expectedValue {
+			updates := map[string]interface{}{
+				"value":         expectedValue,
+				"status":        model.DNSRecordStatusPending,
+				"desired_state": model.DNSRecordDesiredStatePresent,
+			}
+			if err := tx.Model(&model.DomainDNSRecord{}).Where("id = ?", record.ID).Updates(updates).Error; err != nil {
+				tx.Rollback()
+				httpx.FailErr(c, httpx.ErrDatabaseError("failed to update DNS record", err))
+				return
+			}
+			affected++
+		}
+	}
+
+	if err := tx.Commit().Error; err != nil {
+		httpx.FailErr(c, httpx.ErrDatabaseError("failed to commit transaction", err))
+		return
+	}
+
+	response := RepairCNAMEResponse{
+		LineGroupID:   int(lineGroup.ID),
+		DomainID:      int(lineGroup.DomainID),
+		Domain:        domain.Domain,
+		ExpectedValue: expectedValue,
+		Affected:      affected,
+	}
+
+	httpx.OK(c, gin.H{
+		"item": response,
 	})
 }

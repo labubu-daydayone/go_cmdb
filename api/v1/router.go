@@ -122,15 +122,16 @@ func SetupRouter(r *gin.Engine, db *gorm.DB, cfg *config.Config, acmeWorker *acm
 					nodeGroupsGroup.POST("/delete", nodeGroupsHandler.Delete)
 				}
 
-			// Line groups routes
-			lineGroupsHandler := line_groups.NewHandler(db)
-			lineGroupsGroup := protected.Group("/line-groups")
-			{
-				lineGroupsGroup.GET("", lineGroupsHandler.List)
-				lineGroupsGroup.POST("/create", lineGroupsHandler.Create)
-				lineGroupsGroup.POST("/update", lineGroupsHandler.Update)
-				lineGroupsGroup.POST("/delete", lineGroupsHandler.Delete)
-			}
+		// Line groups routes
+		lineGroupsHandler := line_groups.NewHandler(db)
+		lineGroupsGroup := protected.Group("/line-groups")
+		{
+			lineGroupsGroup.GET("", lineGroupsHandler.List)
+			lineGroupsGroup.POST("/create", lineGroupsHandler.Create)
+			lineGroupsGroup.POST("/update", lineGroupsHandler.Update)
+			lineGroupsGroup.POST("/delete", lineGroupsHandler.Delete)
+			lineGroupsGroup.POST("/dns/repair-cname", lineGroupsHandler.RepairCNAME)
+		}
 
 			// Origin groups routes
 			originGroupsHandler := origin_groups.NewHandler(db)
