@@ -4,7 +4,9 @@ import (
 	"crypto/rand"
 	"encoding/hex"
 	"fmt"
+	"log"
 
+	"go_cmdb/internal/dns/providers/cloudflare"
 	"go_cmdb/internal/httpx"
 	"go_cmdb/internal/model"
 
@@ -98,6 +100,57 @@ func (h *Handler) markDNSRecordsForDeletion(tx *gorm.DB, lineGroupID int, reason
 		Where("owner_type = ? AND owner_id = ? AND desired_state = ?", "line_group", lineGroupID, model.DNSRecordDesiredStatePresent).
 		Updates(updates).Error; err != nil {
 		return fmt.Errorf("failed to mark DNS records for deletion: %w", err)
+	}
+
+	return nil
+}
+
+// deleteDNSRecordsSync synchronously deletes DNS records from Cloudflare and local database
+func (h *Handler) deleteDNSRecordsSync(tx *gorm.DB, lineGroupID int) error {
+	// Step 1: Get all CNAME records for this line group
+	var records []model.DomainDNSRecord
+	if err := tx.Where("owner_type = ? AND owner_id = ? AND type = ? AND desired_state = ?",
+		"line_group", lineGroupID, model.DNSRecordTypeCNAME, model.DNSRecordDesiredStatePresent).Find(&records).Error; err != nil {
+		return fmt.Errorf("failed to get DNS records: %w", err)
+	}
+
+	if len(records) == 0 {
+		return nil // No records to delete
+	}
+
+	// Step 2: For each record, delete from Cloudflare then from database
+	for _, record := range records {
+		// Get domain provider info
+		var provider model.DomainDNSProvider
+		if err := tx.Where("domain_id = ?", record.DomainID).First(&provider).Error; err != nil {
+			log.Printf("[Line Group] Failed to get DNS provider for record %d: %v, deleting local record anyway\n", record.ID, err)
+			tx.Delete(&record)
+			continue
+		}
+
+		// Get API key
+		var apiKey model.APIKey
+		if err := tx.First(&apiKey, provider.APIKeyID).Error; err != nil {
+			log.Printf("[Line Group] Failed to get API key for record %d: %v, deleting local record anyway\n", record.ID, err)
+			tx.Delete(&record)
+			continue
+		}
+
+		// Delete from Cloudflare if provider_record_id exists
+		if record.ProviderRecordID != "" {
+			cfProvider := cloudflare.NewCloudflareProvider(apiKey.Account, apiKey.APIToken)
+			err := cfProvider.DeleteRecord(provider.ProviderZoneID, record.ProviderRecordID)
+			if err != nil && err != cloudflare.ErrNotFound {
+				log.Printf("[Line Group] Failed to delete record %d from Cloudflare: %v, deleting local record anyway\n", record.ID, err)
+			} else {
+				log.Printf("[Line Group] Deleted record %d from Cloudflare\n", record.ID)
+			}
+		}
+
+		// Delete from local database
+		if err := tx.Delete(&record).Error; err != nil {
+			log.Printf("[Line Group] Failed to delete record %d from database: %v\n", record.ID, err)
+		}
 	}
 
 	return nil
@@ -381,10 +434,10 @@ func (h *Handler) Update(c *gin.Context) {
 			return
 		}
 
-		// Mark old DNS records for deletion
-		if err := h.markDNSRecordsForDeletion(tx, req.ID, "node group changed"); err != nil {
+		// Synchronously delete old DNS records from Cloudflare and local database
+		if err := h.deleteDNSRecordsSync(tx, req.ID); err != nil {
 			tx.Rollback()
-			httpx.FailErr(c, httpx.ErrDatabaseError("failed to mark old DNS records for deletion", err))
+			httpx.FailErr(c, httpx.ErrDatabaseError("failed to delete old DNS records", err))
 			return
 		}
 
