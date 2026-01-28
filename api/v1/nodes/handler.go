@@ -27,10 +27,10 @@ type ListRequest struct {
 
 // ListResponse represents list nodes response
 type ListResponse struct {
-	Items    []dto.NodeDTO `json:"items"`
-	Total    int64         `json:"total"`
-	Page     int           `json:"page"`
-	PageSize int           `json:"pageSize"`
+	Items    []dto.NodeListItemDTO `json:"items"`
+	Total    int64                 `json:"total"`
+	Page     int                   `json:"page"`
+	PageSize int                   `json:"pageSize"`
 }
 
 // CreateRequest represents create node request
@@ -164,34 +164,36 @@ func (h *Handler) List(c *gin.Context) {
 	}
 
 	// Convert to DTO
-	items := make([]dto.NodeDTO, len(nodes))
+	items := make([]dto.NodeListItemDTO, len(nodes))
 	for i, node := range nodes {
-		// Extract main IP and sub IPs
+		// Extract main IP and build ips.items
 		mainIp := ""
-		var subIps []dto.SubIpDTO
+		var ipItems []dto.NodeIPItemDTO
 		for _, ip := range node.IPs {
 			if ip.IPType == model.NodeIPTypeMain {
 				mainIp = ip.IP
-			} else {
-				subIps = append(subIps, dto.SubIpDTO{
-					ID:      ip.ID,
-					IP:      ip.IP,
-					Enabled: ip.Enabled,
-				})
 			}
+			ipItems = append(ipItems, dto.NodeIPItemDTO{
+				ID:        ip.ID,
+				IP:        ip.IP,
+				IsMain:    ip.IPType == model.NodeIPTypeMain,
+				IpEnabled: ip.Enabled,
+			})
 		}
 
-		items[i] = dto.NodeDTO{
+		items[i] = dto.NodeListItemDTO{
 			ID:              node.ID,
 			Name:            node.Name,
 			MainIp:          mainIp,
 			AgentPort:       node.AgentPort,
-			Enabled:         node.Enabled,
+			NodeEnabled:     node.Enabled,
 			AgentStatus:     string(node.Status),
 			LastSeenAt:      node.LastSeenAt,
 			LastHealthError: node.LastHealthError,
 			HealthFailCount: node.HealthFailCount,
-			SubIps:          subIps,
+			Ips: dto.NodeIPsContainerDTO{
+				Items: ipItems,
+			},
 			CreatedAt:       node.CreatedAt,
 			UpdatedAt:       node.UpdatedAt,
 		}
@@ -547,33 +549,35 @@ func (h *Handler) Get(c *gin.Context) {
 		// Identity not found is not an error, just return node without identity
 	}
 
-	// Extract main IP and sub IPs
+	// Extract main IP and build ips.items
 	mainIp := ""
-	var subIps []dto.SubIpDTO
+	var ipItems []dto.NodeIPItemDTO
 	for _, ip := range node.IPs {
 		if ip.IPType == model.NodeIPTypeMain {
 			mainIp = ip.IP
-		} else {
-			subIps = append(subIps, dto.SubIpDTO{
-				ID:      ip.ID,
-				IP:      ip.IP,
-				Enabled: ip.Enabled,
-			})
 		}
+		ipItems = append(ipItems, dto.NodeIPItemDTO{
+			ID:        ip.ID,
+			IP:        ip.IP,
+			IsMain:    ip.IPType == model.NodeIPTypeMain,
+			IpEnabled: ip.Enabled,
+		})
 	}
 
 	// Build DTO response
-	response := dto.NodeDetailDTO{
+	response := dto.NodeDetailItemDTO{
 		ID:              node.ID,
 		Name:            node.Name,
 		MainIp:          mainIp,
 		AgentPort:       node.AgentPort,
-		Enabled:         node.Enabled,
+		NodeEnabled:     node.Enabled,
 		AgentStatus:     string(node.Status),
 		LastSeenAt:      node.LastSeenAt,
 		LastHealthError: node.LastHealthError,
 		HealthFailCount: node.HealthFailCount,
-		SubIps:          subIps,
+		Ips: dto.NodeIPsContainerDTO{
+			Items: ipItems,
+		},
 		CreatedAt:       node.CreatedAt,
 		UpdatedAt:       node.UpdatedAt,
 	}
@@ -585,7 +589,7 @@ func (h *Handler) Get(c *gin.Context) {
 		}
 	}
 
-	httpx.OK(c, response)
+	httpx.OK(c, map[string]interface{}{"item": response})
 }
 
 // Delete handles POST /api/v1/nodes/delete
