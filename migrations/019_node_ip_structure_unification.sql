@@ -12,7 +12,7 @@ CREATE TABLE IF NOT EXISTS node_ips (
     INDEX idx_node_ips_node_id (node_id),
     INDEX idx_node_ips_ip_type (ip_type),
     FOREIGN KEY (node_id) REFERENCES nodes(id) ON DELETE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- Step 2: Migrate main IPs from nodes table to node_ips
 INSERT INTO node_ips (node_id, ip, ip_type, enabled, created_at, updated_at)
