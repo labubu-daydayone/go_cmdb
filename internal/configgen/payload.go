@@ -19,7 +19,6 @@ type WebsiteConfig struct {
 type DomainConfig struct {
 	Domain    string `json:"domain"`
 	IsPrimary bool   `json:"isPrimary"`
-	CNAME     string `json:"cname"`
 }
 
 // OriginConfig represents origin configuration

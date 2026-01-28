@@ -1,29 +1,31 @@
 package model
 
-// LineGroupStatus represents line group status
-type LineGroupStatus string
+import "time"
 
-const (
-	LineGroupStatusActive   LineGroupStatus = "active"
-	LineGroupStatusInactive LineGroupStatus = "inactive"
-)
-
-// LineGroup represents a line group that references a node group
+// LineGroup represents a line group for CDN line management
 type LineGroup struct {
-	BaseModel
-	Name        string          `gorm:"type:varchar(128);uniqueIndex;not null" json:"name"`
-	DomainID    int             `gorm:"not null;index" json:"domain_id"`
-	NodeGroupID int             `gorm:"not null;index" json:"node_group_id"`
-	CNAMEPrefix string          `gorm:"type:varchar(128);uniqueIndex;not null" json:"cname_prefix"`
-	CNAME       string          `gorm:"type:varchar(255);uniqueIndex;not null" json:"cname"`
-	Status      LineGroupStatus `gorm:"type:enum('active','inactive');default:'active'" json:"status"`
+	ID           int64     `gorm:"column:id;primaryKey;autoIncrement" json:"-"`
+	Name         string    `gorm:"column:name;type:varchar(128);not null" json:"-"`
+	Description  string    `gorm:"column:description;type:varchar(255);not null;default:''" json:"-"`
+	DomainID     int64     `gorm:"column:domain_id;not null;index:idx_domain_id" json:"-"`
+	NodeGroupID  int64     `gorm:"column:node_group_id;not null;index:idx_node_group_id" json:"-"`
+	CNAMEPrefix  string    `gorm:"column:cname_prefix;type:varchar(64);not null;uniqueIndex:uk_cname_prefix" json:"-"`
+	Status       string    `gorm:"column:status;type:varchar(32);not null;default:'active'" json:"-"`
+	CreatedAt    time.Time `gorm:"column:created_at;not null" json:"-"`
+	UpdatedAt    time.Time `gorm:"column:updated_at;not null" json:"-"`
 	
-	// Relations
-	Domain    *Domain    `gorm:"foreignKey:DomainID" json:"domain,omitempty"`
-	NodeGroup *NodeGroup `gorm:"foreignKey:NodeGroupID" json:"node_group,omitempty"`
+	// Associations
+	Domain    *Domain    `gorm:"foreignKey:DomainID" json:"-"`
+	NodeGroup *NodeGroup `gorm:"foreignKey:NodeGroupID" json:"-"`
 }
 
 // TableName specifies the table name for LineGroup model
 func (LineGroup) TableName() string {
 	return "line_groups"
 }
+
+// LineGroupStatus constants
+const (
+	LineGroupStatusActive   = "active"
+	LineGroupStatusDisabled = "disabled"
+)

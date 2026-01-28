@@ -267,10 +267,12 @@ func SetupRouter(r *gin.Engine, db *gorm.DB, cfg *config.Config, acmeWorker *acm
 				protected.POST("/releases", releasesHandlerInstance.CreateRelease)
 				protected.GET("/releases/:id", releasesHandlerInstance.GetRelease)
 
-				// Domain routes (T2-10-02, T2-10-03, T2-10-04)
+				// Domain routes (T2-10-02, T2-10-03, T2-10-04, C1-02)
+				domainsOptionsHandler := domains.NewOptionsHandler(db)
 				domainsGroup := protected.Group("/domains")
 				{
 					domainsGroup.GET("", domains.ListDomains)
+					domainsGroup.GET("/options", domainsOptionsHandler.GetOptions)
 					domainsGroup.POST("/sync", domains.SyncDomains)
 					domainsGroup.POST("/:id/enable-cdn", domains.EnableCDN)
 					domainsGroup.POST("/:id/disable-cdn", domains.DisableCDN)

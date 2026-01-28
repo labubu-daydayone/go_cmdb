@@ -70,12 +70,12 @@ func generateCNAMEPrefix() string {
 // createDNSRecordForLineGroup creates CNAME record for line group
 func (h *Handler) createDNSRecordForLineGroup(tx *gorm.DB, lineGroup *model.LineGroup, nodeGroupCNAME string) error {
 	dnsRecord := model.DomainDNSRecord{
-		DomainID:  lineGroup.DomainID,
+		DomainID:  int(lineGroup.DomainID),
 		Type:      model.DNSRecordTypeCNAME,
 		Name:      lineGroup.CNAMEPrefix,
 		Value:     nodeGroupCNAME,
 		OwnerType: "line_group",
-		OwnerID:   lineGroup.ID,
+		OwnerID:   int(lineGroup.ID),
 		Status:    model.DNSRecordStatusPending,
 	}
 
@@ -225,7 +225,6 @@ func (h *Handler) Create(c *gin.Context) {
 		}
 	}
 
-	cname := cnamePrefix + "." + domain.Domain
 
 	tx := h.db.Begin()
 	defer func() {
@@ -236,10 +235,9 @@ func (h *Handler) Create(c *gin.Context) {
 
 	lineGroup := model.LineGroup{
 		Name:        req.Name,
-		DomainID:    req.DomainID,
-		NodeGroupID: req.NodeGroupID,
+		DomainID:    int64(req.DomainID),
+		NodeGroupID: int64(req.NodeGroupID),
 		CNAMEPrefix: cnamePrefix,
-		CNAME:       cname,
 		Status:      model.LineGroupStatusActive,
 	}
 
@@ -250,7 +248,7 @@ func (h *Handler) Create(c *gin.Context) {
 	}
 
 	// Create DNS CNAME record
-	if err := h.createDNSRecordForLineGroup(tx, &lineGroup, nodeGroup.CNAME); err != nil {
+	if err := h.createDNSRecordForLineGroup(tx, &lineGroup, nodeGroup.CNAMEPrefix); err != nil {
 		tx.Rollback()
 		httpx.FailErr(c, httpx.ErrDatabaseError("failed to create DNS record", err))
 		return
@@ -338,8 +336,8 @@ func (h *Handler) Update(c *gin.Context) {
 		updates["node_group_id"] = *req.NodeGroupID
 
 		// Create new DNS CNAME record
-		lineGroup.NodeGroupID = *req.NodeGroupID
-		if err := h.createDNSRecordForLineGroup(tx, &lineGroup, nodeGroup.CNAME); err != nil {
+		lineGroup.NodeGroupID = int64(*req.NodeGroupID)
+		if err := h.createDNSRecordForLineGroup(tx, &lineGroup, nodeGroup.CNAMEPrefix); err != nil {
 			tx.Rollback()
 			httpx.FailErr(c, httpx.ErrDatabaseError("failed to create DNS record", err))
 			return
