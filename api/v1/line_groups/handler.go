@@ -12,6 +12,21 @@ import (
 	"gorm.io/gorm"
 )
 
+// LineGroupItemDTO represents line group item in response
+type LineGroupItemDTO struct {
+	ID            int    `json:"id"`
+	Name          string `json:"name"`
+	DomainID      int    `json:"domainId"`
+	DomainName    string `json:"domainName"`
+	NodeGroupID   int    `json:"nodeGroupId"`
+	NodeGroupName string `json:"nodeGroupName"`
+	CNAMEPrefix   string `json:"cnamePrefix"`
+	CNAME         string `json:"cname"`
+	Status        string `json:"status"`
+	CreatedAt     string `json:"createdAt"`
+	UpdatedAt     string `json:"updatedAt"`
+}
+
 // ListRequest represents list line groups request
 type ListRequest struct {
 	Page        int    `form:"page"`
@@ -24,10 +39,10 @@ type ListRequest struct {
 
 // ListResponse represents list line groups response
 type ListResponse struct {
-	Items    []model.LineGroup `json:"items"`
-	Total    int64             `json:"total"`
-	Page     int               `json:"page"`
-	PageSize int               `json:"pageSize"`
+	Items    []LineGroupItemDTO `json:"items"`
+	Total    int64              `json:"total"`
+	Page     int                `json:"page"`
+	PageSize int                `json:"pageSize"`
 }
 
 // CreateRequest represents create line group request
@@ -170,21 +185,27 @@ func (h *Handler) List(c *gin.Context) {
 			domainName = lg.Domain.Domain
 		}
 		
+		nodeGroupName := ""
+		if lg.NodeGroup != nil {
+			nodeGroupName = lg.NodeGroup.Name
+		}
+		
 		items[i] = LineGroupItemDTO{
-			ID:          int(lg.ID),
-			Name:        lg.Name,
-			DomainID:    int(lg.DomainID),
-			DomainName:  domainName,
-			NodeGroupID: int(lg.NodeGroupID),
-			CNAMEPrefix: lg.CNAMEPrefix,
-			CNAME:       lg.CNAMEPrefix + "." + domainName,
-			Status:      lg.Status,
-			CreatedAt:   lg.CreatedAt.Format("2006-01-02T15:04:05-07:00"),
-			UpdatedAt:   lg.UpdatedAt.Format("2006-01-02T15:04:05-07:00"),
+			ID:            int(lg.ID),
+			Name:          lg.Name,
+			DomainID:      int(lg.DomainID),
+			DomainName:    domainName,
+			NodeGroupID:   int(lg.NodeGroupID),
+			NodeGroupName: nodeGroupName,
+			CNAMEPrefix:   lg.CNAMEPrefix,
+			CNAME:         lg.CNAMEPrefix + "." + domainName,
+			Status:        lg.Status,
+			CreatedAt:     lg.CreatedAt.Format("2006-01-02T15:04:05-07:00"),
+			UpdatedAt:     lg.UpdatedAt.Format("2006-01-02T15:04:05-07:00"),
 		}
 	}
 
-	httpx.OK(c, LineGroupListResponse{
+	httpx.OK(c, ListResponse{
 		Items:    items,
 		Total:    total,
 		Page:     req.Page,
@@ -293,20 +314,26 @@ func (h *Handler) Create(c *gin.Context) {
 		domainName = lineGroup.Domain.Domain
 	}
 	
+	nodeGroupName := ""
+	if lineGroup.NodeGroup != nil {
+		nodeGroupName = lineGroup.NodeGroup.Name
+	}
+	
 	item := LineGroupItemDTO{
-		ID:          int(lineGroup.ID),
-		Name:        lineGroup.Name,
-		DomainID:    int(lineGroup.DomainID),
-		DomainName:  domainName,
-		NodeGroupID: int(lineGroup.NodeGroupID),
-		CNAMEPrefix: lineGroup.CNAMEPrefix,
-		CNAME:       lineGroup.CNAMEPrefix + "." + domainName,
-		Status:      lineGroup.Status,
-		CreatedAt:   lineGroup.CreatedAt.Format("2006-01-02T15:04:05-07:00"),
-		UpdatedAt:   lineGroup.UpdatedAt.Format("2006-01-02T15:04:05-07:00"),
+		ID:            int(lineGroup.ID),
+		Name:          lineGroup.Name,
+		DomainID:      int(lineGroup.DomainID),
+		DomainName:    domainName,
+		NodeGroupID:   int(lineGroup.NodeGroupID),
+		NodeGroupName: nodeGroupName,
+		CNAMEPrefix:   lineGroup.CNAMEPrefix,
+		CNAME:         lineGroup.CNAMEPrefix + "." + domainName,
+		Status:        lineGroup.Status,
+		CreatedAt:     lineGroup.CreatedAt.Format("2006-01-02T15:04:05-07:00"),
+		UpdatedAt:     lineGroup.UpdatedAt.Format("2006-01-02T15:04:05-07:00"),
 	}
 
-	httpx.OK(c, LineGroupDetailResponse{Item: item})
+	httpx.OK(c, gin.H{"item": item})
 }
 
 // Update handles POST /api/v1/line-groups/update
@@ -413,7 +440,32 @@ func (h *Handler) Update(c *gin.Context) {
 		return
 	}
 
-	httpx.OK(c, lineGroup)
+	// Convert to DTO
+	domainName := ""
+	if lineGroup.Domain != nil {
+		domainName = lineGroup.Domain.Domain
+	}
+	
+	nodeGroupName := ""
+	if lineGroup.NodeGroup != nil {
+		nodeGroupName = lineGroup.NodeGroup.Name
+	}
+	
+	item := LineGroupItemDTO{
+		ID:            int(lineGroup.ID),
+		Name:          lineGroup.Name,
+		DomainID:      int(lineGroup.DomainID),
+		DomainName:    domainName,
+		NodeGroupID:   int(lineGroup.NodeGroupID),
+		NodeGroupName: nodeGroupName,
+		CNAMEPrefix:   lineGroup.CNAMEPrefix,
+		CNAME:         lineGroup.CNAMEPrefix + "." + domainName,
+		Status:        lineGroup.Status,
+		CreatedAt:     lineGroup.CreatedAt.Format("2006-01-02T15:04:05-07:00"),
+		UpdatedAt:     lineGroup.UpdatedAt.Format("2006-01-02T15:04:05-07:00"),
+	}
+
+	httpx.OK(c, gin.H{"item": item})
 }
 
 // Delete handles POST /api/v1/line-groups/delete
