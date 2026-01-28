@@ -89,13 +89,13 @@ func (h *Handler) createDNSRecordForLineGroup(tx *gorm.DB, lineGroup *model.Line
 // markDNSRecordsForDeletion marks DNS records for deletion when node group changes
 func (h *Handler) markDNSRecordsForDeletion(tx *gorm.DB, lineGroupID int, reason string) error {
 	updates := map[string]interface{}{
-		"desired_state": model.DNSRecordStateAbsent,
+		"desired_state": model.DNSRecordDesiredStateAbsent,
 		"status":        model.DNSRecordStatusPending,
 		"last_error":    reason,
 	}
 
 	if err := tx.Model(&model.DomainDNSRecord{}).
-		Where("owner_type = ? AND owner_id = ? AND desired_state = ?", "line_group", lineGroupID, model.DNSRecordStatePresent).
+		Where("owner_type = ? AND owner_id = ? AND desired_state = ?", "line_group", lineGroupID, model.DNSRecordDesiredStatePresent).
 		Updates(updates).Error; err != nil {
 		return fmt.Errorf("failed to mark DNS records for deletion: %w", err)
 	}
