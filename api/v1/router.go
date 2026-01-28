@@ -95,10 +95,10 @@ func SetupRouter(r *gin.Engine, db *gorm.DB, cfg *config.Config, acmeWorker *acm
 				// Sub IPs routes
 				nodesGroup.POST("/sub-ips/add", nodesHandler.AddSubIPs)
 				nodesGroup.POST("/sub-ips/delete", nodesHandler.DeleteSubIPs)
-				nodesGroup.POST("/sub-ips/toggle", nodesHandler.ToggleSubIP)
+					nodesGroup.POST("/sub-ips/toggle", nodesHandler.ToggleSubIP)
 
-				// Identity routes
-				nodesGroup.GET("/:id/identity", nodesHandler.GetIdentity)
+					// Identity routes
+					nodesGroup.GET("/:id/identity", nodesHandler.GetIdentity)
 					nodesGroup.POST("/:id/identity/revoke", nodesHandler.RevokeIdentity)
 				}
 
