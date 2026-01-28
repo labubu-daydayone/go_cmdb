@@ -261,9 +261,6 @@ func (h *Handler) Create(c *gin.Context) {
 		}
 	}
 
-	// Use primary domain for CNAME (for display)
-	cname := cnamePrefix + "." + primaryDomain.Domain
-
 	tx := h.db.Begin()
 	defer func() {
 		if r := recover(); r != nil {
@@ -275,7 +272,6 @@ func (h *Handler) Create(c *gin.Context) {
 		Name:        req.Name,
 		Description: req.Description,
 		CNAMEPrefix: cnamePrefix,
-		CNAME:       cname,
 		Status:      model.NodeGroupStatusActive,
 	}
 

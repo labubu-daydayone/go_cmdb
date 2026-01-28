@@ -239,6 +239,13 @@ func (h *Handler) Create(c *gin.Context) {
 			return httpx.ErrDatabaseError("failed to query line group", err)
 		}
 
+		// 加载Domain信息以计算CNAME
+		var domain model.Domain
+		if err := tx.First(&domain, lineGroup.DomainID).Error; err != nil {
+			return httpx.ErrDatabaseError("failed to query domain", err)
+		}
+		cname := lineGroup.CNAMEPrefix + "." + domain.Domain
+
 		// 2. 创建website
 		website := model.Website{
 			LineGroupID:        req.LineGroupID,
@@ -271,7 +278,6 @@ func (h *Handler) Create(c *gin.Context) {
 				WebsiteID: website.ID,
 				Domain:    domain,
 				IsPrimary: i == 0, // 第一个域名为主域名
-				CNAME:     lineGroup.CNAME,
 			}
 			if err := tx.Create(&wd).Error; err != nil {
 				return httpx.ErrDatabaseError("failed to create website domain", err)
@@ -279,12 +285,12 @@ func (h *Handler) Create(c *gin.Context) {
 
 			// 4. 生成DNS记录（CNAME）
 			dnsRecord := model.DomainDNSRecord{
-				DomainID:  lineGroup.DomainID,
+				DomainID:  int(lineGroup.DomainID),
 				OwnerType: "website_domain",
 				OwnerID:   wd.ID,
 				Type:      "CNAME",
 				Name:      domain, // 完整域名
-				Value:     lineGroup.CNAME,
+				Value:     cname,
 				TTL:       600,
 				Status:    "pending",
 			}
@@ -524,14 +530,14 @@ func (h *Handler) Update(c *gin.Context) {
 				return httpx.ErrDatabaseError("failed to query line group", err)
 			}
 
-			updates["line_group_id"] = req.LineGroupID
-
-			// 更新website_domains的cname
-			if err := tx.Model(&model.WebsiteDomain{}).
-				Where("website_id = ?", website.ID).
-				Update("cname", lineGroup.CNAME).Error; err != nil {
-				return httpx.ErrDatabaseError("failed to update domain cname", err)
+			// 加载Domain信息以计算CNAME
+			var domain model.Domain
+			if err := tx.First(&domain, lineGroup.DomainID).Error; err != nil {
+				return httpx.ErrDatabaseError("failed to query domain", err)
 			}
+			cname := lineGroup.CNAMEPrefix + "." + domain.Domain
+
+			updates["line_group_id"] = req.LineGroupID
 
 			// 标记旧DNS记录为error
 			if err := tx.Model(&model.DomainDNSRecord{}).
@@ -548,12 +554,12 @@ func (h *Handler) Update(c *gin.Context) {
 			// 生成新DNS记录
 			for _, domain := range website.Domains {
 				dnsRecord := model.DomainDNSRecord{
-					DomainID:  lineGroup.DomainID,
+					DomainID:  int(lineGroup.DomainID),
 					OwnerType: "website_domain",
 					OwnerID:   domain.ID,
 					Type:      "CNAME",
 					Name:      domain.Domain,
-					Value:     lineGroup.CNAME,
+					Value:     cname,
 					TTL:       600,
 					Status:    "pending",
 				}
