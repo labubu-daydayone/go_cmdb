@@ -1,7 +1,7 @@
 -- Step 1: Create node_ips table
 CREATE TABLE IF NOT EXISTS node_ips (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    node_id INT NOT NULL,
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    node_id BIGINT NOT NULL,
     ip VARCHAR(64) NOT NULL,
     ip_type ENUM('main', 'sub') NOT NULL,
     enabled TINYINT NOT NULL DEFAULT 1,
@@ -35,7 +35,7 @@ JOIN node_ips ni ON nsi.node_id = ni.node_id AND nsi.ip = ni.ip AND ni.ip_type =
 RENAME TABLE node_group_sub_ips TO node_group_ips;
 
 -- Step 6: Add new ip_id column to node_group_ips
-ALTER TABLE node_group_ips ADD COLUMN ip_id INT NULL AFTER node_group_id;
+ALTER TABLE node_group_ips ADD COLUMN ip_id BIGINT NULL AFTER node_group_id;
 
 -- Step 7: Populate ip_id from sub_ip_id using temporary mapping
 UPDATE node_group_ips ngi
@@ -44,7 +44,7 @@ SET ngi.ip_id = t.new_ip_id;
 
 -- Step 8: Make ip_id NOT NULL and add constraints
 ALTER TABLE node_group_ips 
-    MODIFY COLUMN ip_id INT NOT NULL,
+    MODIFY COLUMN ip_id BIGINT NOT NULL,
     ADD UNIQUE KEY uk_node_group_ips (node_group_id, ip_id),
     ADD INDEX idx_node_group_ips_ip_id (ip_id),
     ADD FOREIGN KEY (ip_id) REFERENCES node_ips(id) ON DELETE CASCADE;
