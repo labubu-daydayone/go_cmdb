@@ -411,7 +411,7 @@ func (h *Handler) triggerAutoDispatch(originGroupID int) {
 
 	// 查询所有enabled=true且agentStatus=online的节点
 	var nodes []model.Node
-	if err := h.db.Where("enabled = ? AND agent_status = ?", true, "online").Find(&nodes).Error; err != nil {
+	if err := h.db.Where("enabled = ? AND status = ?", true, "online").Find(&nodes).Error; err != nil {
 		log.Printf("[Origin Group] Failed to find online nodes: %v\n", err)
 		return
 	}
