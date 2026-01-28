@@ -506,17 +506,17 @@ func (h *Handler) Update(c *gin.Context) {
 	var group model.OriginGroup
 	if err := h.db.First(&group, req.ID).Error; err != nil {
 		if err == gorm.ErrRecordNotFound {
-			httpx.FailErr(c, httpx.ErrResourceNotFound("origin group not found"))
+			httpx.FailErr(c, httpx.ErrNotFound("origin group not found"))
 			return
 		}
-		httpx.FailErr(c, httpx.ErrDatabase(err))
+		httpx.FailErr(c, httpx.ErrDatabaseError("database error", err))
 		return
 	}
 
 	// 检查name唯一性（排除自己）
 	var existingGroup model.OriginGroup
 	if err := h.db.Where("name = ? AND id != ?", req.Name, req.ID).First(&existingGroup).Error; err == nil {
-		httpx.FailErr(c, httpx.ErrResourceConflict("origin group name already exists"))
+		httpx.FailErr(c, httpx.ErrAlreadyExists("origin group name already exists"))
 		return
 	}
 
@@ -525,7 +525,7 @@ func (h *Handler) Update(c *gin.Context) {
 	group.Description = req.Description
 
 	if err := h.db.Save(&group).Error; err != nil {
-		httpx.FailErr(c, httpx.ErrDatabase(err))
+		httpx.FailErr(c, httpx.ErrDatabaseError("database error", err))
 		return
 	}
 
@@ -560,10 +560,10 @@ func (h *Handler) Delete(c *gin.Context) {
 	var group model.OriginGroup
 	if err := h.db.First(&group, req.ID).Error; err != nil {
 		if err == gorm.ErrRecordNotFound {
-			httpx.FailErr(c, httpx.ErrResourceNotFound("origin group not found"))
+			httpx.FailErr(c, httpx.ErrNotFound("origin group not found"))
 			return
 		}
-		httpx.FailErr(c, httpx.ErrDatabase(err))
+		httpx.FailErr(c, httpx.ErrDatabaseError("database error", err))
 		return
 	}
 
@@ -578,19 +578,19 @@ func (h *Handler) Delete(c *gin.Context) {
 	// 删除所有关联的地址
 	if err := tx.Where("origin_group_id = ?", req.ID).Delete(&model.OriginGroupAddress{}).Error; err != nil {
 		tx.Rollback()
-		httpx.FailErr(c, httpx.ErrDatabase(err))
+		httpx.FailErr(c, httpx.ErrDatabaseError("database error", err))
 		return
 	}
 
 	// 删除分组
 	if err := tx.Delete(&group).Error; err != nil {
 		tx.Rollback()
-		httpx.FailErr(c, httpx.ErrDatabase(err))
+		httpx.FailErr(c, httpx.ErrDatabaseError("database error", err))
 		return
 	}
 
 	if err := tx.Commit().Error; err != nil {
-		httpx.FailErr(c, httpx.ErrDatabase(err))
+		httpx.FailErr(c, httpx.ErrDatabaseError("database error", err))
 		return
 	}
 
