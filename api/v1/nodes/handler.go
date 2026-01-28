@@ -124,13 +124,13 @@ func (h *Handler) List(c *gin.Context) {
 		query = query.Where("name LIKE ?", "%"+req.Name+"%")
 	}
 
-	// IP filter (main_ip or sub_ip)
+	// IP filter (any IP in node_ips)
 	if req.IP != "" {
-		subQuery := h.db.Model(&model.NodeSubIP{}).
+		ipQuery := h.db.Model(&model.NodeIP{}).
 			Select("node_id").
 			Where("ip LIKE ?", "%"+req.IP+"%")
 		
-		query = query.Where("main_ip LIKE ? OR id IN (?)", "%"+req.IP+"%", subQuery)
+		query = query.Where("id IN (?)", ipQuery)
 	}
 
 	// Status filter
@@ -154,7 +154,7 @@ func (h *Handler) List(c *gin.Context) {
 	var nodes []model.Node
 	offset := (req.Page - 1) * req.PageSize
 	if err := query.
-		Preload("SubIPs").
+		Preload("IPs").
 		Offset(offset).
 		Limit(req.PageSize).
 		Order("id DESC").
@@ -166,20 +166,25 @@ func (h *Handler) List(c *gin.Context) {
 	// Convert to DTO
 	items := make([]dto.NodeDTO, len(nodes))
 	for i, node := range nodes {
-		// Convert SubIPs
-		subIps := make([]dto.SubIpDTO, len(node.SubIPs))
-		for j, subIP := range node.SubIPs {
-			subIps[j] = dto.SubIpDTO{
-				ID:      subIP.ID,
-				IP:      subIP.IP,
-				Enabled: subIP.Enabled,
+		// Extract main IP and sub IPs
+		mainIp := ""
+		var subIps []dto.SubIpDTO
+		for _, ip := range node.IPs {
+			if ip.IPType == model.NodeIPTypeMain {
+				mainIp = ip.IP
+			} else {
+				subIps = append(subIps, dto.SubIpDTO{
+					ID:      ip.ID,
+					IP:      ip.IP,
+					Enabled: ip.Enabled,
+				})
 			}
 		}
 
 		items[i] = dto.NodeDTO{
 			ID:              node.ID,
 			Name:            node.Name,
-			MainIp:          node.MainIP,
+			MainIp:          mainIp,
 			AgentPort:       node.AgentPort,
 			Enabled:         node.Enabled,
 			AgentStatus:     string(node.Status),
@@ -225,8 +230,8 @@ func (h *Handler) Create(c *gin.Context) {
 		return
 	}
 
-	// Check mainIp uniqueness
-	if err := h.db.Model(&model.Node{}).Where("main_ip = ?", req.MainIP).Count(&count).Error; err != nil {
+	// Check mainIp uniqueness in node_ips
+	if err := h.db.Model(&model.NodeIP{}).Where("ip = ?", req.MainIP).Count(&count).Error; err != nil {
 		httpx.FailErr(c, httpx.ErrDatabaseError("failed to check mainIp uniqueness", err))
 		return
 	}
@@ -261,14 +266,20 @@ func (h *Handler) Create(c *gin.Context) {
 		node.AgentPort = 8080
 	}
 
-	// Create sub IPs
+	// Create main IP and sub IPs
+	node.IPs = append(node.IPs, model.NodeIP{
+		IP:      req.MainIP,
+		IPType:  model.NodeIPTypeMain,
+		Enabled: true,
+	})
 	for _, subIP := range req.SubIPs {
 		enabled := true
 		if subIP.Enabled != nil {
 			enabled = *subIP.Enabled
 		}
-		node.SubIPs = append(node.SubIPs, model.NodeSubIP{
+		node.IPs = append(node.IPs, model.NodeIP{
 			IP:      subIP.IP,
+			IPType:  model.NodeIPTypeSub,
 			Enabled: enabled,
 		})
 	}
@@ -283,7 +294,7 @@ func (h *Handler) Create(c *gin.Context) {
 
 		// Generate identity
 		var err error
-			identity, err = h.identityService.CreateIdentity(tx, node.ID, node.Name, node.MainIP)
+			identity, err = h.identityService.CreateIdentity(tx, node.ID, node.Name, req.MainIP)
 		if err != nil {
 			return fmt.Errorf("failed to create identity: %w", err)
 		}
@@ -298,8 +309,8 @@ func (h *Handler) Create(c *gin.Context) {
 				httpx.FailErr(c, httpx.ErrAlreadyExists("mainIp already exists"))
 				return
 			}
-			if strings.Contains(err.Error(), "uk_node_sub_ips_ip") {
-				httpx.FailErr(c, httpx.ErrAlreadyExists("subIp already exists"))
+			if strings.Contains(err.Error(), "uk_node_ips_ip") {
+				httpx.FailErr(c, httpx.ErrAlreadyExists("IP already exists"))
 				return
 			}
 		}
@@ -308,10 +319,10 @@ func (h *Handler) Create(c *gin.Context) {
 	}
 
 	// Build DTO response
-response := dto.NodeWithIdentityDTO{
-			ID:              node.ID,
-				Name:            node.Name,
-				MainIp:          node.MainIP,
+	response := dto.NodeWithIdentityDTO{
+				ID:              node.ID,
+					Name:            node.Name,
+					MainIp:          req.MainIP,
 				AgentPort:       node.AgentPort,
 				Enabled:         node.Enabled,
 				AgentStatus:     string(node.Status),
@@ -368,10 +379,10 @@ func (h *Handler) Update(c *gin.Context) {
 	}
 
 	if req.MainIP != nil {
-		// Check mainIp uniqueness (exclude current node)
+		// Check mainIp uniqueness (exclude current node's IPs)
 		var count int64
-		if err := h.db.Model(&model.Node{}).
-			Where("main_ip = ? AND id != ?", *req.MainIP, req.ID).
+		if err := h.db.Model(&model.NodeIP{}).
+			Where("ip = ? AND node_id != ?", *req.MainIP, req.ID).
 			Count(&count).Error; err != nil {
 			httpx.FailErr(c, httpx.ErrDatabaseError("failed to check mainIp uniqueness", err))
 			return
@@ -380,6 +391,14 @@ func (h *Handler) Update(c *gin.Context) {
 			httpx.FailErr(c, httpx.ErrAlreadyExists("mainIp already exists"))
 			return
 		}
+		// Update main IP in node_ips table
+		if err := h.db.Model(&model.NodeIP{}).
+			Where("node_id = ? AND ip_type = ?", req.ID, model.NodeIPTypeMain).
+			Update("ip", *req.MainIP).Error; err != nil {
+			httpx.FailErr(c, httpx.ErrDatabaseError("failed to update mainIp", err))
+			return
+		}
+		// Also update in nodes table for backward compatibility
 		updates["main_ip"] = *req.MainIP
 	}
 
@@ -413,7 +432,7 @@ func (h *Handler) Update(c *gin.Context) {
 	// Handle sub IPs update
 	if req.SubIPs != nil {
 		// Delete all existing sub IPs
-		if err := h.db.Where("node_id = ?", req.ID).Delete(&model.NodeSubIP{}).Error; err != nil {
+		if err := h.db.Where("node_id = ? AND ip_type = ?", req.ID, model.NodeIPTypeSub).Delete(&model.NodeIP{}).Error; err != nil {
 			httpx.FailErr(c, httpx.ErrDatabaseError("failed to delete old sub IPs", err))
 			return
 		}
@@ -424,39 +443,55 @@ func (h *Handler) Update(c *gin.Context) {
 			if subIP.Enabled != nil {
 				enabled = *subIP.Enabled
 			}
-			newSubIP := model.NodeSubIP{
+			newIP := model.NodeIP{
 				NodeID:  req.ID,
 				IP:      subIP.IP,
+				IPType:  model.NodeIPTypeSub,
 				Enabled: enabled,
 			}
-			if err := h.db.Create(&newSubIP).Error; err != nil {
+			if err := h.db.Create(&newIP).Error; err != nil {
 				httpx.FailErr(c, httpx.ErrDatabaseError("failed to create sub IP", err))
 				return
 			}
 		}
 	}
 
-	// Reload node
-	if err := h.db.First(&node, req.ID).Error; err != nil {
+	// Reload node with IPs
+	if err := h.db.Preload("IPs").First(&node, req.ID).Error; err != nil {
 		httpx.FailErr(c, httpx.ErrDatabaseError("failed to reload node", err))
 		return
 	}
 
+	// Extract main IP and sub IPs
+	mainIp := ""
+	var subIps []dto.SubIpDTO
+	for _, ip := range node.IPs {
+		if ip.IPType == model.NodeIPTypeMain {
+			mainIp = ip.IP
+		} else {
+			subIps = append(subIps, dto.SubIpDTO{
+				ID:      ip.ID,
+				IP:      ip.IP,
+				Enabled: ip.Enabled,
+			})
+		}
+	}
+
 	// Build DTO response
-response := dto.NodeDTO{
+	response := dto.NodeDTO{
 				ID:              node.ID,
-				Name:            node.Name,
-				MainIp:          node.MainIP,
-				AgentPort:       node.AgentPort,
-				Enabled:         node.Enabled,
-				AgentStatus:     string(node.Status),
-				LastSeenAt:      node.LastSeenAt,
-				LastHealthError: node.LastHealthError,
-				HealthFailCount: node.HealthFailCount,
-				SubIps:          []dto.SubIpDTO{},
-				CreatedAt:       node.CreatedAt,
-				UpdatedAt:       node.UpdatedAt,
-			}
+					Name:            node.Name,
+					MainIp:          mainIp,
+					AgentPort:       node.AgentPort,
+					Enabled:         node.Enabled,
+					AgentStatus:     string(node.Status),
+					LastSeenAt:      node.LastSeenAt,
+					LastHealthError: node.LastHealthError,
+					HealthFailCount: node.HealthFailCount,
+					SubIps:          subIps,
+					CreatedAt:       node.CreatedAt,
+					UpdatedAt:       node.UpdatedAt,
+				}
 
 	httpx.OK(c, response)
 }
@@ -493,7 +528,7 @@ func (h *Handler) Get(c *gin.Context) {
 	}
 
 	var node model.Node
-	if err := h.db.Preload("SubIPs").First(&node, id).Error; err != nil {
+	if err := h.db.Preload("IPs").First(&node, id).Error; err != nil {
 		if err == gorm.ErrRecordNotFound {
 			httpx.FailErr(c, httpx.ErrNotFound("node not found"))
 			return
@@ -512,13 +547,18 @@ func (h *Handler) Get(c *gin.Context) {
 		// Identity not found is not an error, just return node without identity
 	}
 
-	// Convert sub IPs to DTO
-	subIps := make([]dto.SubIpDTO, len(node.SubIPs))
-	for i, subIP := range node.SubIPs {
-		subIps[i] = dto.SubIpDTO{
-			ID:      subIP.ID,
-			IP:      subIP.IP,
-			Enabled: subIP.Enabled,
+	// Extract main IP and sub IPs
+	mainIp := ""
+	var subIps []dto.SubIpDTO
+	for _, ip := range node.IPs {
+		if ip.IPType == model.NodeIPTypeMain {
+			mainIp = ip.IP
+		} else {
+			subIps = append(subIps, dto.SubIpDTO{
+				ID:      ip.ID,
+				IP:      ip.IP,
+				Enabled: ip.Enabled,
+			})
 		}
 	}
 
@@ -526,7 +566,7 @@ func (h *Handler) Get(c *gin.Context) {
 	response := dto.NodeDetailDTO{
 		ID:              node.ID,
 		Name:            node.Name,
-		MainIp:          node.MainIP,
+		MainIp:          mainIp,
 		AgentPort:       node.AgentPort,
 		Enabled:         node.Enabled,
 		AgentStatus:     string(node.Status),
@@ -600,7 +640,7 @@ func (h *Handler) AddSubIPs(c *gin.Context) {
 	// Check subIPs global uniqueness
 	for _, subIP := range req.SubIPs {
 		var count int64
-		if err := h.db.Model(&model.NodeSubIP{}).Where("ip = ?", subIP.IP).Count(&count).Error; err != nil {
+		if err := h.db.Model(&model.NodeIP{}).Where("ip = ?", subIP.IP).Count(&count).Error; err != nil {
 			httpx.FailErr(c, httpx.ErrDatabaseError("failed to check subIp uniqueness", err))
 			return
 		}
@@ -616,15 +656,16 @@ func (h *Handler) AddSubIPs(c *gin.Context) {
 		if subIP.Enabled != nil {
 			enabled = *subIP.Enabled
 		}
-		newSubIP := model.NodeSubIP{
+		newIP := model.NodeIP{
 			NodeID:  req.NodeID,
 			IP:      subIP.IP,
+			IPType:  model.NodeIPTypeSub,
 			Enabled: enabled,
 		}
-		if err := h.db.Create(&newSubIP).Error; err != nil {
+		if err := h.db.Create(&newIP).Error; err != nil {
 			// Check for duplicate key error
 			if strings.Contains(err.Error(), "Duplicate entry") || strings.Contains(err.Error(), "duplicate key") {
-				if strings.Contains(err.Error(), "uk_node_sub_ips_ip") {
+				if strings.Contains(err.Error(), "uk_node_ips_ip") {
 					httpx.FailErr(c, httpx.ErrAlreadyExists("subIp already exists"))
 					return
 				}

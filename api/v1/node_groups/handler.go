@@ -32,7 +32,7 @@ type ListResponse struct {
 // NodeGroupItem represents a node group in list response
 type NodeGroupItem struct {
 	model.NodeGroup
-	SubIPCount int `json:"sub_ip_count"`
+	IPCount int `json:"ip_count"`
 }
 
 // CreateRequest represents create node group request
@@ -40,7 +40,7 @@ type CreateRequest struct {
 	Name        string `json:"name" binding:"required"`
 	Description string `json:"description"`
 	DomainID    int    `json:"domainId" binding:"required"`
-	SubIPIDs    []int  `json:"subIPIds"`
+	IPIDs    []int  `json:"ipIds"`
 }
 
 // UpdateRequest represents update node group request
@@ -49,7 +49,7 @@ type UpdateRequest struct {
 	Name        *string `json:"name"`
 	Description *string `json:"description"`
 	Status      *string `json:"status"`
-	SubIPIDs    []int   `json:"subIPIds"`
+	IPIDs    []int   `json:"ipIds"`
 }
 
 // DeleteRequest represents delete node groups request
@@ -75,24 +75,24 @@ func generateCNAMEPrefix() string {
 }
 
 // createDNSRecordsForNodeGroup creates A records for node group sub IPs
-func (h *Handler) createDNSRecordsForNodeGroup(tx *gorm.DB, nodeGroup *model.NodeGroup, subIPIDs []int) error {
-	if len(subIPIDs) == 0 {
+func (h *Handler) createDNSRecordsForNodeGroup(tx *gorm.DB, nodeGroup *model.NodeGroup, ipIDs []int) error {
+	if len(ipIDs) == 0 {
 		return nil
 	}
 
 	// Fetch sub IPs
-	var subIPs []model.NodeSubIP
-	if err := tx.Where("id IN ?", subIPIDs).Find(&subIPs).Error; err != nil {
+	var ips []model.NodeIP
+	if err := tx.Where("id IN ?", ipIDs).Find(&ips).Error; err != nil {
 		return fmt.Errorf("failed to fetch sub IPs: %w", err)
 	}
 
 	// Create A records for each sub IP
-	for _, subIP := range subIPs {
+	for _, ip := range ips {
 		dnsRecord := model.DomainDNSRecord{
 			DomainID:  nodeGroup.DomainID,
 			Type:      model.DNSRecordTypeA,
 			Name:      nodeGroup.CNAMEPrefix,
-			Value:     subIP.IP,
+			Value:     ip.IP,
 			OwnerType: "node_group",
 			OwnerID:   nodeGroup.ID,
 			Status:    model.DNSRecordStatusPending,
@@ -180,11 +180,11 @@ func (h *Handler) List(c *gin.Context) {
 	items := make([]NodeGroupItem, len(nodeGroups))
 	for i, ng := range nodeGroups {
 		var count int64
-		h.db.Model(&model.NodeGroupSubIP{}).Where("node_group_id = ?", ng.ID).Count(&count)
+		h.db.Model(&model.NodeGroupIP{}).Where("node_group_id = ?", ng.ID).Count(&count)
 		
 		items[i] = NodeGroupItem{
 			NodeGroup:  ng,
-			SubIPCount: int(count),
+			IPCount: int(count),
 		}
 	}
 
@@ -264,11 +264,11 @@ func (h *Handler) Create(c *gin.Context) {
 		return
 	}
 
-	if len(req.SubIPIDs) > 0 {
-		for _, subIPID := range req.SubIPIDs {
-			mapping := model.NodeGroupSubIP{
+	if len(req.IPIDs) > 0 {
+		for _, ipID := range req.IPIDs {
+			mapping := model.NodeGroupIP{
 				NodeGroupID: nodeGroup.ID,
-				SubIPID:     subIPID,
+				IPID:     ipID,
 			}
 			if err := tx.Create(&mapping).Error; err != nil {
 				tx.Rollback()
@@ -277,7 +277,7 @@ func (h *Handler) Create(c *gin.Context) {
 			}
 		}
 
-		if err := h.createDNSRecordsForNodeGroup(tx, &nodeGroup, req.SubIPIDs); err != nil {
+		if err := h.createDNSRecordsForNodeGroup(tx, &nodeGroup, req.IPIDs); err != nil {
 			tx.Rollback()
 			httpx.FailErr(c, httpx.ErrDatabaseError("failed to create DNS records", err))
 			return
@@ -289,7 +289,7 @@ func (h *Handler) Create(c *gin.Context) {
 		return
 	}
 
-	if err := h.db.Preload("Domain").Preload("SubIPs").First(&nodeGroup, nodeGroup.ID).Error; err != nil {
+	if err := h.db.Preload("Domain").Preload("IPs").First(&nodeGroup, nodeGroup.ID).Error; err != nil {
 		httpx.FailErr(c, httpx.ErrDatabaseError("failed to reload node group", err))
 		return
 	}
@@ -355,24 +355,24 @@ func (h *Handler) Update(c *gin.Context) {
 		}
 	}
 
-	if req.SubIPIDs != nil {
+	if req.IPIDs != nil {
 		if err := h.markDNSRecordsAsError(tx, req.ID, "sub IPs updated"); err != nil {
 			tx.Rollback()
 			httpx.FailErr(c, httpx.ErrDatabaseError("failed to mark old DNS records as error", err))
 			return
 		}
 
-		if err := tx.Where("node_group_id = ?", req.ID).Delete(&model.NodeGroupSubIP{}).Error; err != nil {
+		if err := tx.Where("node_group_id = ?", req.ID).Delete(&model.NodeGroupIP{}).Error; err != nil {
 			tx.Rollback()
 			httpx.FailErr(c, httpx.ErrDatabaseError("failed to delete old sub IP mappings", err))
 			return
 		}
 
-		if len(req.SubIPIDs) > 0 {
-			for _, subIPID := range req.SubIPIDs {
-				mapping := model.NodeGroupSubIP{
+		if len(req.IPIDs) > 0 {
+			for _, ipID := range req.IPIDs {
+				mapping := model.NodeGroupIP{
 					NodeGroupID: req.ID,
-					SubIPID:     subIPID,
+					IPID:     ipID,
 				}
 				if err := tx.Create(&mapping).Error; err != nil {
 					tx.Rollback()
@@ -381,7 +381,7 @@ func (h *Handler) Update(c *gin.Context) {
 				}
 			}
 
-			if err := h.createDNSRecordsForNodeGroup(tx, &nodeGroup, req.SubIPIDs); err != nil {
+			if err := h.createDNSRecordsForNodeGroup(tx, &nodeGroup, req.IPIDs); err != nil {
 				tx.Rollback()
 				httpx.FailErr(c, httpx.ErrDatabaseError("failed to create DNS records", err))
 				return
@@ -394,7 +394,7 @@ func (h *Handler) Update(c *gin.Context) {
 		return
 	}
 
-	if err := h.db.Preload("Domain").Preload("SubIPs").First(&nodeGroup, req.ID).Error; err != nil {
+	if err := h.db.Preload("Domain").Preload("IPs").First(&nodeGroup, req.ID).Error; err != nil {
 		httpx.FailErr(c, httpx.ErrDatabaseError("failed to reload node group", err))
 		return
 	}

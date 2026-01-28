@@ -19,8 +19,8 @@ type NodeGroup struct {
 	Status      NodeGroupStatus `gorm:"type:enum('active','inactive');default:'active'" json:"status"`
 	
 	// Relations
-	Domain *Domain              `gorm:"foreignKey:DomainID" json:"domain,omitempty"`
-	SubIPs []NodeGroupSubIP     `gorm:"foreignKey:NodeGroupID;constraint:OnDelete:CASCADE" json:"sub_ips,omitempty"`
+	Domain *Domain         `gorm:"foreignKey:DomainID" json:"domain,omitempty"`
+	IPs    []NodeGroupIP   `gorm:"foreignKey:NodeGroupID;constraint:OnDelete:CASCADE" json:"ips,omitempty"`
 }
 
 // TableName specifies the table name for NodeGroup model

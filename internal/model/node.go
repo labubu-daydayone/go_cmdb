@@ -22,7 +22,7 @@ type Node struct {
 	LastSeenAt       *time.Time `gorm:"type:datetime;null" json:"last_seen_at"`
 	LastHealthError  *string    `gorm:"type:varchar(255);null" json:"last_health_error"`
 	HealthFailCount  int        `gorm:"type:int;not null;default:0" json:"health_fail_count"`
-	SubIPs           []NodeSubIP `gorm:"foreignKey:NodeID;constraint:OnDelete:CASCADE" json:"sub_ips,omitempty"`
+	IPs              []NodeIP    `gorm:"foreignKey:NodeID;constraint:OnDelete:CASCADE" json:"ips,omitempty"`
 }
 
 // TableName specifies the table name for Node model
