@@ -86,17 +86,18 @@ func (h *Handler) createDNSRecordForLineGroup(tx *gorm.DB, lineGroup *model.Line
 	return nil
 }
 
-// markDNSRecordsAsError marks DNS records as error for a line group
-func (h *Handler) markDNSRecordsAsError(tx *gorm.DB, lineGroupID int, reason string) error {
+// markDNSRecordsForDeletion marks DNS records for deletion when node group changes
+func (h *Handler) markDNSRecordsForDeletion(tx *gorm.DB, lineGroupID int, reason string) error {
 	updates := map[string]interface{}{
-		"status":     model.DNSRecordStatusError,
-		"last_error": reason,
+		"desired_state": model.DNSRecordStateAbsent,
+		"status":        model.DNSRecordStatusPending,
+		"last_error":    reason,
 	}
 
 	if err := tx.Model(&model.DomainDNSRecord{}).
-		Where("owner_type = ? AND owner_id = ?", "line_group", lineGroupID).
+		Where("owner_type = ? AND owner_id = ? AND desired_state = ?", "line_group", lineGroupID, model.DNSRecordStatePresent).
 		Updates(updates).Error; err != nil {
-		return fmt.Errorf("failed to mark DNS records as error: %w", err)
+		return fmt.Errorf("failed to mark DNS records for deletion: %w", err)
 	}
 
 	return nil
@@ -380,10 +381,10 @@ func (h *Handler) Update(c *gin.Context) {
 			return
 		}
 
-		// Mark old DNS records as error
-		if err := h.markDNSRecordsAsError(tx, req.ID, "node group changed"); err != nil {
+		// Mark old DNS records for deletion
+		if err := h.markDNSRecordsForDeletion(tx, req.ID, "node group changed"); err != nil {
 			tx.Rollback()
-			httpx.FailErr(c, httpx.ErrDatabaseError("failed to mark old DNS records as error", err))
+			httpx.FailErr(c, httpx.ErrDatabaseError("failed to mark old DNS records for deletion", err))
 			return
 		}
 
@@ -469,9 +470,9 @@ func (h *Handler) Delete(c *gin.Context) {
 	}()
 
 	for _, id := range req.IDs {
-		if err := h.markDNSRecordsAsError(tx, id, "line group deleted"); err != nil {
+		if err := h.markDNSRecordsForDeletion(tx, id, "line group deleted"); err != nil {
 			tx.Rollback()
-			httpx.FailErr(c, httpx.ErrDatabaseError("failed to mark DNS records as error", err))
+			httpx.FailErr(c, httpx.ErrDatabaseError("failed to mark DNS records for deletion", err))
 			return
 		}
 	}
