@@ -527,17 +527,26 @@ func (h *Handler) RepairCNAME(c *gin.Context) {
 	for _, record := range dnsRecords {
 		// Check if value is incorrect (missing domain suffix or ends with just ".")
 		if record.Value != expectedValue {
+			// Mark old record for deletion
 			updates := map[string]interface{}{
-				"value":         expectedValue,
 				"status":        model.DNSRecordStatusPending,
-				"desired_state": model.DNSRecordDesiredStatePresent,
+				"desired_state": model.DNSRecordDesiredStateAbsent,
 			}
 			if err := tx.Model(&model.DomainDNSRecord{}).Where("id = ?", record.ID).Updates(updates).Error; err != nil {
 				tx.Rollback()
-				httpx.FailErr(c, httpx.ErrDatabaseError("failed to update DNS record", err))
+				httpx.FailErr(c, httpx.ErrDatabaseError("failed to mark old record for deletion", err))
 				return
 			}
 			affected++
+		}
+	}
+
+	// Create new DNS record with correct value
+	if affected > 0 {
+		if err := h.createDNSRecordForLineGroup(tx, &lineGroup, expectedValue); err != nil {
+			tx.Rollback()
+			httpx.FailErr(c, httpx.ErrDatabaseError("failed to create new DNS record", err))
+			return
 		}
 	}
 
