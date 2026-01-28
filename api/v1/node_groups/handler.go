@@ -17,7 +17,6 @@ type ListRequest struct {
 	Page     int    `form:"page"`
 	PageSize int    `form:"pageSize"`
 	Name     string `form:"name"`
-	DomainID *int   `form:"domainId"`
 	Status   string `form:"status"`
 }
 
@@ -31,15 +30,22 @@ type ListResponse struct {
 
 // NodeGroupItem represents a node group in list response
 type NodeGroupItem struct {
-	model.NodeGroup
-	IPCount int `json:"ip_count"`
+	ID          int    `json:"id"`
+	Name        string `json:"name"`
+	Description string `json:"description"`
+	CNAMEPrefix string `json:"cnamePrefix"`
+	CNAME       string `json:"cname"`
+	Status      string `json:"status"`
+	IPCount     int    `json:"ipCount"`
+	CreatedAt   string `json:"createdAt"`
+	UpdatedAt   string `json:"updatedAt"`
 }
 
 // CreateRequest represents create node group request
 type CreateRequest struct {
 	Name        string `json:"name" binding:"required"`
 	Description string `json:"description"`
-	IPIDs    []int  `json:"ipIds" binding:"required,min=1"`
+	IPIDs       []int  `json:"ipIds" binding:"required,min=1"`
 }
 
 // UpdateRequest represents update node group request
@@ -48,7 +54,7 @@ type UpdateRequest struct {
 	Name        *string `json:"name"`
 	Description *string `json:"description"`
 	Status      *string `json:"status"`
-	IPIDs    []int   `json:"ipIds"`
+	IPIDs       []int   `json:"ipIds"`
 }
 
 // DeleteRequest represents delete node groups request
@@ -93,13 +99,15 @@ func (h *Handler) createDNSRecordsForAllCDNDomains(tx *gorm.DB, nodeGroup *model
 	for _, domain := range cdnDomains {
 		for _, ip := range ips {
 			dnsRecord := model.DomainDNSRecord{
-				DomainID:  domain.ID,
-				Type:      model.DNSRecordTypeA,
-				Name:      nodeGroup.CNAMEPrefix,
-				Value:     ip.IP,
-				OwnerType: "node_group",
-				OwnerID:   nodeGroup.ID,
-				Status:    model.DNSRecordStatusPending,
+				DomainID:     domain.ID,
+				Type:         model.DNSRecordTypeA,
+				Name:         nodeGroup.CNAMEPrefix,
+				Value:        ip.IP,
+				TTL:          120,
+				OwnerType:    "node_group",
+				OwnerID:      nodeGroup.ID,
+				Status:       model.DNSRecordStatusPending,
+				DesiredState: model.DNSRecordDesiredStatePresent,
 			}
 
 			if err := tx.Create(&dnsRecord).Error; err != nil {
@@ -111,49 +119,16 @@ func (h *Handler) createDNSRecordsForAllCDNDomains(tx *gorm.DB, nodeGroup *model
 	return nil
 }
 
-// createDNSRecordsForNodeGroup creates A records for node group sub IPs (deprecated, kept for compatibility)
-func (h *Handler) createDNSRecordsForNodeGroup(tx *gorm.DB, nodeGroup *model.NodeGroup, ipIDs []int) error {
-	if len(ipIDs) == 0 {
-		return nil
-	}
-
-	// Fetch sub IPs
-	var ips []model.NodeIP
-	if err := tx.Where("id IN ?", ipIDs).Find(&ips).Error; err != nil {
-		return fmt.Errorf("failed to fetch sub IPs: %w", err)
-	}
-
-	// Create A records for each sub IP
-	for _, ip := range ips {
-		dnsRecord := model.DomainDNSRecord{
-			DomainID:  nodeGroup.DomainID,
-			Type:      model.DNSRecordTypeA,
-			Name:      nodeGroup.CNAMEPrefix,
-			Value:     ip.IP,
-			OwnerType: "node_group",
-			OwnerID:   nodeGroup.ID,
-			Status:    model.DNSRecordStatusPending,
-		}
-
-		if err := tx.Create(&dnsRecord).Error; err != nil {
-			return fmt.Errorf("failed to create DNS record: %w", err)
-		}
-	}
-
-	return nil
-}
-
-// markDNSRecordsAsError marks DNS records as error for a node group
-func (h *Handler) markDNSRecordsAsError(tx *gorm.DB, nodeGroupID int, reason string) error {
+// markDNSRecordsAsAbsent marks DNS records as absent for a node group
+func (h *Handler) markDNSRecordsAsAbsent(tx *gorm.DB, nodeGroupID int) error {
 	updates := map[string]interface{}{
-		"status":     model.DNSRecordStatusError,
-		"last_error": reason,
+		"desired_state": model.DNSRecordDesiredStateAbsent,
 	}
 
 	if err := tx.Model(&model.DomainDNSRecord{}).
 		Where("owner_type = ? AND owner_id = ?", "node_group", nodeGroupID).
 		Updates(updates).Error; err != nil {
-		return fmt.Errorf("failed to mark DNS records as error: %w", err)
+		return fmt.Errorf("failed to mark DNS records as absent: %w", err)
 	}
 
 	return nil
@@ -183,11 +158,6 @@ func (h *Handler) List(c *gin.Context) {
 		query = query.Where("name LIKE ?", "%"+req.Name+"%")
 	}
 
-	// DomainID filter
-	if req.DomainID != nil {
-		query = query.Where("domain_id = ?", *req.DomainID)
-	}
-
 	// Status filter
 	if req.Status != "" {
 		query = query.Where("status = ?", req.Status)
@@ -204,7 +174,6 @@ func (h *Handler) List(c *gin.Context) {
 	var nodeGroups []model.NodeGroup
 	offset := (req.Page - 1) * req.PageSize
 	if err := query.
-		Preload("Domain").
 		Offset(offset).
 		Limit(req.PageSize).
 		Order("id DESC").
@@ -218,10 +187,17 @@ func (h *Handler) List(c *gin.Context) {
 	for i, ng := range nodeGroups {
 		var count int64
 		h.db.Model(&model.NodeGroupIP{}).Where("node_group_id = ?", ng.ID).Count(&count)
-		
+
 		items[i] = NodeGroupItem{
-			NodeGroup:  ng,
-			IPCount: int(count),
+			ID:          ng.ID,
+			Name:        ng.Name,
+			Description: ng.Description,
+			CNAMEPrefix: ng.CNAMEPrefix,
+			CNAME:       ng.CNAME,
+			Status:      string(ng.Status),
+			IPCount:     int(count),
+			CreatedAt:   ng.CreatedAt.Format("2006-01-02T15:04:05Z07:00"),
+			UpdatedAt:   ng.UpdatedAt.Format("2006-01-02T15:04:05Z07:00"),
 		}
 	}
 
@@ -253,7 +229,7 @@ func (h *Handler) Create(c *gin.Context) {
 		return
 	}
 
-	// Use first CDN domain as primary domain (for compatibility)
+	// Use first CDN domain for CNAME display
 	primaryDomain := cdnDomains[0]
 
 	// Check name uniqueness
@@ -281,8 +257,8 @@ func (h *Handler) Create(c *gin.Context) {
 		}
 	}
 
-		// Use primary domain for CNAME (for display)
-		cname := cnamePrefix + "." + primaryDomain.Domain
+	// Use primary domain for CNAME (for display)
+	cname := cnamePrefix + "." + primaryDomain.Domain
 
 	tx := h.db.Begin()
 	defer func() {
@@ -294,7 +270,6 @@ func (h *Handler) Create(c *gin.Context) {
 	nodeGroup := model.NodeGroup{
 		Name:        req.Name,
 		Description: req.Description,
-		DomainID:    primaryDomain.ID,
 		CNAMEPrefix: cnamePrefix,
 		CNAME:       cname,
 		Status:      model.NodeGroupStatusActive,
@@ -310,7 +285,7 @@ func (h *Handler) Create(c *gin.Context) {
 		for _, ipID := range req.IPIDs {
 			mapping := model.NodeGroupIP{
 				NodeGroupID: nodeGroup.ID,
-				IPID:     ipID,
+				IPID:        ipID,
 			}
 			if err := tx.Create(&mapping).Error; err != nil {
 				tx.Rollback()
@@ -332,12 +307,25 @@ func (h *Handler) Create(c *gin.Context) {
 		return
 	}
 
-	if err := h.db.Preload("Domain").Preload("IPs").First(&nodeGroup, nodeGroup.ID).Error; err != nil {
+	// Reload node group
+	if err := h.db.First(&nodeGroup, nodeGroup.ID).Error; err != nil {
 		httpx.FailErr(c, httpx.ErrDatabaseError("failed to reload node group", err))
 		return
 	}
 
-	httpx.OK(c, nodeGroup)
+	// Return response with data.item structure
+	httpx.OK(c, map[string]interface{}{
+		"item": map[string]interface{}{
+			"id":          nodeGroup.ID,
+			"name":        nodeGroup.Name,
+			"description": nodeGroup.Description,
+			"cnamePrefix": nodeGroup.CNAMEPrefix,
+			"cname":       nodeGroup.CNAME,
+			"status":      nodeGroup.Status,
+			"createdAt":   nodeGroup.CreatedAt.Format("2006-01-02T15:04:05Z07:00"),
+			"updatedAt":   nodeGroup.UpdatedAt.Format("2006-01-02T15:04:05Z07:00"),
+		},
+	})
 }
 
 // Update handles POST /api/v1/node-groups/update
@@ -398,24 +386,28 @@ func (h *Handler) Update(c *gin.Context) {
 		}
 	}
 
+	// Handle IP updates
 	if req.IPIDs != nil {
-		if err := h.markDNSRecordsAsError(tx, req.ID, "sub IPs updated"); err != nil {
+		// Mark old DNS records as absent
+		if err := h.markDNSRecordsAsAbsent(tx, req.ID); err != nil {
 			tx.Rollback()
-			httpx.FailErr(c, httpx.ErrDatabaseError("failed to mark old DNS records as error", err))
+			httpx.FailErr(c, httpx.ErrDatabaseError("failed to mark old DNS records as absent", err))
 			return
 		}
 
+		// Delete old IP mappings
 		if err := tx.Where("node_group_id = ?", req.ID).Delete(&model.NodeGroupIP{}).Error; err != nil {
 			tx.Rollback()
 			httpx.FailErr(c, httpx.ErrDatabaseError("failed to delete old sub IP mappings", err))
 			return
 		}
 
+		// Create new IP mappings and DNS records
 		if len(req.IPIDs) > 0 {
 			for _, ipID := range req.IPIDs {
 				mapping := model.NodeGroupIP{
 					NodeGroupID: req.ID,
-					IPID:     ipID,
+					IPID:        ipID,
 				}
 				if err := tx.Create(&mapping).Error; err != nil {
 					tx.Rollback()
@@ -424,7 +416,16 @@ func (h *Handler) Update(c *gin.Context) {
 				}
 			}
 
-			if err := h.createDNSRecordsForNodeGroup(tx, &nodeGroup, req.IPIDs); err != nil {
+			// Fetch all CDN domains
+			var cdnDomains []model.Domain
+			if err := tx.Where("purpose = ? AND status = ?", "cdn", "active").Find(&cdnDomains).Error; err != nil {
+				tx.Rollback()
+				httpx.FailErr(c, httpx.ErrDatabaseError("failed to fetch CDN domains", err))
+				return
+			}
+
+			// Create new DNS records for all CDN domains
+			if err := h.createDNSRecordsForAllCDNDomains(tx, &nodeGroup, cdnDomains, req.IPIDs); err != nil {
 				tx.Rollback()
 				httpx.FailErr(c, httpx.ErrDatabaseError("failed to create DNS records", err))
 				return
@@ -437,12 +438,25 @@ func (h *Handler) Update(c *gin.Context) {
 		return
 	}
 
-	if err := h.db.Preload("Domain").Preload("IPs").First(&nodeGroup, req.ID).Error; err != nil {
+	// Reload node group
+	if err := h.db.First(&nodeGroup, req.ID).Error; err != nil {
 		httpx.FailErr(c, httpx.ErrDatabaseError("failed to reload node group", err))
 		return
 	}
 
-	httpx.OK(c, nodeGroup)
+	// Return response with data.item structure
+	httpx.OK(c, map[string]interface{}{
+		"item": map[string]interface{}{
+			"id":          nodeGroup.ID,
+			"name":        nodeGroup.Name,
+			"description": nodeGroup.Description,
+			"cnamePrefix": nodeGroup.CNAMEPrefix,
+			"cname":       nodeGroup.CNAME,
+			"status":      nodeGroup.Status,
+			"createdAt":   nodeGroup.CreatedAt.Format("2006-01-02T15:04:05Z07:00"),
+			"updatedAt":   nodeGroup.UpdatedAt.Format("2006-01-02T15:04:05Z07:00"),
+		},
+	})
 }
 
 // Delete handles POST /api/v1/node-groups/delete
@@ -460,14 +474,16 @@ func (h *Handler) Delete(c *gin.Context) {
 		}
 	}()
 
+	// Mark all DNS records as absent for each node group
 	for _, id := range req.IDs {
-		if err := h.markDNSRecordsAsError(tx, id, "node group deleted"); err != nil {
+		if err := h.markDNSRecordsAsAbsent(tx, id); err != nil {
 			tx.Rollback()
-			httpx.FailErr(c, httpx.ErrDatabaseError("failed to mark DNS records as error", err))
+			httpx.FailErr(c, httpx.ErrDatabaseError("failed to mark DNS records as absent", err))
 			return
 		}
 	}
 
+	// Delete node groups (cascade will delete node_group_ips)
 	result := tx.Delete(&model.NodeGroup{}, req.IDs)
 	if result.Error != nil {
 		tx.Rollback()
@@ -480,7 +496,6 @@ func (h *Handler) Delete(c *gin.Context) {
 		return
 	}
 
-	httpx.OK(c, gin.H{
-		"deletedCount": result.RowsAffected,
-	})
+	// Return null data for delete operation
+	httpx.OK(c, nil)
 }
