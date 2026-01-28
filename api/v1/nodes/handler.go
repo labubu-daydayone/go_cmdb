@@ -173,11 +173,16 @@ func (h *Handler) List(c *gin.Context) {
 			if ip.IPType == model.NodeIPTypeMain {
 				mainIp = ip.IP
 			}
+			ipType := "sub"
+			if ip.IPType == model.NodeIPTypeMain {
+				ipType = "main"
+			}
 			ipItems = append(ipItems, dto.NodeIPItemDTO{
-				ID:        ip.ID,
-				IP:        ip.IP,
-				IsMain:    ip.IPType == model.NodeIPTypeMain,
-				IpEnabled: ip.Enabled,
+				ID:               ip.ID,
+				IP:               ip.IP,
+				IpType:           ipType,
+				IpEnabled:        ip.Enabled,
+				EffectiveEnabled: node.Enabled && ip.Enabled,
 			})
 		}
 
@@ -186,7 +191,7 @@ func (h *Handler) List(c *gin.Context) {
 			Name:            node.Name,
 			MainIp:          mainIp,
 			AgentPort:       node.AgentPort,
-			NodeEnabled:     node.Enabled,
+			Enabled:         node.Enabled,
 			AgentStatus:     string(node.Status),
 			LastSeenAt:      node.LastSeenAt,
 			LastHealthError: node.LastHealthError,
@@ -556,11 +561,16 @@ func (h *Handler) Get(c *gin.Context) {
 		if ip.IPType == model.NodeIPTypeMain {
 			mainIp = ip.IP
 		}
+		ipType := "sub"
+		if ip.IPType == model.NodeIPTypeMain {
+			ipType = "main"
+		}
 		ipItems = append(ipItems, dto.NodeIPItemDTO{
-			ID:        ip.ID,
-			IP:        ip.IP,
-			IsMain:    ip.IPType == model.NodeIPTypeMain,
-			IpEnabled: ip.Enabled,
+			ID:               ip.ID,
+			IP:               ip.IP,
+			IpType:           ipType,
+			IpEnabled:        ip.Enabled,
+			EffectiveEnabled: node.Enabled && ip.Enabled,
 		})
 	}
 
@@ -570,7 +580,7 @@ func (h *Handler) Get(c *gin.Context) {
 		Name:            node.Name,
 		MainIp:          mainIp,
 		AgentPort:       node.AgentPort,
-		NodeEnabled:     node.Enabled,
+		Enabled:         node.Enabled,
 		AgentStatus:     string(node.Status),
 		LastSeenAt:      node.LastSeenAt,
 		LastHealthError: node.LastHealthError,

@@ -8,7 +8,7 @@ type NodeDetailItemDTO struct {
 	Name            string             `json:"name"`
 	MainIp          string             `json:"mainIp"`
 	AgentPort       int                `json:"agentPort"`
-	NodeEnabled     bool               `json:"nodeEnabled"`
+	Enabled         bool               `json:"enabled"`
 	AgentStatus     string             `json:"agentStatus"`
 	LastSeenAt      *time.Time         `json:"lastSeenAt,omitempty"`
 	LastHealthError *string            `json:"lastHealthError,omitempty"`
