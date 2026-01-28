@@ -233,9 +233,6 @@ func (h *Handler) Create(c *gin.Context) {
 		return
 	}
 
-	// Use first CDN domain for CNAME display
-	primaryDomain := cdnDomains[0]
-
 	// Check name uniqueness
 	var count int64
 	if err := h.db.Model(&model.NodeGroup{}).Where("name = ?", req.Name).Count(&count).Error; err != nil {
