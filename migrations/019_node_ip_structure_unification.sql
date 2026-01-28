@@ -49,7 +49,10 @@ ALTER TABLE node_group_ips
     ADD INDEX idx_node_group_ips_ip_id (ip_id),
     ADD FOREIGN KEY (ip_id) REFERENCES node_ips(id) ON DELETE CASCADE;
 
--- Step 9: Drop old sub_ip_id column
+-- Step 9: Drop foreign key constraint on sub_ip_id before dropping the column
+ALTER TABLE node_group_ips DROP FOREIGN KEY IF EXISTS fk_node_group_sub_ips_sub_ip;
+
+-- Step 9.1: Drop old sub_ip_id column
 ALTER TABLE node_group_ips DROP COLUMN sub_ip_id;
 
 -- Step 10: Drop old index on node_group_sub_ips (if exists)
