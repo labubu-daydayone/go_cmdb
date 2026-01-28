@@ -99,8 +99,8 @@ func SetupRouter(r *gin.Engine, db *gorm.DB, cfg *config.Config, acmeWorker *acm
 
 				// Identity routes
 				nodesGroup.GET("/:id/identity", nodesHandler.GetIdentity)
-				nodesGroup.POST("/:id/identity/revoke", nodesHandler.RevokeIdentity)
-			}
+					nodesGroup.POST("/:id/identity/revoke", nodesHandler.RevokeIdentity)
+				}
 
 				// Node IPs routes
 				nodeIPsHandler := node_ips.NewHandler(db)
