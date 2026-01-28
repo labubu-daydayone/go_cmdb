@@ -689,7 +689,7 @@ func (h *Handler) DeleteSubIPs(c *gin.Context) {
 	}
 
 	// Delete sub IPs
-	result := h.db.Where("node_id = ? AND id IN ?", req.NodeID, req.SubIPIDs).Delete(&model.NodeSubIP{})
+	result := h.db.Where("node_id = ? AND id IN ?", req.NodeID, req.SubIPIDs).Delete(&model.NodeIP{})
 	if result.Error != nil {
 		httpx.FailErr(c, httpx.ErrDatabaseError("failed to delete sub IPs", result.Error))
 		return
