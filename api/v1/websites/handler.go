@@ -418,7 +418,7 @@ func (h *Handler) createOriginSetFromGroup(tx *gorm.DB, websiteID, originGroupID
 	// 创建origin_set
 	originSet := model.OriginSet{
 		Source:        "group",
-		OriginGroupID: originGroupID,
+		OriginGroupID: int64(originGroupID),
 	}
 	if err := tx.Create(&originSet).Error; err != nil {
 		return httpx.ErrDatabaseError("failed to create origin set", err)

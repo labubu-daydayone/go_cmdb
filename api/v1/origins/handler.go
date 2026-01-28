@@ -66,7 +66,7 @@ func (h *Handler) CreateFromGroup(c *gin.Context) {
 	// 创建origin_set
 	originSet := model.OriginSet{
 		Source:        model.OriginSetSourceGroup,
-		OriginGroupID: req.OriginGroupID,
+		OriginGroupID: int64(req.OriginGroupID),
 	}
 
 	if err := tx.Create(&originSet).Error; err != nil {
