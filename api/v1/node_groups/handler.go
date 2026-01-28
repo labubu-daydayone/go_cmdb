@@ -39,8 +39,7 @@ type NodeGroupItem struct {
 type CreateRequest struct {
 	Name        string `json:"name" binding:"required"`
 	Description string `json:"description"`
-	DomainID    int    `json:"domainId" binding:"required"`
-	IPIDs    []int  `json:"ipIds"`
+	IPIDs    []int  `json:"ipIds" binding:"required,min=1"`
 }
 
 // UpdateRequest represents update node group request
@@ -74,7 +73,45 @@ func generateCNAMEPrefix() string {
 	return "ng-" + hex.EncodeToString(bytes)
 }
 
-// createDNSRecordsForNodeGroup creates A records for node group sub IPs
+// createDNSRecordsForAllCDNDomains creates A records for all CDN domains × all available IPs
+func (h *Handler) createDNSRecordsForAllCDNDomains(tx *gorm.DB, nodeGroup *model.NodeGroup, cdnDomains []model.Domain, ipIDs []int) error {
+	if len(ipIDs) == 0 {
+		return nil
+	}
+
+	// Fetch IPs and filter by enabled=true
+	var ips []model.NodeIP
+	if err := tx.Where("id IN ? AND enabled = ?", ipIDs, true).Find(&ips).Error; err != nil {
+		return fmt.Errorf("failed to fetch IPs: %w", err)
+	}
+
+	if len(ips) == 0 {
+		return fmt.Errorf("no available IPs found")
+	}
+
+	// Create A records for each CDN domain × each available IP
+	for _, domain := range cdnDomains {
+		for _, ip := range ips {
+			dnsRecord := model.DomainDNSRecord{
+				DomainID:  domain.ID,
+				Type:      model.DNSRecordTypeA,
+				Name:      nodeGroup.CNAMEPrefix,
+				Value:     ip.IP,
+				OwnerType: "node_group",
+				OwnerID:   nodeGroup.ID,
+				Status:    model.DNSRecordStatusPending,
+			}
+
+			if err := tx.Create(&dnsRecord).Error; err != nil {
+				return fmt.Errorf("failed to create DNS record for domain %s, IP %s: %w", domain.Domain, ip.IP, err)
+			}
+		}
+	}
+
+	return nil
+}
+
+// createDNSRecordsForNodeGroup creates A records for node group sub IPs (deprecated, kept for compatibility)
 func (h *Handler) createDNSRecordsForNodeGroup(tx *gorm.DB, nodeGroup *model.NodeGroup, ipIDs []int) error {
 	if len(ipIDs) == 0 {
 		return nil
@@ -204,16 +241,20 @@ func (h *Handler) Create(c *gin.Context) {
 		return
 	}
 
-	// Check domain exists
-	var domain model.Domain
-	if err := h.db.First(&domain, req.DomainID).Error; err != nil {
-		if err == gorm.ErrRecordNotFound {
-			httpx.FailErr(c, httpx.ErrNotFound("domain not found"))
-			return
-		}
-		httpx.FailErr(c, httpx.ErrDatabaseError("failed to find domain", err))
+	// Fetch all CDN domains (purpose=cdn, status=active)
+	var cdnDomains []model.Domain
+	if err := h.db.Where("purpose = ? AND status = ?", "cdn", "active").Find(&cdnDomains).Error; err != nil {
+		httpx.FailErr(c, httpx.ErrDatabaseError("failed to fetch CDN domains", err))
 		return
 	}
+
+	if len(cdnDomains) == 0 {
+		httpx.FailErr(c, httpx.ErrNotFound("no active CDN domains found"))
+		return
+	}
+
+	// Use first CDN domain as primary domain (for compatibility)
+	primaryDomain := cdnDomains[0]
 
 	// Check name uniqueness
 	var count int64
@@ -240,7 +281,8 @@ func (h *Handler) Create(c *gin.Context) {
 		}
 	}
 
-	cname := cnamePrefix + "." + domain.Domain
+		// Use primary domain for CNAME (for display)
+		cname := cnamePrefix + "." + primaryDomain.Domain
 
 	tx := h.db.Begin()
 	defer func() {
@@ -252,7 +294,7 @@ func (h *Handler) Create(c *gin.Context) {
 	nodeGroup := model.NodeGroup{
 		Name:        req.Name,
 		Description: req.Description,
-		DomainID:    req.DomainID,
+		DomainID:    primaryDomain.ID,
 		CNAMEPrefix: cnamePrefix,
 		CNAME:       cname,
 		Status:      model.NodeGroupStatusActive,
@@ -277,7 +319,8 @@ func (h *Handler) Create(c *gin.Context) {
 			}
 		}
 
-		if err := h.createDNSRecordsForNodeGroup(tx, &nodeGroup, req.IPIDs); err != nil {
+		// Create DNS records for all CDN domains × all available IPs
+		if err := h.createDNSRecordsForAllCDNDomains(tx, &nodeGroup, cdnDomains, req.IPIDs); err != nil {
 			tx.Rollback()
 			httpx.FailErr(c, httpx.ErrDatabaseError("failed to create DNS records", err))
 			return
