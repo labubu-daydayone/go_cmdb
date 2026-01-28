@@ -132,25 +132,61 @@ func (h *Handler) Create(c *gin.Context) {
 
 // ListResponse 列表响应
 type ListResponse struct {
-	Items []ListItemDTO `json:"items"`
+	Items    []ListItemDTO `json:"items"`
+	Total    int64         `json:"total"`
+	Page     int           `json:"page"`
+	PageSize int           `json:"pageSize"`
 }
 
 // ListItemDTO 列表项
 type ListItemDTO struct {
-	ID            int    `json:"id"`
-	Name          string `json:"name"`
-	Description   string `json:"description"`
-	Status        string `json:"status"`
-	OriginGroupID int64  `json:"originGroupId"`
-	CreatedAt     string `json:"createdAt"`
-	UpdatedAt     string `json:"updatedAt"`
+	ID              int    `json:"id"`
+	Name            string `json:"name"`
+	Description     string `json:"description"`
+	Status          string `json:"status"`
+	OriginGroupID   int64  `json:"originGroupId"`
+	OriginGroupName string `json:"originGroupName"`
+	CreatedAt       string `json:"createdAt"`
+	UpdatedAt       string `json:"updatedAt"`
 }
 
 // List 列表
 // GET /api/v1/origin-sets
 func (h *Handler) List(c *gin.Context) {
-	var originSets []model.OriginSet
-	if err := h.db.Find(&originSets).Error; err != nil {
+	page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
+	pageSize, _ := strconv.Atoi(c.DefaultQuery("pageSize", "15"))
+	if pageSize > 100 {
+		pageSize = 100
+	}
+
+	db := h.db.Model(&model.OriginSet{})
+
+	// 过滤
+	if originGroupIDStr := c.Query("originGroupId"); originGroupIDStr != "" {
+		originGroupID, err := strconv.ParseInt(originGroupIDStr, 10, 64)
+		if err == nil {
+			db = db.Where("origin_group_id = ?", originGroupID)
+		}
+	}
+	if status := c.Query("status"); status != "" {
+		db = db.Where("status = ?", status)
+	}
+
+	var total int64
+	if err := db.Count(&total).Error; err != nil {
+		httpx.FailErr(c, httpx.ErrDatabaseError("database error", err))
+		return
+	}
+
+	var originSets []struct {
+		model.OriginSet
+		OriginGroupName string `gorm:"column:origin_group_name"`
+	}
+
+	offset := (page - 1) * pageSize
+	if err := db.Select("origin_sets.*, origin_groups.name as origin_group_name").
+		Joins("left join origin_groups on origin_groups.id = origin_sets.origin_group_id").
+		Limit(pageSize).Offset(offset).Find(&originSets).Error; err != nil {
 		httpx.FailErr(c, httpx.ErrDatabaseError("database error", err))
 		return
 	}
@@ -158,29 +194,36 @@ func (h *Handler) List(c *gin.Context) {
 	items := make([]ListItemDTO, 0, len(originSets))
 	for _, set := range originSets {
 		items = append(items, ListItemDTO{
-			ID:            int(set.ID),
-			Name:          set.Name,
-			Description:   set.Description,
-			Status:        set.Status,
-			OriginGroupID: set.OriginGroupID,
-			CreatedAt:     set.CreatedAt.Format("2006-01-02T15:04:05-07:00"),
-			UpdatedAt:     set.UpdatedAt.Format("2006-01-02T15:04:05-07:00"),
+			ID:              int(set.ID),
+			Name:            set.Name,
+			Description:     set.Description,
+			Status:          set.Status,
+			OriginGroupID:   set.OriginGroupID,
+			OriginGroupName: set.OriginGroupName,
+			CreatedAt:       set.CreatedAt.Format("2006-01-02T15:04:05-07:00"),
+			UpdatedAt:       set.UpdatedAt.Format("2006-01-02T15:04:05-07:00"),
 		})
 	}
 
-	httpx.OK(c, gin.H{"items": items})
+	httpx.OK(c, ListResponse{
+		Items:    items,
+		Total:    total,
+		Page:     page,
+		PageSize: pageSize,
+	})
 }
 
 // DetailResponse 详情响应
 type DetailResponse struct {
-	ID            int                      `json:"id"`
-	Name          string                   `json:"name"`
-	Description   string                   `json:"description"`
-	Status        string                   `json:"status"`
-	OriginGroupID int64                    `json:"originGroupId"`
-	Items         DetailItemsWrapper       `json:"items"`
-	CreatedAt     string                   `json:"createdAt"`
-	UpdatedAt     string                   `json:"updatedAt"`
+	ID              int                      `json:"id"`
+	Name            string                   `json:"name"`
+	Description     string                   `json:"description"`
+	Status          string                   `json:"status"`
+	OriginGroupID   int64                    `json:"originGroupId"`
+	OriginGroupName string                   `json:"originGroupName"`
+	Items           DetailItemsWrapper       `json:"items"`
+	CreatedAt       string                   `json:"createdAt"`
+	UpdatedAt       string                   `json:"updatedAt"`
 }
 
 // DetailItemsWrapper 详情项包装器
@@ -209,8 +252,13 @@ func (h *Handler) Detail(c *gin.Context) {
 	}
 
 	// 查询 origin set
-	var originSet model.OriginSet
-	if err := h.db.First(&originSet, id).Error; err != nil {
+	var originSet struct {
+		model.OriginSet
+		OriginGroupName string `gorm:"column:origin_group_name"`
+	}
+	if err := h.db.Model(&model.OriginSet{}).Select("origin_sets.*, origin_groups.name as origin_group_name").
+		Joins("left join origin_groups on origin_groups.id = origin_sets.origin_group_id").
+		First(&originSet, id).Error; err != nil {
 		if err == gorm.ErrRecordNotFound {
 			httpx.FailErr(c, httpx.ErrNotFound("origin set not found"))
 			return
@@ -246,11 +294,12 @@ func (h *Handler) Detail(c *gin.Context) {
 	}
 
 	resp := DetailResponse{
-		ID:            int(originSet.ID),
-		Name:          originSet.Name,
-		Description:   originSet.Description,
-		Status:        originSet.Status,
-		OriginGroupID: originSet.OriginGroupID,
+		ID:              int(originSet.ID),
+		Name:            originSet.Name,
+		Description:     originSet.Description,
+		Status:          originSet.Status,
+		OriginGroupID:   originSet.OriginGroupID,
+		OriginGroupName: originSet.OriginGroupName,
 		Items: DetailItemsWrapper{
 			Items: detailItems,
 		},
