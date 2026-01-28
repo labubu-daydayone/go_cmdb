@@ -162,8 +162,30 @@ func (h *Handler) List(c *gin.Context) {
 		return
 	}
 
-	httpx.OK(c, ListResponse{
-		Items:    lineGroups,
+	// Convert to DTOs
+	items := make([]LineGroupItemDTO, len(lineGroups))
+	for i, lg := range lineGroups {
+		domainName := ""
+		if lg.Domain != nil {
+			domainName = lg.Domain.Domain
+		}
+		
+		items[i] = LineGroupItemDTO{
+			ID:          int(lg.ID),
+			Name:        lg.Name,
+			DomainID:    int(lg.DomainID),
+			DomainName:  domainName,
+			NodeGroupID: int(lg.NodeGroupID),
+			CNAMEPrefix: lg.CNAMEPrefix,
+			CNAME:       lg.CNAMEPrefix + "." + domainName,
+			Status:      lg.Status,
+			CreatedAt:   lg.CreatedAt.Format("2006-01-02T15:04:05-07:00"),
+			UpdatedAt:   lg.UpdatedAt.Format("2006-01-02T15:04:05-07:00"),
+		}
+	}
+
+	httpx.OK(c, LineGroupListResponse{
+		Items:    items,
 		Total:    total,
 		Page:     req.Page,
 		PageSize: req.PageSize,
@@ -264,7 +286,26 @@ func (h *Handler) Create(c *gin.Context) {
 		return
 	}
 
-	httpx.OK(c, lineGroup)
+	// Convert to DTO
+	domainName := ""
+	if lineGroup.Domain != nil {
+		domainName = lineGroup.Domain.Domain
+	}
+	
+	item := LineGroupItemDTO{
+		ID:          int(lineGroup.ID),
+		Name:        lineGroup.Name,
+		DomainID:    int(lineGroup.DomainID),
+		DomainName:  domainName,
+		NodeGroupID: int(lineGroup.NodeGroupID),
+		CNAMEPrefix: lineGroup.CNAMEPrefix,
+		CNAME:       lineGroup.CNAMEPrefix + "." + domainName,
+		Status:      lineGroup.Status,
+		CreatedAt:   lineGroup.CreatedAt.Format("2006-01-02T15:04:05-07:00"),
+		UpdatedAt:   lineGroup.UpdatedAt.Format("2006-01-02T15:04:05-07:00"),
+	}
+
+	httpx.OK(c, LineGroupDetailResponse{Item: item})
 }
 
 // Update handles POST /api/v1/line-groups/update

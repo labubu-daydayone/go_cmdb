@@ -87,7 +87,6 @@ func (a *Aggregator) buildDomains(websiteID int) ([]DomainConfig, error) {
 		configs = append(configs, DomainConfig{
 			Domain:    domain.Domain,
 			IsPrimary: domain.IsPrimary,
-			CNAME:     domain.CNAME,
 		})
 	}
 

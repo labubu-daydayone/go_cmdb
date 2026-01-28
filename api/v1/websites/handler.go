@@ -135,10 +135,14 @@ func (h *Handler) List(c *gin.Context) {
 			UpdatedAt:          w.UpdatedAt.Format("2006-01-02 15:04:05"),
 		}
 
-		// LineGroup名称
+		// LineGroup名称和CNAME
 		if w.LineGroup != nil {
 			item.LineGroupName = w.LineGroup.Name
-			item.CNAME = w.LineGroup.CNAME
+			// 加载Domain信息以计算CNAME
+			var domain model.Domain
+			if err := h.db.First(&domain, w.LineGroup.DomainID).Error; err == nil {
+				item.CNAME = w.LineGroup.CNAMEPrefix + "." + domain.Domain
+			}
 		}
 
 		// OriginGroup名称

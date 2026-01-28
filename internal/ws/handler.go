@@ -29,7 +29,6 @@ type WebsiteListItem struct {
 	Status             string   `json:"status"`
 	Domains            []string `json:"domains"`
 	PrimaryDomain      string   `json:"primary_domain"`
-	CNAME              string   `json:"cname"`
 	HTTPSEnabled       bool     `json:"https_enabled"`
 	CreatedAt          string   `json:"created_at"`
 	UpdatedAt          string   `json:"updated_at"`
