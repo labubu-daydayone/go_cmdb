@@ -17,6 +17,7 @@ import (
 	"go_cmdb/api/v1/line_groups"
 	"go_cmdb/api/v1/middleware"
 	"go_cmdb/api/v1/node_groups"
+	"go_cmdb/api/v1/node_ips"
 	"go_cmdb/api/v1/nodes"
 	"go_cmdb/api/v1/origin_groups"
 	"go_cmdb/api/v1/origins"
@@ -101,15 +102,24 @@ func SetupRouter(r *gin.Engine, db *gorm.DB, cfg *config.Config, acmeWorker *acm
 				nodesGroup.POST("/:id/identity/revoke", nodesHandler.RevokeIdentity)
 			}
 
-			// Node groups routes
-			nodeGroupsHandler := node_groups.NewHandler(db)
-			nodeGroupsGroup := protected.Group("/node-groups")
-			{
-				nodeGroupsGroup.GET("", nodeGroupsHandler.List)
-				nodeGroupsGroup.POST("/create", nodeGroupsHandler.Create)
-				nodeGroupsGroup.POST("/update", nodeGroupsHandler.Update)
-				nodeGroupsGroup.POST("/delete", nodeGroupsHandler.Delete)
-			}
+				// Node IPs routes
+				nodeIPsHandler := node_ips.NewHandler(db)
+				nodeIPsGroup := protected.Group("/node-ips")
+				{
+					nodeIPsGroup.GET("", nodeIPsHandler.List)
+					nodeIPsGroup.POST("/disable", nodeIPsHandler.Disable)
+					nodeIPsGroup.POST("/enable", nodeIPsHandler.Enable)
+				}
+
+				// Node groups routes
+				nodeGroupsHandler := node_groups.NewHandler(db)
+				nodeGroupsGroup := protected.Group("/node-groups")
+				{
+					nodeGroupsGroup.GET("", nodeGroupsHandler.List)
+					nodeGroupsGroup.POST("/create", nodeGroupsHandler.Create)
+					nodeGroupsGroup.POST("/update", nodeGroupsHandler.Update)
+					nodeGroupsGroup.POST("/delete", nodeGroupsHandler.Delete)
+				}
 
 			// Line groups routes
 			lineGroupsHandler := line_groups.NewHandler(db)
