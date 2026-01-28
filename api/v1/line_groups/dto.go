@@ -2,16 +2,17 @@ package line_groups
 
 // LineGroupItemDTO represents a line group item in list or detail response
 type LineGroupItemDTO struct {
-	ID           int    `json:"id"`
-	Name         string `json:"name"`
-	DomainID     int    `json:"domainId"`
-	DomainName   string `json:"domainName"`   // For display
-	NodeGroupID  int    `json:"nodeGroupId"`
-	CNAMEPrefix  string `json:"cnamePrefix"`
-	CNAME        string `json:"cname"`        // Computed field: cnamePrefix + "." + domainName
-	Status       string `json:"status"`
-	CreatedAt    string `json:"createdAt"`
-	UpdatedAt    string `json:"updatedAt"`
+	ID            int    `json:"id"`
+	Name          string `json:"name"`
+	DomainID      int    `json:"domainId"`
+	DomainName    string `json:"domainName"`    // For display
+	NodeGroupID   int    `json:"nodeGroupId"`
+	NodeGroupName string `json:"nodeGroupName"` // For display
+	CNAMEPrefix   string `json:"cnamePrefix"`
+	CNAME         string `json:"cname"`         // Computed field: cnamePrefix + "." + domainName
+	Status        string `json:"status"`
+	CreatedAt     string `json:"createdAt"`
+	UpdatedAt     string `json:"updatedAt"`
 }
 
 // LineGroupListResponse represents list line groups response

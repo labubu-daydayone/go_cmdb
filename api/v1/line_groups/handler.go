@@ -12,21 +12,6 @@ import (
 	"gorm.io/gorm"
 )
 
-// LineGroupItemDTO represents line group item in response
-type LineGroupItemDTO struct {
-	ID            int    `json:"id"`
-	Name          string `json:"name"`
-	DomainID      int    `json:"domainId"`
-	DomainName    string `json:"domainName"`
-	NodeGroupID   int    `json:"nodeGroupId"`
-	NodeGroupName string `json:"nodeGroupName"`
-	CNAMEPrefix   string `json:"cnamePrefix"`
-	CNAME         string `json:"cname"`
-	Status        string `json:"status"`
-	CreatedAt     string `json:"createdAt"`
-	UpdatedAt     string `json:"updatedAt"`
-}
-
 // ListRequest represents list line groups request
 type ListRequest struct {
 	Page        int    `form:"page"`
