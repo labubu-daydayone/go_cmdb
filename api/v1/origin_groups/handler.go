@@ -485,3 +485,114 @@ func (h *Handler) triggerAutoDispatch(originGroupID int) {
 		log.Printf("[Origin Group] Would dispatch to node %d (ip=%s)\n", node.ID, node.MainIP)
 	}
 }
+
+// UpdateRequest 更新回源分组请求
+type UpdateRequest struct {
+	ID          int    `json:"id" binding:"required"`
+	Name        string `json:"name" binding:"required"`
+	Description string `json:"description"`
+}
+
+// Update 更新回源分组
+// POST /api/v1/origin-groups/update
+func (h *Handler) Update(c *gin.Context) {
+	var req UpdateRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		httpx.FailErr(c, httpx.ErrParamMissing("invalid request"))
+		return
+	}
+
+	// 检查分组是否存在
+	var group model.OriginGroup
+	if err := h.db.First(&group, req.ID).Error; err != nil {
+		if err == gorm.ErrRecordNotFound {
+			httpx.FailErr(c, httpx.ErrResourceNotFound("origin group not found"))
+			return
+		}
+		httpx.FailErr(c, httpx.ErrDatabase(err))
+		return
+	}
+
+	// 检查name唯一性（排除自己）
+	var existingGroup model.OriginGroup
+	if err := h.db.Where("name = ? AND id != ?", req.Name, req.ID).First(&existingGroup).Error; err == nil {
+		httpx.FailErr(c, httpx.ErrResourceConflict("origin group name already exists"))
+		return
+	}
+
+	// 更新字段
+	group.Name = req.Name
+	group.Description = req.Description
+
+	if err := h.db.Save(&group).Error; err != nil {
+		httpx.FailErr(c, httpx.ErrDatabase(err))
+		return
+	}
+
+	// 返回更新后的分组
+	resp := CreateResponse{
+		ID:          int(group.ID),
+		Name:        group.Name,
+		Description: group.Description,
+		Status:      group.Status,
+		CreatedAt:   group.CreatedAt.Format("2006-01-02T15:04:05-07:00"),
+		UpdatedAt:   group.UpdatedAt.Format("2006-01-02T15:04:05-07:00"),
+	}
+
+	httpx.OK(c, gin.H{"item": resp})
+}
+
+// DeleteRequest 删除回源分组请求
+type DeleteRequest struct {
+	ID int `json:"id" binding:"required"`
+}
+
+// Delete 删除回源分组
+// POST /api/v1/origin-groups/delete
+func (h *Handler) Delete(c *gin.Context) {
+	var req DeleteRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		httpx.FailErr(c, httpx.ErrParamMissing("invalid request"))
+		return
+	}
+
+	// 检查分组是否存在
+	var group model.OriginGroup
+	if err := h.db.First(&group, req.ID).Error; err != nil {
+		if err == gorm.ErrRecordNotFound {
+			httpx.FailErr(c, httpx.ErrResourceNotFound("origin group not found"))
+			return
+		}
+		httpx.FailErr(c, httpx.ErrDatabase(err))
+		return
+	}
+
+	// 开启事务
+	tx := h.db.Begin()
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+		}
+	}()
+
+	// 删除所有关联的地址
+	if err := tx.Where("origin_group_id = ?", req.ID).Delete(&model.OriginGroupAddress{}).Error; err != nil {
+		tx.Rollback()
+		httpx.FailErr(c, httpx.ErrDatabase(err))
+		return
+	}
+
+	// 删除分组
+	if err := tx.Delete(&group).Error; err != nil {
+		tx.Rollback()
+		httpx.FailErr(c, httpx.ErrDatabase(err))
+		return
+	}
+
+	if err := tx.Commit().Error; err != nil {
+		httpx.FailErr(c, httpx.ErrDatabase(err))
+		return
+	}
+
+	httpx.OK(c, nil)
+}
