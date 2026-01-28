@@ -11,7 +11,7 @@ const (
 // NodeIP represents an IP address for a node (main or sub)
 type NodeIP struct {
 	BaseModel
-	NodeID  int        `gorm:"not null;index" json:"node_id"`
+	NodeID  int64      `gorm:"not null;index" json:"node_id"`
 	IP      string     `gorm:"type:varchar(64);uniqueIndex:uk_node_ips_ip;not null" json:"ip"`
 	IPType  NodeIPType `gorm:"type:enum('main','sub');not null;index" json:"ip_type"`
 	Enabled bool       `gorm:"type:tinyint;default:1" json:"enabled"`
