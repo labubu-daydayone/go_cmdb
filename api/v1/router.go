@@ -134,14 +134,14 @@ func SetupRouter(r *gin.Engine, db *gorm.DB, cfg *config.Config, acmeWorker *acm
 		}
 
 			// Origin groups routes
-			originGroupsHandler := origin_groups.NewHandler(db)
-			originGroupsGroup := protected.Group("/origin-groups")
-			{
-				originGroupsGroup.GET("", originGroupsHandler.List)
-				originGroupsGroup.POST("/create", originGroupsHandler.Create)
-				originGroupsGroup.POST("/update", originGroupsHandler.Update)
-				originGroupsGroup.POST("/delete", originGroupsHandler.Delete)
-			}
+		originGroupsHandler := origin_groups.NewHandler(db)
+		originGroupsGroup := protected.Group("/origin-groups")
+		{
+			originGroupsGroup.GET("/list", originGroupsHandler.List)
+			originGroupsGroup.GET("/detail", originGroupsHandler.Detail)
+			originGroupsGroup.POST("/create", originGroupsHandler.Create)
+			originGroupsGroup.POST("/addresses/upsert", originGroupsHandler.AddressesUpsert)
+		}
 
 			// Origins routes (website origin sets)
 			originsHandler := origins.NewHandler(db)
