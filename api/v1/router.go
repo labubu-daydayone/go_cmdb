@@ -107,6 +107,7 @@ func SetupRouter(r *gin.Engine, db *gorm.DB, cfg *config.Config, acmeWorker *acm
 				nodeIPsGroup := protected.Group("/node-ips")
 				{
 					nodeIPsGroup.GET("", nodeIPsHandler.List)
+					nodeIPsGroup.GET("/:id/dns-preview", nodeIPsHandler.DNSPreview)
 					nodeIPsGroup.POST("/disable", nodeIPsHandler.Disable)
 					nodeIPsGroup.POST("/enable", nodeIPsHandler.Enable)
 				}

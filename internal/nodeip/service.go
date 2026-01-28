@@ -9,12 +9,16 @@ import (
 
 // Service handles node IP operations
 type Service struct {
-	db *gorm.DB
+	db        *gorm.DB
+	DNSLinker *DNSLinker
 }
 
 // NewService creates a new node IP service
 func NewService(db *gorm.DB) *Service {
-	return &Service{db: db}
+	return &Service{
+		db:        db,
+		DNSLinker: NewDNSLinker(db),
+	}
 }
 
 // ListNodeIPs retrieves node IPs with optional filtering by nodeId
@@ -48,32 +52,78 @@ func (s *Service) ListNodeIPs(nodeID *int) ([]dto.NodeIPItem, error) {
 	return items, nil
 }
 
-// DisableNodeIPs disables node IPs by IDs
+// DisableNodeIPs disables node IPs by IDs and updates DNS records
 func (s *Service) DisableNodeIPs(ids []int) error {
 	if len(ids) == 0 {
 		return nil
 	}
 
-	return s.db.Model(&model.NodeIP{}).
+	// Start transaction
+	tx := s.db.Begin()
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+		}
+	}()
+
+	// Disable IPs
+	if err := tx.Model(&model.NodeIP{}).
 		Where("id IN ?", ids).
 		Updates(map[string]interface{}{
 			"enabled": false,
 			"status":  model.NodeIPStatusDisabled,
-		}).Error
+		}).Error; err != nil {
+		tx.Rollback()
+		return err
+	}
+
+	// Update DNS records to absent for each IP
+	linker := NewDNSLinker(tx)
+	for _, ipID := range ids {
+		if err := linker.ApplyDesiredRecords(ipID, model.DNSRecordDesiredStateAbsent); err != nil {
+			tx.Rollback()
+			return err
+		}
+	}
+
+	return tx.Commit().Error
 }
 
-// EnableNodeIPs enables node IPs by IDs
+// EnableNodeIPs enables node IPs by IDs and updates DNS records
 func (s *Service) EnableNodeIPs(ids []int) error {
 	if len(ids) == 0 {
 		return nil
 	}
 
-	return s.db.Model(&model.NodeIP{}).
+	// Start transaction
+	tx := s.db.Begin()
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+		}
+	}()
+
+	// Enable IPs
+	if err := tx.Model(&model.NodeIP{}).
 		Where("id IN ?", ids).
 		Updates(map[string]interface{}{
 			"enabled": true,
 			"status":  model.NodeIPStatusActive,
-		}).Error
+		}).Error; err != nil {
+		tx.Rollback()
+		return err
+	}
+
+	// Update DNS records to present for each IP
+	linker := NewDNSLinker(tx)
+	for _, ipID := range ids {
+		if err := linker.ApplyDesiredRecords(ipID, model.DNSRecordDesiredStatePresent); err != nil {
+			tx.Rollback()
+			return err
+		}
+	}
+
+	return tx.Commit().Error
 }
 
 // CheckIPsExist checks if all IDs exist
