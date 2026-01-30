@@ -173,7 +173,8 @@ func (h *Handler) AddressesUpsert(c *gin.Context) {
 		}
 	}
 
-	if err := tx.Create(&addresses).Error; err != nil {
+	// 使用 Select 显式指定所有字段，避免 bool 零值被忽略
+	if err := tx.Select("OriginGroupID", "Address", "Role", "Weight", "Enabled", "Protocol").Create(&addresses).Error; err != nil {
 		tx.Rollback()
 		httpx.FailErr(c, httpx.ErrDatabaseError("failed to create addresses", err))
 		return
