@@ -160,24 +160,25 @@ func (h *Handler) AddressesUpsert(c *gin.Context) {
 		return
 	}
 
-	// 创建新地址
-	addresses := make([]model.OriginGroupAddress, len(req.Items))
-	for i, item := range req.Items {
-		addresses[i] = model.OriginGroupAddress{
+	// 创建新地址 - 逐条插入以确保 enabled 字段正确保存
+	for _, item := range req.Items {
+		addr := model.OriginGroupAddress{
 			OriginGroupID: req.OriginGroupID,
 			Address:       item.Address,
 			Role:          item.Role,
 			Weight:        item.Weight,
 			Enabled:       item.Enabled,
-			Protocol:      model.OriginProtocolHTTP, // 默认http
+			Protocol:      model.OriginProtocolHTTP,
 		}
-	}
-
-	// 使用 Select("*") 强制包含所有字段，包括零值
-	if err := tx.Select("*").Create(&addresses).Error; err != nil {
-		tx.Rollback()
-		httpx.FailErr(c, httpx.ErrDatabaseError("failed to create addresses", err))
-		return
+		// 使用原生 SQL 确保 enabled 字段被正确设置
+		if err := tx.Exec(
+			"INSERT INTO origin_group_addresses (origin_group_id, address, role, weight, enabled, protocol, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, NOW(), NOW())",
+			addr.OriginGroupID, addr.Address, addr.Role, addr.Weight, addr.Enabled, addr.Protocol,
+		).Error; err != nil {
+			tx.Rollback()
+			httpx.FailErr(c, httpx.ErrDatabaseError("failed to create address", err))
+			return
+		}
 	}
 
 	// 校验至少存在1个enabled=true的primary
