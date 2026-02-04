@@ -212,13 +212,7 @@ func (h *Handler) GetByID(c *gin.Context) {
 	}
 
 	var website model.Website
-	if err := h.db.
-		Preload("LineGroup").
-		Preload("OriginGroup").
-		Preload("OriginSet.Addresses").
-		Preload("Domains").
-		Preload("HTTPS").
-		First(&website, id).Error; err != nil {
+	if err := h.db.First(&website, id).Error; err != nil {
 		if err == gorm.ErrRecordNotFound {
 			httpx.FailErr(c, httpx.ErrNotFound("website not found"))
 			return
