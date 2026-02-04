@@ -53,14 +53,14 @@ func (h *Handler) Create(c *gin.Context) {
 	// 解析文本
 	lines := parseText(req.Text)
 	if len(lines) == 0 {
-		httpx.FailErr(c, httpx.ErrAlreadyExists("domains required"))
+		httpx.FailErr(c, httpx.ErrParamMissing("domains required"))
 		return
 	}
 
 	// 检查每行是否至少有 1 个域名
 	for i, domains := range lines {
 		if len(domains) == 0 {
-			httpx.FailErr(c, httpx.ErrAlreadyExists("domains required"))
+			httpx.FailErr(c, httpx.ErrParamMissing("domains required"))
 			return
 		}
 		_ = i
