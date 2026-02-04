@@ -258,7 +258,7 @@ func (h *Handler) Update(c *gin.Context) {
 	}
 
 	// 检查是否有origin_set
-	if website.OriginSetID == 0 || website.OriginSet == nil {
+	if website.OriginSetID == nil || website.OriginSet == nil {
 		httpx.FailErr(c, httpx.ErrNotFound(""))
 		return
 	}
@@ -278,7 +278,7 @@ func (h *Handler) Update(c *gin.Context) {
 	}()
 
 	// 删除旧addresses
-	if err := tx.Where("origin_set_id = ?", website.OriginSetID).
+	if err := tx.Where("origin_set_id = ?", *website.OriginSetID).
 		Delete(&model.OriginAddress{}).Error; err != nil {
 		tx.Rollback()
 		httpx.FailErr(c, httpx.ErrDatabaseError("", err))
@@ -298,7 +298,7 @@ func (h *Handler) Update(c *gin.Context) {
 		}
 
 		addresses[i] = model.OriginAddress{
-			OriginSetID: website.OriginSetID,
+			OriginSetID: *website.OriginSetID,
 			Role:        addr.Role,
 			Protocol:    addr.Protocol,
 			Address:     addr.Address,
@@ -321,7 +321,7 @@ func (h *Handler) Update(c *gin.Context) {
 
 	// 重新加载完整数据
 	var originSet model.OriginSet
-	if err := h.db.Preload("Addresses").First(&originSet, website.OriginSetID).Error; err != nil {
+	if err := h.db.Preload("Addresses").First(&originSet, *website.OriginSetID).Error; err != nil {
 		httpx.FailErr(c, httpx.ErrDatabaseError("", err))
 		return
 	}
@@ -355,7 +355,7 @@ func (h *Handler) Delete(c *gin.Context) {
 	}
 
 	// 检查是否有origin_set
-	if website.OriginSetID == 0 {
+	if website.OriginSetID == nil {
 		httpx.OK(c, gin.H{"message": "no origin_set to delete"})
 		return
 	}
@@ -369,7 +369,7 @@ func (h *Handler) Delete(c *gin.Context) {
 	}()
 
 	// 删除origin_set（级联删除addresses）
-	if err := tx.Delete(&model.OriginSet{}, website.OriginSetID).Error; err != nil {
+	if err := tx.Delete(&model.OriginSet{}, *website.OriginSetID).Error; err != nil {
 		tx.Rollback()
 		httpx.FailErr(c, httpx.ErrDatabaseError("", err))
 		return
@@ -378,8 +378,8 @@ func (h *Handler) Delete(c *gin.Context) {
 	// 更新website（设置为redirect模式）
 	if err := tx.Model(&website).Updates(map[string]interface{}{
 		"origin_mode":     model.OriginModeRedirect,
-		"origin_group_id": 0,
-		"origin_set_id":   0,
+		"origin_group_id": nil,
+		"origin_set_id":   nil,
 	}).Error; err != nil {
 		tx.Rollback()
 		httpx.FailErr(c, httpx.ErrDatabaseError("", err))

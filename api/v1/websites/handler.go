@@ -122,19 +122,19 @@ func (h *Handler) List(c *gin.Context) {
 	// 转换为响应格式
 	list := make([]WebsiteItem, 0, len(websites))
 	for _, w := range websites {
-		item := WebsiteItem{
-			ID:                 w.ID,
-			LineGroupID:        w.LineGroupID,
-			CacheRuleID:        w.CacheRuleID,
-			OriginMode:         w.OriginMode,
-			OriginGroupID:      w.OriginGroupID,
-			OriginSetID:        w.OriginSetID,
-			RedirectURL:        w.RedirectURL,
-			RedirectStatusCode: w.RedirectStatusCode,
-			Status:             w.Status,
-			CreatedAt:          w.CreatedAt.Format("2006-01-02 15:04:05"),
-			UpdatedAt:          w.UpdatedAt.Format("2006-01-02 15:04:05"),
-		}
+			item := WebsiteItem{
+				ID:                 w.ID,
+				LineGroupID:        w.LineGroupID,
+				CacheRuleID:        w.CacheRuleID,
+				OriginMode:         w.OriginMode,
+				OriginGroupID:      model.UVal(w.OriginGroupID),
+				OriginSetID:        model.UVal(w.OriginSetID),
+				RedirectURL:        w.RedirectURL,
+				RedirectStatusCode: w.RedirectStatusCode,
+				Status:             w.Status,
+				CreatedAt:          w.CreatedAt.Format("2006-01-02 15:04:05"),
+				UpdatedAt:          w.UpdatedAt.Format("2006-01-02 15:04:05"),
+			}
 
 		// LineGroup名称和CNAME
 		if w.LineGroup != nil {
@@ -261,16 +261,14 @@ func (h *Handler) Create(c *gin.Context) {
 		switch req.OriginMode {
 		case "group":
 			// group 模式：只设置 originGroupID
-			website.OriginGroupID = req.OriginGroupID
-			// 使用 Omit 跳过 originSetID
-			createDB = tx.Omit("origin_set_id").Create(&website)
+			website.OriginGroupID = model.UPtr(req.OriginGroupID)
+			// originSetID 保持 nil
 		case "manual", "redirect":
 			// manual/redirect 模式：originGroupID 和 originSetID 都为 NULL
-			// 使用 Omit 跳过这两个字段
-			createDB = tx.Omit("origin_group_id", "origin_set_id").Create(&website)
+			// 保持默认 nil
 		}
 
-		if err := createDB.Error; err != nil {
+		if err := tx.Create(&website).Error; err != nil {
 			return httpx.ErrDatabaseError("failed to create website", err)
 		}
 		websiteID = website.ID
@@ -598,7 +596,7 @@ func (h *Handler) Update(c *gin.Context) {
 			// 状态机校验（简化版，实际可能需要更复杂的逻辑）
 			if oldMode != newMode {
 				// 删除旧origin_set
-				if website.OriginSetID > 0 {
+				if website.OriginSetID != nil && *website.OriginSetID > 0 {
 					if err := tx.Delete(&model.OriginAddress{}, "origin_set_id = ?", website.OriginSetID).Error; err != nil {
 						return httpx.ErrDatabaseError("failed to delete origin addresses", err)
 					}
