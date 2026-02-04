@@ -687,9 +687,9 @@ func (h *Handler) Delete(c *gin.Context) {
 // GetByIDRequest 根据ID查询请求
 type GetByIDRequest struct {
 	ID string `uri:"id" binding:"required"`
-}
-// 
-func (h *Handler) GetByID(c *gin.Context) {
+	}
+	// GetByID 根据ID查询网站详情
+	func (h *Handler) GetByID(c *gin.Context) {
 	var req GetByIDRequest
 	if err := c.ShouldBindUri(&req); err != nil {
 		httpx.FailErr(c, httpx.ErrParamInvalid("invalid id"))
