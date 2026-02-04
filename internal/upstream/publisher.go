@@ -163,7 +163,7 @@ func (p *Publisher) Publish(req *PublishRequest) (*PublishResponse, error) {
 
 			// 记录第一个任务 ID
 			if firstTaskID == 0 {
-				firstTaskID = task.ID
+				firstTaskID = int64(task.ID)
 			}
 		}
 
