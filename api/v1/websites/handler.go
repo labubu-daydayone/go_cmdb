@@ -258,19 +258,22 @@ func (h *Handler) Create(c *gin.Context) {
 		}
 
 			// 根据 originMode 设置 origin 字段
+			var createDB *gorm.DB
 			switch req.OriginMode {
 			case "group":
 				// group 模式：只设置 originGroupID
 				if req.OriginGroupID > 0 {
 					website.OriginGroupID = sql.NullInt32{Int32: int32(req.OriginGroupID), Valid: true}
 				}
-				// originSetID 保持 invalid (NULL)
+				// originSetID 保持 invalid (NULL), 使用 Omit 排除
+				createDB = tx.Omit("OriginSetID")
 			case "manual", "redirect":
 				// manual/redirect 模式：originGroupID 和 originSetID 都为 NULL
-				// 保持默认 invalid (NULL)
+				// 使用 Omit 排除这两个字段
+				createDB = tx.Omit("OriginGroupID", "OriginSetID")
 			}
 
-		if err := tx.Create(&website).Error; err != nil {
+			if err := createDB.Create(&website).Error; err != nil {
 			return httpx.ErrDatabaseError("failed to create website", err)
 		}
 		websiteID = website.ID
