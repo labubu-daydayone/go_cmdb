@@ -184,13 +184,13 @@ func SetupRouter(r *gin.Engine, db *gorm.DB, cfg *config.Config, acmeWorker *acm
 			websitesHandler := websites.NewHandler(db)
 			websitesGroup := protected.Group("/websites")
 			{
-			websitesGroup.GET("", websitesHandler.List)
-			websitesGroup.GET("/:id", websitesHandler.GetByID)
-			websitesGroup.POST("/create", websitesHandler.Create)
-			websitesGroup.POST("/update", websitesHandler.Update)
-			websitesGroup.POST("/delete", websitesHandler.Delete)
-			websitesGroup.POST("/bind-origin-set", websitesHandler.BindOriginSet)
-		}
+				websitesGroup.GET("", websitesHandler.List)
+				websitesGroup.GET("/:id", websitesHandler.GetByID)
+				websitesGroup.POST("/create", websitesHandler.Create)
+				websitesGroup.POST("/update", websitesHandler.Update)
+				websitesGroup.POST("/delete", websitesHandler.Delete)
+				websitesGroup.POST("/bind-origin-set", websitesHandler.BindOriginSet)
+			}
 
 			// Agent tasks routes
 			agentTasksHandler := agent_tasks.NewHandler(db, cfg)
