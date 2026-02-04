@@ -682,9 +682,6 @@ func (h *Handler) Delete(c *gin.Context) {
 // 		}
 // 
 // 		httpx.OK(c, nil)
-// }
-// 
-// GetByIDRequest 根据ID查询请求
 type GetByIDRequest struct {
 	ID string `uri:"id" binding:"required"`
 }
