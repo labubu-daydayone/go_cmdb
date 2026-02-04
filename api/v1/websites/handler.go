@@ -731,6 +731,11 @@ func (h *Handler) Delete(c *gin.Context) {
 				return httpx.ErrDatabaseError("failed to query website", err)
 			}
 
+			// 删除certificate_bindings
+			if err := tx.Where("owner_type = ? AND owner_id = ?", "website", id).Delete(&model.CertificateBinding{}).Error; err != nil {
+				return httpx.ErrDatabaseError("failed to delete certificate bindings", err)
+			}
+
 			// 标记DNS记录为error
 			if err := tx.Model(&model.DomainDNSRecord{}).
 				Where("owner_type = ? AND owner_id IN (?)",
