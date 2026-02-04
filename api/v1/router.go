@@ -9,6 +9,7 @@ import (
 	"go_cmdb/api/v1/agent_tasks"
 	"go_cmdb/api/v1/api_keys"
 	"go_cmdb/api/v1/auth"
+	"go_cmdb/api/v1/cache_rules"
 	"go_cmdb/api/v1/cert"
 	"go_cmdb/api/v1/certificate_renew"
 	configHandler "go_cmdb/api/v1/config"
@@ -164,6 +165,19 @@ func SetupRouter(r *gin.Engine, db *gorm.DB, cfg *config.Config, acmeWorker *acm
 				originSetsGroup.GET("", originSetsHandler.List)
 				originSetsGroup.GET("/:id", originSetsHandler.Detail)
 				originSetsGroup.POST("/bind-website", originSetsHandler.BindWebsite)
+			}
+
+			// Cache Rules routes
+			cacheRulesHandler := cache_rules.NewHandler(db)
+			cacheRulesGroup := protected.Group("/cache-rules")
+			{
+				cacheRulesGroup.POST("/create", cacheRulesHandler.Create)
+				cacheRulesGroup.GET("", cacheRulesHandler.List)
+				cacheRulesGroup.POST("/update", cacheRulesHandler.Update)
+				cacheRulesGroup.POST("/delete", cacheRulesHandler.Delete)
+				cacheRulesGroup.POST("/items/upsert", cacheRulesHandler.ItemsUpsert)
+				cacheRulesGroup.GET("/:id/items", cacheRulesHandler.GetItems)
+				cacheRulesGroup.POST("/items/delete", cacheRulesHandler.DeleteItems)
 			}
 
 			// Websites routes
