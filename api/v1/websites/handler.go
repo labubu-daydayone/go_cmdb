@@ -266,11 +266,11 @@ func (h *Handler) Create(c *gin.Context) {
 					website.OriginGroupID = sql.NullInt32{Int32: int32(req.OriginGroupID), Valid: true}
 				}
 				// originSetID 保持 invalid (NULL), 使用 Omit 排除
-				createDB = tx.Omit("OriginSetID")
+				createDB = tx.Omit("origin_set_id")
 			case "manual", "redirect":
 				// manual/redirect 模式：originGroupID 和 originSetID 都为 NULL
 				// 使用 Omit 排除这两个字段
-				createDB = tx.Omit("OriginGroupID", "OriginSetID")
+				createDB = tx.Omit("origin_group_id", "origin_set_id")
 			}
 
 			if err := createDB.Create(&website).Error; err != nil {
