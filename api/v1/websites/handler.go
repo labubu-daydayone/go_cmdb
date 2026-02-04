@@ -180,19 +180,18 @@ func (h *Handler) List(c *gin.Context) {
 
 // CreateRequest 创建请求
 type CreateRequest struct {
-	LineGroupID int      `json:"line_group_id" binding:"required"`
-	CacheRuleID int      `json:"cache_rule_id"`
-	Domains     []string `json:"domains" binding:"required,min=1"` // 至少一个域名
+	Domain      string `json:"domain" binding:"required"` // 域名（必填且唯一）
+	LineGroupID int    `json:"lineGroupId" binding:"required"`
+	CacheRuleID int    `json:"cacheRuleId"`
 
 	// 回源配置
-	OriginMode         string                   `json:"origin_mode" binding:"required,oneof=group manual redirect"`
-	OriginGroupID      int                      `json:"origin_group_id"`      // group模式时必填
-	OriginAddresses    []OriginAddressInput     `json:"origin_addresses"`     // manual模式时必填
-	RedirectURL        string                   `json:"redirect_url"`         // redirect模式时必填
-	RedirectStatusCode int                      `json:"redirect_status_code"` // redirect模式时必填
+	OriginMode    string `json:"originMode" binding:"required,oneof=group manual redirect"`
+	OriginGroupID *int  `json:"originGroupId"` // group模式时必填
+	OriginSetID   *int  `json:"originSetId"`   // group模式时必填
 
-	// HTTPS配置（可选）
-	HTTPS *HTTPSInput `json:"https"`
+	// redirect配置
+	RedirectURL        *string `json:"redirectUrl"`        // redirect模式时必填
+	RedirectStatusCode *int    `json:"redirectStatusCode"` // redirect模式时可选
 }
 
 // OriginAddressInput 回源地址输入
