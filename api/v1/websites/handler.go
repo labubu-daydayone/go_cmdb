@@ -731,14 +731,6 @@ func (h *Handler) Delete(c *gin.Context) {
 				return httpx.ErrDatabaseError("failed to query website", err)
 			}
 
-			// 解绑回源引用
-			if err := tx.Model(&website).Updates(map[string]interface{}{
-				"origin_set_id":   0,
-				"origin_group_id": 0,
-			}).Error; err != nil {
-				return httpx.ErrDatabaseError("failed to unbind origin references", err)
-			}
-
 			// 标记DNS记录为error
 			if err := tx.Model(&model.DomainDNSRecord{}).
 				Where("owner_type = ? AND owner_id IN (?)",
