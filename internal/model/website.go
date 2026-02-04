@@ -5,8 +5,7 @@ import "database/sql"
 // Website 网站配置
 type Website struct {
 	BaseModel
-	Domain      string `gorm:"type:varchar(255);uniqueIndex:uk_websites_domain" json:"domain"` // 域名（唯一标识）
-	LineGroupID int    `gorm:"not null;index" json:"lineGroupId"`                              // 线路分组ID
+	LineGroupID int `gorm:"not null;index" json:"lineGroupId"` // 线路分组ID
 	CacheRuleID int `gorm:"default:0;index" json:"cacheRuleId"` // 缓存规则ID（可选）
 
 	// 回源配置

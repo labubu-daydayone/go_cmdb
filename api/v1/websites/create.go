@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"go_cmdb/internal/httpx"
 	"go_cmdb/internal/model"
+	"strings"
 
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
@@ -11,22 +12,32 @@ import (
 
 // CreateRequest 创建请求
 type CreateRequest struct {
-	Domain      string `json:"domain" binding:"required"` // 域名（必填且唯一）
-	LineGroupID int    `json:"lineGroupId" binding:"required"`
-	CacheRuleID int    `json:"cacheRuleId"`
-
-	// 回源配置
-	OriginMode    string `json:"originMode" binding:"required,oneof=group manual redirect"`
-	OriginGroupID *int   `json:"originGroupId"` // group模式时必填
-	OriginSetID   *int   `json:"originSetId"`   // group模式时必填
-
-	// redirect配置
-	RedirectURL        *string `json:"redirectUrl"`        // redirect模式时必填
-	RedirectStatusCode *int    `json:"redirectStatusCode"` // redirect模式时可选
+	Text         string `json:"text" binding:"required"`
+	LineGroupID  int    `json:"lineGroupId" binding:"required"`
+	CacheRuleID  int    `json:"cacheRuleId"`
+	OriginMode   string `json:"originMode" binding:"required,oneof=group manual redirect"`
+	OriginGroupID *int  `json:"originGroupId"`
+	OriginSetID   *int  `json:"originSetId"`
+	RedirectURL   *string `json:"redirectUrl"`
+	RedirectStatusCode *int `json:"redirectStatusCode"`
 }
 
-// CreateNew 创建网站
-func (h *Handler) CreateNew(c *gin.Context) {
+// CreateResponse 创建响应
+type CreateResponse struct {
+	Items []CreateResultItem `json:"items"`
+}
+
+// CreateResultItem 单行创建结果
+type CreateResultItem struct {
+	Line      int      `json:"line"`
+	Created   bool     `json:"created"`
+	WebsiteID *int     `json:"websiteId"`
+	Domains   []string `json:"domains"`
+	Error     *string  `json:"error"`
+}
+
+// Create 创建网站
+func (h *Handler) Create(c *gin.Context) {
 	var req CreateRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		httpx.FailErr(c, httpx.ErrParamInvalid("invalid request body"))
@@ -34,112 +45,161 @@ func (h *Handler) CreateNew(c *gin.Context) {
 	}
 
 	// 参数校验
-	if err := h.validateCreateRequest(&req); err != nil {
-		if appErr, ok := err.(*httpx.AppError); ok {
-			httpx.FailErr(c, appErr)
-		} else {
-			httpx.FailErr(c, httpx.ErrParamInvalid(err.Error()))
-		}
+	if err := validateCreateRequest(&req); err != nil {
+		httpx.FailErr(c, err)
 		return
 	}
 
-	// 事务处理
-	var website model.Website
-	err := h.db.Transaction(func(tx *gorm.DB) error {
-		// 1. 检查 domain 是否已存在
-		var count int64
-		if err := tx.Model(&model.Website{}).Where("domain = ?", req.Domain).Count(&count).Error; err != nil {
-			return httpx.ErrDatabaseError("failed to check domain", err)
-		}
-		if count > 0 {
-			return httpx.ErrAlreadyExists("domain already exists")
-		}
-
-		// 2. 查询 line_group
-		var lineGroup model.LineGroup
-		if err := tx.First(&lineGroup, req.LineGroupID).Error; err != nil {
-			if err == gorm.ErrRecordNotFound {
-				return httpx.ErrNotFound("line group not found")
-			}
-			return httpx.ErrDatabaseError("failed to query line group", err)
-		}
-
-		// 3. 创建 website
-		website = model.Website{
-			Domain:      req.Domain,
-			LineGroupID: req.LineGroupID,
-			CacheRuleID: req.CacheRuleID,
-			OriginMode:  req.OriginMode,
-			Status:      model.WebsiteStatusActive,
-		}
-
-		// 4. 根据 originMode 设置字段
-		switch req.OriginMode {
-		case model.OriginModeGroup:
-			// group 模式：必须提供 originGroupId 和 originSetId
-			if req.OriginGroupID == nil || *req.OriginGroupID <= 0 {
-				return httpx.ErrParamMissing("originGroupId is required for group mode")
-			}
-			if req.OriginSetID == nil || *req.OriginSetID <= 0 {
-				return httpx.ErrParamMissing("originSetId is required for group mode")
-			}
-			website.OriginGroupID = sql.NullInt32{Int32: int32(*req.OriginGroupID), Valid: true}
-			website.OriginSetID = sql.NullInt32{Int32: int32(*req.OriginSetID), Valid: true}
-
-		case model.OriginModeManual:
-			// manual 模式：originGroupId 和 originSetId 都为 NULL
-			// 保持默认值即可
-
-		case model.OriginModeRedirect:
-			// redirect 模式：必须提供 redirectUrl
-			if req.RedirectURL == nil || *req.RedirectURL == "" {
-				return httpx.ErrParamMissing("redirectUrl is required for redirect mode")
-			}
-			website.RedirectURL = *req.RedirectURL
-			if req.RedirectStatusCode != nil {
-				website.RedirectStatusCode = *req.RedirectStatusCode
-			} else {
-				website.RedirectStatusCode = 301 // 默认值
-			}
-		}
-
-		// 5. 创建记录
-		if err := tx.Create(&website).Error; err != nil {
-			// 检查是否是唯一约束冲突
-			return httpx.ErrDatabaseError("failed to create website", err)
-		}
-
-		return nil
-	})
-
-	if err != nil {
-		if appErr, ok := err.(*httpx.AppError); ok {
-			httpx.FailErr(c, appErr)
-		} else {
-			httpx.FailErr(c, httpx.ErrDatabaseError("transaction failed", err))
-		}
+	// 解析文本
+	lines := parseText(req.Text)
+	if len(lines) == 0 {
+		httpx.FailErr(c, httpx.ErrParamInvalid("no valid domains found in text"))
 		return
 	}
 
-	// 返回创建的网站信息
-	httpx.OK(c, gin.H{
-		"item": toWebsiteDTO(&website),
-	})
+	// 逐行处理
+	results := make([]CreateResultItem, 0, len(lines))
+	for i, domains := range lines {
+		lineNum := i + 1
+		result := CreateResultItem{
+			Line:    lineNum,
+			Domains: domains,
+		}
+
+		// 在事务中创建
+		err := h.db.Transaction(func(tx *gorm.DB) error {
+			// 检查域名是否已存在
+			for _, domain := range domains {
+				var count int64
+				if err := tx.Model(&model.WebsiteDomain{}).Where("domain = ?", domain).Count(&count).Error; err != nil {
+					return err
+				}
+				if count > 0 {
+					errMsg := "domain already exists: " + domain
+					result.Error = &errMsg
+					return nil // 不回滚事务，只是标记失败
+				}
+			}
+
+			// 创建 website
+			website := model.Website{
+				LineGroupID: req.LineGroupID,
+				CacheRuleID: req.CacheRuleID,
+				OriginMode:  req.OriginMode,
+				Status:      model.WebsiteStatusActive,
+			}
+
+			// 根据 originMode 设置字段
+			switch req.OriginMode {
+			case "group":
+				if req.OriginGroupID != nil && *req.OriginGroupID > 0 {
+					website.OriginGroupID = sql.NullInt32{Int32: int32(*req.OriginGroupID), Valid: true}
+				}
+				if req.OriginSetID != nil && *req.OriginSetID > 0 {
+					website.OriginSetID = sql.NullInt32{Int32: int32(*req.OriginSetID), Valid: true}
+				}
+			case "redirect":
+				if req.RedirectURL != nil {
+					website.RedirectURL = *req.RedirectURL
+				}
+				if req.RedirectStatusCode != nil {
+					website.RedirectStatusCode = *req.RedirectStatusCode
+				} else {
+					website.RedirectStatusCode = 301
+				}
+			}
+
+			if err := tx.Create(&website).Error; err != nil {
+				return err
+			}
+
+			// 创建 website_domains
+			for idx, domain := range domains {
+				wd := model.WebsiteDomain{
+					WebsiteID: website.ID,
+					Domain:    domain,
+					IsPrimary: idx == 0,
+				}
+				if err := tx.Create(&wd).Error; err != nil {
+					return err
+				}
+			}
+
+			result.Created = true
+			websiteID := website.ID
+			result.WebsiteID = &websiteID
+			return nil
+		})
+
+		if err != nil {
+			errMsg := err.Error()
+			result.Error = &errMsg
+			result.Created = false
+		}
+
+		results = append(results, result)
+	}
+
+	httpx.OK(c, CreateResponse{Items: results})
 }
 
-// validateCreateRequest 验证创建请求
-func (h *Handler) validateCreateRequest(req *CreateRequest) error {
-	// domain 必填
-	if req.Domain == "" {
-		return httpx.ErrParamMissing("domain is required")
+// parseText 解析文本为域名列表
+func parseText(text string) [][]string {
+	text = strings.TrimSpace(text)
+	if text == "" {
+		return nil
 	}
 
-	// originMode 必填
-	if req.OriginMode == "" {
-		return httpx.ErrParamMissing("originMode is required")
+	lines := strings.Split(text, "\n")
+	result := make([][]string, 0, len(lines))
+
+	for _, line := range lines {
+		line = strings.TrimSpace(line)
+		if line == "" {
+			continue
+		}
+
+		// 按空白分割
+		tokens := strings.Fields(line)
+		domains := make([]string, 0, len(tokens))
+		seen := make(map[string]bool)
+
+		for _, token := range tokens {
+			domain := normalizeDomain(token)
+			if domain == "" {
+				continue
+			}
+			// 去重
+			if !seen[domain] {
+				domains = append(domains, domain)
+				seen[domain] = true
+			}
+		}
+
+		if len(domains) > 0 {
+			result = append(result, domains)
+		}
 	}
 
-	// 根据 originMode 验证参数
+	return result
+}
+
+// normalizeDomain 规范化域名
+func normalizeDomain(domain string) string {
+	domain = strings.TrimSpace(domain)
+	domain = strings.ToLower(domain)
+	domain = strings.TrimSuffix(domain, ".")
+
+	// 禁止包含协议前缀
+	if strings.Contains(domain, "http://") || strings.Contains(domain, "https://") || strings.Contains(domain, "/") {
+		return ""
+	}
+
+	return domain
+}
+
+// validateCreateRequest 校验创建请求
+func validateCreateRequest(req *CreateRequest) *httpx.AppError {
 	switch req.OriginMode {
 	case model.OriginModeGroup:
 		if req.OriginGroupID == nil || *req.OriginGroupID <= 0 {
@@ -155,45 +215,4 @@ func (h *Handler) validateCreateRequest(req *CreateRequest) error {
 	}
 
 	return nil
-}
-
-// toWebsiteDTO 转换为 DTO
-func toWebsiteDTO(w *model.Website) map[string]interface{} {
-	dto := map[string]interface{}{
-		"id":          w.ID,
-		"domain":      w.Domain,
-		"lineGroupId": w.LineGroupID,
-		"cacheRuleId": w.CacheRuleID,
-		"originMode":  w.OriginMode,
-		"status":      w.Status,
-		"createdAt":   w.CreatedAt.Format("2006-01-02T15:04:05Z07:00"),
-		"updatedAt":   w.UpdatedAt.Format("2006-01-02T15:04:05Z07:00"),
-	}
-
-	// 处理可空字段
-	if w.OriginGroupID.Valid {
-		dto["originGroupId"] = int(w.OriginGroupID.Int32)
-	} else {
-		dto["originGroupId"] = nil
-	}
-
-	if w.OriginSetID.Valid {
-		dto["originSetId"] = int(w.OriginSetID.Int32)
-	} else {
-		dto["originSetId"] = nil
-	}
-
-	if w.RedirectURL != "" {
-		dto["redirectUrl"] = w.RedirectURL
-	} else {
-		dto["redirectUrl"] = nil
-	}
-
-	if w.RedirectStatusCode != 0 {
-		dto["redirectStatusCode"] = w.RedirectStatusCode
-	} else {
-		dto["redirectStatusCode"] = nil
-	}
-
-	return dto
 }
