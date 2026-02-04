@@ -1,8 +1,6 @@
 package websites
 
 import (
-	"crypto/md5"
-	"fmt"
 	"go_cmdb/internal/httpx"
 	"go_cmdb/internal/model"
 	"go_cmdb/internal/upstream"
@@ -70,7 +68,6 @@ func (h *Handler) BatchBindOriginSet(c *gin.Context) {
 	}()
 
 	var items []BatchBindOriginSetItem
-	renderer := upstream.NewRenderer(h.db)
 	publisher := upstream.NewPublisher(h.db)
 
 	for _, websiteID := range req.WebsiteIDs {
@@ -87,61 +84,25 @@ func (h *Handler) BatchBindOriginSet(c *gin.Context) {
 			return
 		}
 
-		// 3.2 渲染 upstream 内容
-		renderResp, err := renderer.Render(&upstream.RenderRequest{
-			OriginSetID: req.OriginSetID,
+		// 3.2 触发发布（Publisher 内部会判断幂等性）
+		publishResp, err := publisher.Publish(&upstream.PublishRequest{
 			WebsiteID:   websiteID,
+			OriginSetID: req.OriginSetID,
 		})
 		if err != nil {
 			tx.Rollback()
 			if appErr, ok := err.(*httpx.AppError); ok {
 				httpx.FailErr(c, appErr)
 			} else {
-				httpx.FailErr(c, httpx.ErrInternalError("failed to render upstream", err))
+				httpx.FailErr(c, httpx.ErrInternalError("failed to publish", err))
 			}
 			return
-		}
-
-		// 3.3 计算内容 hash（用于幂等判断）
-		contentHash := fmt.Sprintf("%x", md5.Sum([]byte(renderResp.UpstreamConf)))
-
-		// 3.4 检查 website 的上次绑定是否为相同的 originSetId，且内容未变化
-		// 简化实现：直接对比 website 当前的 origin_set_id
-		var currentWebsite model.Website
-		if err := tx.First(&currentWebsite, websiteID).Error; err != nil {
-			tx.Rollback()
-			httpx.FailErr(c, httpx.ErrDatabaseError("failed to query website", err))
-			return
-		}
-
-		var taskID int64 = 0
-		// 如果已经绑定了相同的 originSetId，且内容 hash 一致，则跳过
-		// 注意：这里简化实现，只判断 originSetId 是否相同
-		if currentWebsite.OriginSetID == int(req.OriginSetID) {
-			// 幂等跳过，taskID 保持为 0
-			_ = contentHash // 避免未使用变量警告
-		} else {
-			// 3.5 创建新任务
-			publishResp, err := publisher.Publish(&upstream.PublishRequest{
-				WebsiteID:   websiteID,
-				OriginSetID: req.OriginSetID,
-			})
-			if err != nil {
-				tx.Rollback()
-				if appErr, ok := err.(*httpx.AppError); ok {
-					httpx.FailErr(c, appErr)
-				} else {
-					httpx.FailErr(c, httpx.ErrInternalError("failed to publish", err))
-				}
-				return
-			}
-			taskID = publishResp.ReleaseID
 		}
 
 		items = append(items, BatchBindOriginSetItem{
 			WebsiteID:   websiteID,
 			OriginSetID: req.OriginSetID,
-			TaskID:      taskID,
+			TaskID:      publishResp.TaskID, // 0 表示幂等跳过，>0 表示创建了新任务
 		})
 	}
 
