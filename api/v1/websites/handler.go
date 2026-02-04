@@ -246,16 +246,28 @@ func (h *Handler) Create(c *gin.Context) {
 			return httpx.ErrDatabaseError("failed to query domain", err)
 		}
 		cname := lineGroup.CNAMEPrefix + "." + domain.Domain
-
-		// 2. 创建website
+		// 2. 创建 website
 		website := model.Website{
 			LineGroupID:        req.LineGroupID,
 			CacheRuleID:        req.CacheRuleID,
 			OriginMode:         req.OriginMode,
-			OriginGroupID:      req.OriginGroupID,
 			RedirectURL:        req.RedirectURL,
 			RedirectStatusCode: req.RedirectStatusCode,
 			Status:             model.WebsiteStatusActive,
+		}
+
+		// 根据 originMode 设置 origin 字段
+		switch req.OriginMode {
+		case "group":
+			// group 模式：只设置 originGroupID
+			website.OriginGroupID = req.OriginGroupID
+			// originSetID 保持 NULL（默认值）
+		case "manual":
+			// manual 模式：originGroupID 和 originSetID 都为 NULL
+			// 不设置任何值，保持默认 NULL
+		case "redirect":
+			// redirect 模式：originGroupID 和 originSetID 都为 NULL
+			// 不设置任何值，保持默认 NULL
 		}
 
 		if err := tx.Create(&website).Error; err != nil {
