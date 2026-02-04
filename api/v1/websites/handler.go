@@ -222,7 +222,7 @@ func (h *Handler) GetByID(c *gin.Context) {
 	}
 
 	httpx.OK(c, gin.H{
-		"item": toWebsiteDTO(&website),
+		"item": website,
 	})
 }
 
