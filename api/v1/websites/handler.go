@@ -227,7 +227,9 @@ func (h *Handler) GetByID(c *gin.Context) {
 		return
 	}
 
-	httpx.OK(c, website)
+	httpx.OK(c, gin.H{
+		"item": toWebsiteDTO(&website),
+	})
 }
 
 // validateCertificateCoverage validates if a certificate covers all website domains
