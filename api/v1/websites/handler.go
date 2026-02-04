@@ -36,31 +36,10 @@ type ListRequest struct {
 
 // ListResponse 列表响应
 type ListResponse struct {
-	Items    []WebsiteItem `json:"items"`
-	Total    int64         `json:"total"`
-	Page     int           `json:"page"`
-	PageSize int           `json:"pageSize"`
-}
-
-// WebsiteItem 网站列表项
-type WebsiteItem struct {
-	ID                 int      `json:"id"`
-	LineGroupID        int      `json:"line_group_id"`
-	LineGroupName      string   `json:"line_group_name"`
-	CacheRuleID        int      `json:"cache_rule_id"`
-	OriginMode         string   `json:"origin_mode"`
-	OriginGroupID      int      `json:"origin_group_id"`
-	OriginGroupName    string   `json:"origin_group_name"`
-	OriginSetID        int      `json:"origin_set_id"`
-	RedirectURL        string   `json:"redirect_url"`
-	RedirectStatusCode int      `json:"redirect_status_code"`
-	Status             string   `json:"status"`
-	Domains            []string `json:"domains"`
-	PrimaryDomain      string   `json:"primary_domain"`
-	CNAME              string   `json:"cname"`
-	HTTPSEnabled       bool     `json:"https_enabled"`
-	CreatedAt          string   `json:"created_at"`
-	UpdatedAt          string   `json:"updated_at"`
+	Items    []WebsiteListItemDTO `json:"items"`
+	Total    int64                `json:"total"`
+	Page     int                  `json:"page"`
+	PageSize int                  `json:"pageSize"`
 }
 
 // List 网站列表
@@ -118,21 +97,29 @@ func (h *Handler) List(c *gin.Context) {
 	}
 
 	// 转换为响应格式
-	list := make([]WebsiteItem, 0, len(websites))
+	list := make([]WebsiteListItemDTO, 0, len(websites))
 	for _, w := range websites {
-			item := WebsiteItem{
-				ID:                 w.ID,
-				LineGroupID:        w.LineGroupID,
-				CacheRuleID:        w.CacheRuleID,
-				OriginMode:         w.OriginMode,
-				OriginGroupID:      int(w.OriginGroupID.Int32),
-				OriginSetID:        int(w.OriginSetID.Int32),
-				RedirectURL:        w.RedirectURL,
-				RedirectStatusCode: w.RedirectStatusCode,
-				Status:             w.Status,
-				CreatedAt:          w.CreatedAt.Format("2006-01-02 15:04:05"),
-				UpdatedAt:          w.UpdatedAt.Format("2006-01-02 15:04:05"),
-			}
+		item := WebsiteListItemDTO{
+			ID:                 w.ID,
+			LineGroupID:        w.LineGroupID,
+			CacheRuleID:        w.CacheRuleID,
+			OriginMode:         w.OriginMode,
+			RedirectURL:        w.RedirectURL,
+			RedirectStatusCode: w.RedirectStatusCode,
+			Status:             w.Status,
+			CreatedAt:          w.CreatedAt,
+			UpdatedAt:          w.UpdatedAt,
+		}
+
+		// OriginGroupID 和 OriginSetID 处理
+		if w.OriginGroupID.Valid {
+			val := int(w.OriginGroupID.Int32)
+			item.OriginGroupID = &val
+		}
+		if w.OriginSetID.Valid {
+			val := int(w.OriginSetID.Int32)
+			item.OriginSetID = &val
+		}
 
 		// LineGroup名称和CNAME
 		if w.LineGroup != nil {
@@ -153,9 +140,6 @@ func (h *Handler) List(c *gin.Context) {
 		domains := make([]string, 0, len(w.Domains))
 		for _, d := range w.Domains {
 			domains = append(domains, d.Domain)
-			if d.IsPrimary {
-				item.PrimaryDomain = d.Domain
-			}
 		}
 		item.Domains = domains
 
@@ -194,7 +178,12 @@ func (h *Handler) GetByID(c *gin.Context) {
 	}
 
 	var website model.Website
-	if err := h.db.First(&website, id).Error; err != nil {
+	if err := h.db.
+		Preload("LineGroup").
+		Preload("OriginGroup").
+		Preload("Domains").
+		Preload("HTTPS").
+		First(&website, id).Error; err != nil {
 		if err == gorm.ErrRecordNotFound {
 			httpx.FailErr(c, httpx.ErrNotFound("website not found"))
 			return
@@ -203,8 +192,57 @@ func (h *Handler) GetByID(c *gin.Context) {
 		return
 	}
 
+	// 转换为 DTO
+	item := WebsiteDTO{
+		ID:                 website.ID,
+		LineGroupID:        website.LineGroupID,
+		CacheRuleID:        website.CacheRuleID,
+		OriginMode:         website.OriginMode,
+		RedirectURL:        website.RedirectURL,
+		RedirectStatusCode: website.RedirectStatusCode,
+		Status:             website.Status,
+		CreatedAt:          website.CreatedAt,
+		UpdatedAt:          website.UpdatedAt,
+	}
+
+	// OriginGroupID 和 OriginSetID 处理
+	if website.OriginGroupID.Valid {
+		val := int(website.OriginGroupID.Int32)
+		item.OriginGroupID = &val
+	}
+	if website.OriginSetID.Valid {
+		val := int(website.OriginSetID.Int32)
+		item.OriginSetID = &val
+	}
+
+	// LineGroup名称和CNAME
+	if website.LineGroup != nil {
+		item.LineGroupName = website.LineGroup.Name
+		var domain model.Domain
+		if err := h.db.First(&domain, website.LineGroup.DomainID).Error; err == nil {
+			item.CNAME = website.LineGroup.CNAMEPrefix + "." + domain.Domain
+		}
+	}
+
+	// OriginGroup名称
+	if website.OriginGroup != nil {
+		item.OriginGroupName = website.OriginGroup.Name
+	}
+
+	// 域名列表
+	domains := make([]string, 0, len(website.Domains))
+	for _, d := range website.Domains {
+		domains = append(domains, d.Domain)
+	}
+	item.Domains = domains
+
+	// HTTPS状态
+	if website.HTTPS != nil {
+		item.HTTPSEnabled = website.HTTPS.Enabled
+	}
+
 	httpx.OK(c, gin.H{
-		"item": website,
+		"item": item,
 	})
 }
 
@@ -380,12 +418,66 @@ func (h *Handler) Update(c *gin.Context) {
 	}
 
 	// 重新查询
-	if err := h.db.First(&website, req.ID).Error; err != nil {
+	if err := h.db.
+		Preload("LineGroup").
+		Preload("OriginGroup").
+		Preload("Domains").
+		Preload("HTTPS").
+		First(&website, req.ID).Error; err != nil {
 		httpx.FailErr(c, httpx.ErrDatabaseError("failed to query updated website", err))
 		return
 	}
 
-	httpx.OK(c, website)
+	// 转换为 DTO
+	item := WebsiteDTO{
+		ID:                 website.ID,
+		LineGroupID:        website.LineGroupID,
+		CacheRuleID:        website.CacheRuleID,
+		OriginMode:         website.OriginMode,
+		RedirectURL:        website.RedirectURL,
+		RedirectStatusCode: website.RedirectStatusCode,
+		Status:             website.Status,
+		CreatedAt:          website.CreatedAt,
+		UpdatedAt:          website.UpdatedAt,
+	}
+
+	// OriginGroupID 和 OriginSetID 处理
+	if website.OriginGroupID.Valid {
+		val := int(website.OriginGroupID.Int32)
+		item.OriginGroupID = &val
+	}
+	if website.OriginSetID.Valid {
+		val := int(website.OriginSetID.Int32)
+		item.OriginSetID = &val
+	}
+
+	// LineGroup名称和CNAME
+	if website.LineGroup != nil {
+		item.LineGroupName = website.LineGroup.Name
+		var domain model.Domain
+		if err := h.db.First(&domain, website.LineGroup.DomainID).Error; err == nil {
+			item.CNAME = website.LineGroup.CNAMEPrefix + "." + domain.Domain
+		}
+	}
+
+	// OriginGroup名称
+	if website.OriginGroup != nil {
+		item.OriginGroupName = website.OriginGroup.Name
+	}
+
+	// 域名列表
+	domains := make([]string, 0, len(website.Domains))
+	for _, d := range website.Domains {
+		domains = append(domains, d.Domain)
+	}
+	item.Domains = domains
+
+	// HTTPS状态
+	if website.HTTPS != nil {
+		item.HTTPSEnabled = website.HTTPS.Enabled
+	}
+
+	httpx.OK(c, item)
 }
 
 // DeleteRequest 删除请求
