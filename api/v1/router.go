@@ -186,7 +186,7 @@ func SetupRouter(r *gin.Engine, db *gorm.DB, cfg *config.Config, acmeWorker *acm
 			{
 				websitesGroup.GET("", websitesHandler.List)
 				websitesGroup.GET("/:id", websitesHandler.GetByID)
-				websitesGroup.POST("/create", websitesHandler.Create)
+				websitesGroup.POST("/create", websitesHandler.CreateNew)
 				websitesGroup.POST("/update", websitesHandler.Update)
 				websitesGroup.POST("/delete", websitesHandler.Delete)
 				websitesGroup.POST("/bind-origin-set", websitesHandler.BindOriginSet)
