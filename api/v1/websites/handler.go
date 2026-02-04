@@ -689,7 +689,6 @@ type GetByIDRequest struct {
 	ID string `uri:"id" binding:"required"`
 }
 // 
-GetByID 根据ID查询网站详情
 func (h *Handler) GetByID(c *gin.Context) {
 	var req GetByIDRequest
 	if err := c.ShouldBindUri(&req); err != nil {
