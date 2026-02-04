@@ -53,8 +53,17 @@ func (h *Handler) Create(c *gin.Context) {
 	// 解析文本
 	lines := parseText(req.Text)
 	if len(lines) == 0 {
-		httpx.FailErr(c, httpx.ErrParamInvalid("no valid domains found in text"))
+		httpx.FailErr(c, httpx.ErrAlreadyExists("domains required"))
 		return
+	}
+
+	// 检查每行是否至少有 1 个域名
+	for i, domains := range lines {
+		if len(domains) == 0 {
+			httpx.FailErr(c, httpx.ErrAlreadyExists("domains required"))
+			return
+		}
+		_ = i
 	}
 
 	// 逐行处理
