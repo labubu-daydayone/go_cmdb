@@ -28,34 +28,13 @@ func (s *NodeSelector) SelectNodesForWebsite(websiteID int64) ([]int, error) {
 		return nil, httpx.ErrDatabaseError("failed to query website", err)
 	}
 
-	// 2. 如果绑定了 nodeGroupId，按 node_group 选择
-	if website.NodeGroupID != nil && *website.NodeGroupID > 0 {
-		return s.selectNodesByNodeGroup(*website.NodeGroupID)
-	}
-
-	// 3. 如果绑定了 lineGroupId，按 line_group 选择
+	// 2. 按 line_group 选择（website 只有 lineGroupId）
 	if website.LineGroupID > 0 {
-		return s.selectNodesByLineGroup(website.LineGroupID)
+		return s.selectNodesByLineGroup(int64(website.LineGroupID))
 	}
 
 	// 4. 否则选择所有在线节点
 	return s.selectAllOnlineNodes()
-}
-
-// selectNodesByNodeGroup 按 node_group 选择节点
-func (s *NodeSelector) selectNodesByNodeGroup(nodeGroupID int) ([]int, error) {
-	var nodeIDs []int
-	err := s.db.Model(&model.NodeGroupIP{}).
-		Select("node_id").
-		Where("node_group_id = ?", nodeGroupID).
-		Distinct().
-		Scan(&nodeIDs).Error
-	if err != nil {
-		return nil, httpx.ErrDatabaseError("failed to query node group nodes", err)
-	}
-
-	// 过滤：只保留 enabled=true 且 agent_status=online 的节点
-	return s.filterOnlineNodes(nodeIDs)
 }
 
 // selectNodesByLineGroup 按 line_group 选择节点

@@ -1,6 +1,7 @@
 package upstream
 
 import (
+	"encoding/json"
 	"fmt"
 	"go_cmdb/internal/httpx"
 	"go_cmdb/internal/model"
@@ -31,6 +32,23 @@ type RenderResponse struct {
 	UpstreamConf string `json:"upstreamConf"`
 }
 
+// OriginAddress 回源地址（从 snapshot_json 解析）
+type OriginAddress struct {
+	ID            int    `json:"id"`
+	Role          string `json:"role"`
+	Weight        int    `json:"weight"`
+	Address       string `json:"address"`
+	Enabled       bool   `json:"enabled"`
+	Protocol      string `json:"protocol"`
+	OriginGroupID int    `json:"origin_group_id"`
+}
+
+// SnapshotData 快照数据结构
+type SnapshotData struct {
+	Addresses     []OriginAddress `json:"addresses"`
+	OriginGroupID int             `json:"originGroupId"`
+}
+
 // Render 渲染 upstream 配置
 func (r *Renderer) Render(req *RenderRequest) (*RenderResponse, error) {
 	// 1. 查询 origin_set
@@ -44,16 +62,33 @@ func (r *Renderer) Render(req *RenderRequest) (*RenderResponse, error) {
 
 	// 2. 查询 origin_set_items
 	var items []model.OriginSetItem
-	if err := r.db.Where("origin_set_id = ? AND enabled = ?", req.OriginSetID, true).
-		Order("role ASC, weight DESC").
+	if err := r.db.Where("origin_set_id = ?", req.OriginSetID).
 		Find(&items).Error; err != nil {
 		return nil, httpx.ErrDatabaseError("failed to query origin set items", err)
 	}
 
-	// 3. 校验至少有一个 primary enabled
+	if len(items) == 0 {
+		return nil, httpx.ErrStateConflict("origin set has no items")
+	}
+
+	// 3. 解析 snapshot_json（只取第一个 item，因为一个 origin_set 对应一个 origin_group）
+	var snapshot SnapshotData
+	if err := json.Unmarshal([]byte(items[0].SnapshotJSON), &snapshot); err != nil {
+		return nil, httpx.ErrInternalError("failed to parse snapshot json", err)
+	}
+
+	// 4. 过滤出 enabled=true 的地址
+	var enabledAddresses []OriginAddress
+	for _, addr := range snapshot.Addresses {
+		if addr.Enabled {
+			enabledAddresses = append(enabledAddresses, addr)
+		}
+	}
+
+	// 5. 校验至少有一个 primary enabled
 	hasPrimary := false
-	for _, item := range items {
-		if item.Role == "primary" && item.Enabled {
+	for _, addr := range enabledAddresses {
+		if addr.Role == "primary" {
 			hasPrimary = true
 			break
 		}
@@ -62,18 +97,18 @@ func (r *Renderer) Render(req *RenderRequest) (*RenderResponse, error) {
 		return nil, httpx.ErrStateConflict("no enabled primary origin")
 	}
 
-	// 4. 生成 upstreamKey
+	// 6. 生成 upstreamKey
 	upstreamKey := fmt.Sprintf("up_%d", req.OriginSetID)
 
-	// 5. 渲染配置
+	// 7. 渲染配置
 	var conf strings.Builder
 	conf.WriteString(fmt.Sprintf("upstream %s {\n", upstreamKey))
 
-	for _, item := range items {
-		if item.Role == "primary" {
-			conf.WriteString(fmt.Sprintf("    server %s weight=%d;\n", item.Address, item.Weight))
-		} else if item.Role == "backup" {
-			conf.WriteString(fmt.Sprintf("    server %s backup;\n", item.Address))
+	for _, addr := range enabledAddresses {
+		if addr.Role == "primary" {
+			conf.WriteString(fmt.Sprintf("    server %s weight=%d;\n", addr.Address, addr.Weight))
+		} else if addr.Role == "backup" {
+			conf.WriteString(fmt.Sprintf("    server %s backup;\n", addr.Address))
 		}
 	}
 
