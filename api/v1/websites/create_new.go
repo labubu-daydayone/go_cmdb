@@ -19,7 +19,11 @@ func (h *Handler) CreateNew(c *gin.Context) {
 
 	// 参数校验
 	if err := h.validateCreateRequestNew(&req); err != nil {
-		httpx.FailErr(c, err)
+		if appErr, ok := err.(*httpx.AppError); ok {
+			httpx.FailErr(c, appErr)
+		} else {
+			httpx.FailErr(c, httpx.ErrParamInvalid(err.Error()))
+		}
 		return
 	}
 
@@ -105,7 +109,11 @@ func (h *Handler) CreateNew(c *gin.Context) {
 	})
 
 	if err != nil {
-		httpx.FailErr(c, err)
+		if appErr, ok := err.(*httpx.AppError); ok {
+			httpx.FailErr(c, appErr)
+		} else {
+			httpx.FailErr(c, httpx.ErrDatabaseError("transaction failed", err))
+		}
 		return
 	}
 

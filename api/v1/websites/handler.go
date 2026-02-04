@@ -215,7 +215,7 @@ type HTTPSInput struct {
 }
 
 // Create 创建网站
-func (h *Handler) Create(c *gin.Context) {
+func (h *Handler) CreateOld(c *gin.Context) {
 	var req CreateRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		httpx.FailErr(c, httpx.ErrParamInvalid("invalid request body"))
@@ -223,7 +223,7 @@ func (h *Handler) Create(c *gin.Context) {
 	}
 
 	// 参数校验
-	if err := h.validateCreateRequest(&req); err != nil {
+	if err := h.validateCreateRequestOld(&req); err != nil {
 		httpx.FailErr(c, err)
 		return
 	}
@@ -246,35 +246,50 @@ func (h *Handler) Create(c *gin.Context) {
 			return httpx.ErrDatabaseError("failed to query domain", err)
 		}
 		cname := lineGroup.CNAMEPrefix + "." + domain.Domain
-		// 2. 创建 website
-		website := model.Website{
-			LineGroupID:        req.LineGroupID,
-			CacheRuleID:        req.CacheRuleID,
-			OriginMode:         req.OriginMode,
-			RedirectURL:        req.RedirectURL,
-			RedirectStatusCode: req.RedirectStatusCode,
-			Status:             model.WebsiteStatusActive,
-		}
-
-			// 根据 originMode 设置 origin 字段
-			var createDB *gorm.DB
-			switch req.OriginMode {
-			case "group":
-				// group 模式：只设置 originGroupID
-				if req.OriginGroupID > 0 {
-					website.OriginGroupID = sql.NullInt32{Int32: int32(req.OriginGroupID), Valid: true}
-				}
-				// originSetID 保持 invalid (NULL), 使用 Omit 排除
-				createDB = tx.Omit("origin_set_id")
-			case "manual", "redirect":
-				// manual/redirect 模式：originGroupID 和 originSetID 都为 NULL
-				// 使用 Omit 排除这两个字段
-				createDB = tx.Omit("origin_group_id", "origin_set_id")
+			// 2. 检查 domain 是否已存在
+			var existingCount int64
+			if err := tx.Model(&model.Website{}).Where("domain = ?", req.Domain).Count(&existingCount).Error; err != nil {
+				return httpx.ErrDatabaseError("failed to check domain", err)
+			}
+			if existingCount > 0 {
+				return httpx.ErrAlreadyExists("domain already exists")
 			}
 
-			if err := createDB.Create(&website).Error; err != nil {
-			return httpx.ErrDatabaseError("failed to create website", err)
-		}
+			// 3. 创建 website
+			website := model.Website{
+				Domain:      req.Domain,
+				LineGroupID: req.LineGroupID,
+				CacheRuleID: req.CacheRuleID,
+				OriginMode:  req.OriginMode,
+				Status:      model.WebsiteStatusActive,
+			}
+
+			// 根据 originMode 设置字段
+			switch req.OriginMode {
+			case "group":
+				// group 模式：设置 originGroupID 和 originSetID
+				if req.OriginGroupID != nil && *req.OriginGroupID > 0 {
+					website.OriginGroupID = sql.NullInt32{Int32: int32(*req.OriginGroupID), Valid: true}
+				}
+				if req.OriginSetID != nil && *req.OriginSetID > 0 {
+					website.OriginSetID = sql.NullInt32{Int32: int32(*req.OriginSetID), Valid: true}
+				}
+			case "manual":
+				// manual 模式：originGroupID 和 originSetID 保持 NULL
+				// 不设置，保持默认值
+			case "redirect":
+				// redirect 模式：设置 redirectUrl
+				if req.RedirectURL != nil {
+					website.RedirectURL = *req.RedirectURL
+				}
+				if req.RedirectStatusCode != nil {
+					website.RedirectStatusCode = *req.RedirectStatusCode
+				}
+			}
+
+			if err := tx.Omit("origin_group_id", "origin_set_id").Create(&website).Error; err != nil {
+				return httpx.ErrDatabaseError("failed to create website", err)
+			}
 		websiteID = website.ID
 
 		// 3. 创建website_domains
@@ -373,7 +388,7 @@ func (h *Handler) Create(c *gin.Context) {
 }
 
 // validateCreateRequest 校验创建请求
-func (h *Handler) validateCreateRequest(req *CreateRequest) *httpx.AppError {
+func (h *Handler) validateCreateRequestOld(req *CreateRequest) *httpx.AppError {
 	// 校验origin_mode
 	switch req.OriginMode {
 	case model.OriginModeGroup:

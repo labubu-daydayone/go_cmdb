@@ -7,14 +7,14 @@ type Website struct {
 	BaseModel
 	Domain      string `gorm:"type:varchar(255);uniqueIndex:uk_websites_domain" json:"domain"` // 域名（唯一标识）
 	LineGroupID int    `gorm:"not null;index" json:"lineGroupId"`                              // 线路分组ID
-	CacheRuleID int `gorm:"default:0;index" json:"cache_rule_id"` // 缓存规则ID（可选）
+	CacheRuleID int `gorm:"default:0;index" json:"cacheRuleId"` // 缓存规则ID（可选）
 
 	// 回源配置
-	OriginMode         string `gorm:"type:enum('group','manual','redirect');not null" json:"origin_mode"`
-	OriginGroupID      sql.NullInt32 `gorm:"index;default:null" json:"origin_group_id"`      // group模式时有值，其他为 NULL
-	OriginSetID        sql.NullInt32 `gorm:"index;default:null" json:"origin_set_id"`        // 绑定 origin set 时有值，否则为 NULL
-	RedirectURL        string `gorm:"type:varchar(2048)" json:"redirect_url"`              // redirect模式时有值
-	RedirectStatusCode int    `gorm:"default:0" json:"redirect_status_code"`               // redirect模式时有值
+	OriginMode         string        `gorm:"type:enum('group','manual','redirect');not null" json:"originMode"`
+	OriginGroupID      sql.NullInt32 `gorm:"index;default:null" json:"originGroupId"`      // group模式时有值，其他为 NULL
+	OriginSetID        sql.NullInt32 `gorm:"index;default:null" json:"originSetId"`        // 绑定 origin set 时有值，否则为 NULL
+	RedirectURL        string        `gorm:"type:varchar(2048)" json:"redirectUrl"`        // redirect模式时有值
+	RedirectStatusCode int           `gorm:"default:0" json:"redirectStatusCode"`          // redirect模式时有值
 
 	Status string `gorm:"type:enum('active','inactive');default:'active'" json:"status"`
 
