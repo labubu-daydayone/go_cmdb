@@ -190,6 +190,7 @@ func SetupRouter(r *gin.Engine, db *gorm.DB, cfg *config.Config, acmeWorker *acm
 				websitesGroup.POST("/update", websitesHandler.Update)
 				websitesGroup.POST("/delete", websitesHandler.Delete)
 				websitesGroup.POST("/bind-origin-set", websitesHandler.BindOriginSet)
+				websitesGroup.POST("/origin-set/bind", websitesHandler.BatchBindOriginSet)
 			}
 
 			// Agent tasks routes
