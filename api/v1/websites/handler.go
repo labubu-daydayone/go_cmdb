@@ -257,7 +257,6 @@ func (h *Handler) Create(c *gin.Context) {
 		}
 
 		// 根据 originMode 设置 origin 字段
-		var createDB *gorm.DB
 		switch req.OriginMode {
 		case "group":
 			// group 模式：只设置 originGroupID
