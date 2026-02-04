@@ -2,13 +2,11 @@ package websites
 
 import (
 	"go_cmdb/internal/httpx"
-	"log"
 	"strconv"
 
 	"go_cmdb/internal/cert"
 	"go_cmdb/internal/model"
 	"go_cmdb/internal/upstream"
-	"go_cmdb/internal/ws"
 
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
@@ -175,22 +173,6 @@ func (h *Handler) List(c *gin.Context) {
 		Page:     req.Page,
 		PageSize: req.PageSize,
 	})
-}
-
-// CreateRequest 创建请求
-type CreateRequest struct {
-	Domain      string `json:"domain" binding:"required"` // 域名（必填且唯一）
-	LineGroupID int    `json:"lineGroupId" binding:"required"`
-	CacheRuleID int    `json:"cacheRuleId"`
-
-	// 回源配置
-	OriginMode    string `json:"originMode" binding:"required,oneof=group manual redirect"`
-	OriginGroupID *int  `json:"originGroupId"` // group模式时必填
-	OriginSetID   *int  `json:"originSetId"`   // group模式时必填
-
-	// redirect配置
-	RedirectURL        *string `json:"redirectUrl"`        // redirect模式时必填
-	RedirectStatusCode *int    `json:"redirectStatusCode"` // redirect模式时可选
 }
 
 type GetByIDRequest struct {
