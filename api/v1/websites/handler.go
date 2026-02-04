@@ -307,3 +307,129 @@ func (h *Handler) BindOriginSet(c *gin.Context) {
 		},
 	})
 }
+
+// UpdateRequest 更新请求
+type UpdateRequest struct {
+	ID                 int     `json:"id" binding:"required"`
+	LineGroupID        *int    `json:"lineGroupId"`
+	CacheRuleID        *int    `json:"cacheRuleId"`
+	OriginMode         *string `json:"originMode"`
+	OriginGroupID      *int    `json:"originGroupId"`
+	OriginSetID        *int    `json:"originSetId"`
+	RedirectURL        *string `json:"redirectUrl"`
+	RedirectStatusCode *int    `json:"redirectStatusCode"`
+	Status             *string `json:"status"`
+}
+
+// Update 更新网站
+func (h *Handler) Update(c *gin.Context) {
+	var req UpdateRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		httpx.FailErr(c, httpx.ErrParamInvalid("invalid request body"))
+		return
+	}
+
+	var website model.Website
+	if err := h.db.First(&website, req.ID).Error; err != nil {
+		if err == gorm.ErrRecordNotFound {
+			httpx.FailErr(c, httpx.ErrNotFound("website not found"))
+			return
+		}
+		httpx.FailErr(c, httpx.ErrDatabaseError("failed to query website", err))
+		return
+	}
+
+	// 更新字段
+	updates := make(map[string]interface{})
+	if req.LineGroupID != nil {
+		updates["line_group_id"] = *req.LineGroupID
+	}
+	if req.CacheRuleID != nil {
+		updates["cache_rule_id"] = *req.CacheRuleID
+	}
+	if req.OriginMode != nil {
+		updates["origin_mode"] = *req.OriginMode
+	}
+	if req.OriginGroupID != nil {
+		if *req.OriginGroupID > 0 {
+			updates["origin_group_id"] = *req.OriginGroupID
+		} else {
+			updates["origin_group_id"] = nil
+		}
+	}
+	if req.OriginSetID != nil {
+		if *req.OriginSetID > 0 {
+			updates["origin_set_id"] = *req.OriginSetID
+		} else {
+			updates["origin_set_id"] = nil
+		}
+	}
+	if req.RedirectURL != nil {
+		updates["redirect_url"] = *req.RedirectURL
+	}
+	if req.RedirectStatusCode != nil {
+		updates["redirect_status_code"] = *req.RedirectStatusCode
+	}
+	if req.Status != nil {
+		updates["status"] = *req.Status
+	}
+
+	if err := h.db.Model(&website).Updates(updates).Error; err != nil {
+		httpx.FailErr(c, httpx.ErrDatabaseError("failed to update website", err))
+		return
+	}
+
+	// 重新查询
+	if err := h.db.First(&website, req.ID).Error; err != nil {
+		httpx.FailErr(c, httpx.ErrDatabaseError("failed to query updated website", err))
+		return
+	}
+
+	httpx.OK(c, website)
+}
+
+// DeleteRequest 删除请求
+type DeleteRequest struct {
+	IDs []int `json:"ids" binding:"required"`
+}
+
+// Delete 删除网站
+func (h *Handler) Delete(c *gin.Context) {
+	var req DeleteRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		httpx.FailErr(c, httpx.ErrParamInvalid("invalid request body"))
+		return
+	}
+
+	if len(req.IDs) == 0 {
+		httpx.FailErr(c, httpx.ErrParamInvalid("ids cannot be empty"))
+		return
+	}
+
+	err := h.db.Transaction(func(tx *gorm.DB) error {
+		for _, id := range req.IDs {
+			// 删除 website_domains
+			if err := tx.Where("website_id = ?", id).Delete(&model.WebsiteDomain{}).Error; err != nil {
+				return err
+			}
+
+			// 删除 website_https（如果存在）
+			if err := tx.Where("website_id = ?", id).Delete(&model.WebsiteHTTPS{}).Error; err != nil {
+				return err
+			}
+
+			// 删除 website
+			if err := tx.Delete(&model.Website{}, id).Error; err != nil {
+				return err
+			}
+		}
+		return nil
+	})
+
+	if err != nil {
+		httpx.FailErr(c, httpx.ErrDatabaseError("failed to delete websites", err))
+		return
+	}
+
+	httpx.OK(c, nil)
+}
