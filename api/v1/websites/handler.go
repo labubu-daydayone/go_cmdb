@@ -260,7 +260,7 @@ func (h *Handler) Create(c *gin.Context) {
 		switch req.OriginMode {
 		case "group":
 			// group 模式：只设置 originGroupID
-			website.OriginGroupID = req.OriginGroupID
+			website.OriginGroupID = &req.OriginGroupID
 			// originSetID 保持 NULL（默认值）
 		case "manual":
 			// manual 模式：originGroupID 和 originSetID 都为 NULL

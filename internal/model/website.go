@@ -8,8 +8,8 @@ type Website struct {
 
 	// 回源配置
 	OriginMode         string `gorm:"type:enum('group','manual','redirect');not null" json:"origin_mode"`
-	OriginGroupID      int    `gorm:"default:0;not null;index" json:"origin_group_id"`     // group模式时有值
-	OriginSetID        int    `gorm:"default:0;not null;index" json:"origin_set_id"`       // group/manual模式时有值
+	OriginGroupID      *int   `gorm:"index" json:"origin_group_id"`                        // group模式时有值，其他为 NULL
+	OriginSetID        *int   `gorm:"index" json:"origin_set_id"`                          // 绑定 origin set 时有值，否则为 NULL
 	RedirectURL        string `gorm:"type:varchar(2048)" json:"redirect_url"`              // redirect模式时有值
 	RedirectStatusCode int    `gorm:"default:0" json:"redirect_status_code"`               // redirect模式时有值
 
