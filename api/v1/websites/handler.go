@@ -611,85 +611,85 @@ type CreateRequest struct {
 // 
 // // Delete 删除网站
 func (h *Handler) Delete(c *gin.Context) {
-	var req DeleteRequest
-	if err := c.ShouldBindJSON(&req); err != nil {
-		httpx.FailErr(c, httpx.ErrParamInvalid("invalid request body"))
-		return
-	}
-
-	// 事务处理
-	err := h.db.Transaction(func(tx *gorm.DB) error {
-		for _, id := range req.IDs {
-			// 查询website
-			var website model.Website
-			if err := tx.First(&website, id).Error; err != nil {
-				if err == gorm.ErrRecordNotFound {
-					continue // 跳过不存在的记录
-				}
-				return httpx.ErrDatabaseError("failed to query website", err)
-			}
-
-			// 删除certificate_bindings
-			if err := tx.Where("owner_type = ? AND owner_id = ?", "website", id).Delete(&model.CertificateBinding{}).Error; err != nil {
-				return httpx.ErrDatabaseError("failed to delete certificate bindings", err)
-			}
-
-			// 标记DNS记录为error
-			if err := tx.Model(&model.DomainDNSRecord{}).
-				Where("owner_type = ? AND owner_id IN (?)",
-					"website_domain",
-					tx.Model(&model.WebsiteDomain{}).Select("id").Where("website_id = ?", id)).
-				Updates(map[string]interface{}{
-					"status":     "error",
-					"last_error": "website deleted",
-				}).Error; err != nil {
-				return httpx.ErrDatabaseError("failed to update DNS records", err)
-			}
-
-			// 删除website_domains
-			if err := tx.Where("website_id = ?", id).Delete(&model.WebsiteDomain{}).Error; err != nil {
-				return httpx.ErrDatabaseError("failed to delete website domains", err)
-			}
-
-			// 删除website_https
-			if err := tx.Where("website_id = ?", id).Delete(&model.WebsiteHTTPS{}).Error; err != nil {
-				return httpx.ErrDatabaseError("failed to delete website https", err)
-			}
-
-			// 删除website
-			if err := tx.Delete(&website).Error; err != nil {
-				return httpx.ErrDatabaseError("failed to delete website", err)
-			}
-		}
-
-		return nil
-	})
-
-		if err != nil {
-			if appErr, ok := err.(*httpx.AppError); ok {
-				httpx.FailErr(c, appErr)
-			} else {
-				httpx.FailErr(c, httpx.ErrDatabaseError("transaction failed", err))
-			}
-			return
-		}
-
-		// Publish website events (after transaction success)
-		for _, id := range req.IDs {
-			if err := ws.PublishWebsiteEvent("delete", gin.H{"id": id}); err != nil {
-				log.Printf("[WebSocket] Failed to publish website event: %v", err)
-			}
-		}
-
-		httpx.OK(c, nil)
-}
-
-// GetByIDRequest 根据ID查询请求
-type GetByIDRequest struct {
-	ID string `uri:"id" binding:"required"`
-}
-
-// GetByID 根据ID查询网站详情
+// 	var req DeleteRequest
+// 	if err := c.ShouldBindJSON(&req); err != nil {
+// 		httpx.FailErr(c, httpx.ErrParamInvalid("invalid request body"))
+// 		return
+// 	}
+// 
+// 	// 事务处理
+// 	err := h.db.Transaction(func(tx *gorm.DB) error {
+// 		for _, id := range req.IDs {
+// 			// 查询website
+// 			var website model.Website
+// 			if err := tx.First(&website, id).Error; err != nil {
+// 				if err == gorm.ErrRecordNotFound {
+// 					continue // 跳过不存在的记录
+// 				}
+// 				return httpx.ErrDatabaseError("failed to query website", err)
+// 			}
+// 
+// 			// 删除certificate_bindings
+// 			if err := tx.Where("owner_type = ? AND owner_id = ?", "website", id).Delete(&model.CertificateBinding{}).Error; err != nil {
+// 				return httpx.ErrDatabaseError("failed to delete certificate bindings", err)
+// 			}
+// 
+// 			// 标记DNS记录为error
+// 			if err := tx.Model(&model.DomainDNSRecord{}).
+// 				Where("owner_type = ? AND owner_id IN (?)",
+// 					"website_domain",
+// 					tx.Model(&model.WebsiteDomain{}).Select("id").Where("website_id = ?", id)).
+// 				Updates(map[string]interface{}{
+// 					"status":     "error",
+// 					"last_error": "website deleted",
+// 				}).Error; err != nil {
+// 				return httpx.ErrDatabaseError("failed to update DNS records", err)
+// 			}
+// 
+// 			// 删除website_domains
+// 			if err := tx.Where("website_id = ?", id).Delete(&model.WebsiteDomain{}).Error; err != nil {
+// 				return httpx.ErrDatabaseError("failed to delete website domains", err)
+// 			}
+// 
+// 			// 删除website_https
+// 			if err := tx.Where("website_id = ?", id).Delete(&model.WebsiteHTTPS{}).Error; err != nil {
+// 				return httpx.ErrDatabaseError("failed to delete website https", err)
+// 			}
+// 
+// 			// 删除website
+// 			if err := tx.Delete(&website).Error; err != nil {
+// 				return httpx.ErrDatabaseError("failed to delete website", err)
+// 			}
+// 		}
+// 
+// 		return nil
+// 	})
+// 
+// 		if err != nil {
+// 			if appErr, ok := err.(*httpx.AppError); ok {
+// 				httpx.FailErr(c, appErr)
+// 			} else {
+// 				httpx.FailErr(c, httpx.ErrDatabaseError("transaction failed", err))
+// 			}
+// 			return
+// 		}
+// 
+// 		// Publish website events (after transaction success)
+// 		for _, id := range req.IDs {
+// 			if err := ws.PublishWebsiteEvent("delete", gin.H{"id": id}); err != nil {
+// 				log.Printf("[WebSocket] Failed to publish website event: %v", err)
+// 			}
+// 		}
+// 
+// 		httpx.OK(c, nil)
+// }
+// 
+// // GetByIDRequest 根据ID查询请求
+// type GetByIDRequest struct {
+// 	ID string `uri:"id" binding:"required"`
+// }
+// 
+// // GetByID 根据ID查询网站详情
 func (h *Handler) GetByID(c *gin.Context) {
 	var req GetByIDRequest
 	if err := c.ShouldBindUri(&req); err != nil {
