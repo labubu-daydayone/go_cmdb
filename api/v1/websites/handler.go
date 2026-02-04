@@ -731,6 +731,14 @@ func (h *Handler) Delete(c *gin.Context) {
 				return httpx.ErrDatabaseError("failed to query website", err)
 			}
 
+			// 解绑回源引用
+			if err := tx.Model(&website).Updates(map[string]interface{}{
+				"origin_set_id":   0,
+				"origin_group_id": 0,
+			}).Error; err != nil {
+				return httpx.ErrDatabaseError("failed to unbind origin references", err)
+			}
+
 			// 标记DNS记录为error
 			if err := tx.Model(&model.DomainDNSRecord{}).
 				Where("owner_type = ? AND owner_id IN (?)",
@@ -751,16 +759,6 @@ func (h *Handler) Delete(c *gin.Context) {
 			// 删除website_https
 			if err := tx.Where("website_id = ?", id).Delete(&model.WebsiteHTTPS{}).Error; err != nil {
 				return httpx.ErrDatabaseError("failed to delete website https", err)
-			}
-
-			// 删除origin_set
-			if website.OriginSetID > 0 {
-				if err := tx.Delete(&model.OriginAddress{}, "origin_set_id = ?", website.OriginSetID).Error; err != nil {
-					return httpx.ErrDatabaseError("failed to delete origin addresses", err)
-				}
-				if err := tx.Delete(&model.OriginSet{}, website.OriginSetID).Error; err != nil {
-					return httpx.ErrDatabaseError("failed to delete origin set", err)
-				}
 			}
 
 			// 删除website
@@ -788,7 +786,7 @@ func (h *Handler) Delete(c *gin.Context) {
 			}
 		}
 
-		httpx.OK(c, gin.H{"success": true, "deleted": len(req.IDs)})
+		httpx.OK(c, nil)
 }
 
 // GetByIDRequest 根据ID查询请求
