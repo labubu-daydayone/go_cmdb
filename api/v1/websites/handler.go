@@ -1,7 +1,6 @@
 package websites
 
 import (
-	"database/sql"
 	"go_cmdb/internal/httpx"
 	"log"
 	"strconv"
@@ -399,218 +398,218 @@ type CreateRequest struct {
 // }
 // 
 // // createOriginSetFromGroup 从origin_group创建origin_set
-func (h *Handler) Update(c *gin.Context) {
-	var req UpdateRequest
-	if err := c.ShouldBindJSON(&req); err != nil {
-		httpx.FailErr(c, httpx.ErrParamInvalid("invalid request body"))
-		return
-	}
-
-	// 事务处理
-	err := h.db.Transaction(func(tx *gorm.DB) error {
-		// 查询website
-		var website model.Website
-		if err := tx.Preload("Domains").First(&website, req.ID).Error; err != nil {
-			if err == gorm.ErrRecordNotFound {
-				return httpx.ErrNotFound("website not found")
-			}
-			return httpx.ErrDatabaseError("failed to query website", err)
-		}
-
-		// 更新基础字段
-		updates := make(map[string]interface{})
-		if req.LineGroupID > 0 && req.LineGroupID != website.LineGroupID {
-			// 切换line_group
-			var lineGroup model.LineGroup
-			if err := tx.First(&lineGroup, req.LineGroupID).Error; err != nil {
-				if err == gorm.ErrRecordNotFound {
-					return httpx.ErrNotFound("line group not found")
-				}
-				return httpx.ErrDatabaseError("failed to query line group", err)
-			}
-
-			// 加载Domain信息以计算CNAME
-			var domain model.Domain
-			if err := tx.First(&domain, lineGroup.DomainID).Error; err != nil {
-				return httpx.ErrDatabaseError("failed to query domain", err)
-			}
-			cname := lineGroup.CNAMEPrefix + "." + domain.Domain
-
-			updates["line_group_id"] = req.LineGroupID
-
-			// 标记旧DNS记录为error
-			if err := tx.Model(&model.DomainDNSRecord{}).
-				Where("owner_type = ? AND owner_id IN (?)",
-					"website_domain",
-					tx.Model(&model.WebsiteDomain{}).Select("id").Where("website_id = ?", website.ID)).
-				Updates(map[string]interface{}{
-					"status":     "error",
-					"last_error": "line group changed",
-				}).Error; err != nil {
-				return httpx.ErrDatabaseError("failed to update DNS records", err)
-			}
-
-			// 生成新DNS记录
-			for _, domain := range website.Domains {
-				dnsRecord := model.DomainDNSRecord{
-					DomainID:  int(lineGroup.DomainID),
-					OwnerType: "website_domain",
-					OwnerID:   domain.ID,
-					Type:      "CNAME",
-					Name:      domain.Domain,
-					Value:     cname,
-					TTL:       600,
-					Status:    "pending",
-				}
-				if err := tx.Create(&dnsRecord).Error; err != nil {
-					return httpx.ErrDatabaseError("failed to create DNS record", err)
-				}
-			}
-		}
-
-		if req.CacheRuleID >= 0 {
-			updates["cache_rule_id"] = req.CacheRuleID
-		}
-
-		if req.Status != "" {
-			updates["status"] = req.Status
-		}
-
-		// 更新origin_mode
-		if req.OriginMode != nil {
-			oldMode := website.OriginMode
-			newMode := *req.OriginMode
-
-			// 状态机校验（简化版，实际可能需要更复杂的逻辑）
-			if oldMode != newMode {
-				// 删除旧origin_set
-				if website.OriginSetID.Valid && website.OriginSetID.Int32 > 0 {
-					if err := tx.Delete(&model.OriginAddress{}, "origin_set_id = ?", website.OriginSetID.Int32).Error; err != nil {
-						return httpx.ErrDatabaseError("failed to delete origin addresses", err)
-					}
-					if err := tx.Delete(&model.OriginSet{}, website.OriginSetID.Int32).Error; err != nil {
-						return httpx.ErrDatabaseError("failed to delete origin set", err)
-					}
-				}
-
-				// 创建新origin_set
-				if newMode == model.OriginModeGroup {
-					if req.OriginGroupID == nil || *req.OriginGroupID <= 0 {
-						return httpx.ErrParamMissing("origin_group_id is required for group mode")
-					}
-					if err := h.createOriginSetFromGroup(tx, website.ID, *req.OriginGroupID); err != nil {
-						return err
-					}
-					updates["origin_mode"] = newMode
-					updates["origin_group_id"] = *req.OriginGroupID
-					updates["redirect_url"] = ""
-					updates["redirect_status_code"] = 0
-				} else if newMode == model.OriginModeManual {
-					if len(req.OriginAddresses) == 0 {
-						return httpx.ErrParamMissing("origin_addresses is required for manual mode")
-					}
-					if err := h.createOriginSetManual(tx, website.ID, req.OriginAddresses); err != nil {
-						return err
-					}
-					updates["origin_mode"] = newMode
-					updates["origin_group_id"] = 0
-					updates["redirect_url"] = ""
-					updates["redirect_status_code"] = 0
-				} else if newMode == model.OriginModeRedirect {
-					if req.RedirectURL == nil || *req.RedirectURL == "" {
-						return httpx.ErrParamMissing("redirect_url is required for redirect mode")
-					}
-					updates["origin_mode"] = newMode
-					updates["origin_group_id"] = 0
-					updates["origin_set_id"] = 0
-					updates["redirect_url"] = *req.RedirectURL
-					if req.RedirectStatusCode != nil {
-						updates["redirect_status_code"] = *req.RedirectStatusCode
-					} else {
-						updates["redirect_status_code"] = 301
-					}
-				}
-			}
-		}
-
-		// 应用更新
-		if len(updates) > 0 {
-			if err := tx.Model(&website).Updates(updates).Error; err != nil {
-				return httpx.ErrDatabaseError("failed to update website", err)
-			}
-		}
-
-		// 更新HTTPS配置
-			if req.HTTPS != nil {
-				// select模式且enabled：校验证书覆盖
-				if req.HTTPS.Enabled && req.HTTPS.CertMode == model.CertModeSelect {
-					if err := h.validateCertificateCoverage(tx, req.HTTPS.CertificateID, website.ID); err != nil {
-						return err
-					}
-				}
-
-				var https model.WebsiteHTTPS
-				err := tx.Where("website_id = ?", website.ID).First(&https).Error
-				if err == gorm.ErrRecordNotFound {
-					// 创建新记录
-					https = model.WebsiteHTTPS{
-						WebsiteID:      website.ID,
-						Enabled:        req.HTTPS.Enabled,
-						ForceRedirect:  req.HTTPS.ForceRedirect,
-						HSTS:           req.HTTPS.HSTS,
-						CertMode:       req.HTTPS.CertMode,
-						CertificateID:  req.HTTPS.CertificateID,
-						ACMEProviderID: req.HTTPS.ACMEProviderID,
-						ACMEAccountID:  req.HTTPS.ACMEAccountID,
-					}
-					if err := tx.Create(&https).Error; err != nil {
-						return httpx.ErrDatabaseError("failed to create website https", err)
-					}
-				} else if err != nil {
-					return httpx.ErrDatabaseError("failed to query website https", err)
-				} else {
-					// 更新现有记录
-					httpsUpdates := map[string]interface{}{
-						"enabled":         req.HTTPS.Enabled,
-						"force_redirect":  req.HTTPS.ForceRedirect,
-						"hsts":            req.HTTPS.HSTS,
-						"cert_mode":       req.HTTPS.CertMode,
-						"certificate_id":  req.HTTPS.CertificateID,
-						"acme_provider_id": req.HTTPS.ACMEProviderID,
-						"acme_account_id":  req.HTTPS.ACMEAccountID,
-					}
-					if err := tx.Model(&https).Updates(httpsUpdates).Error; err != nil {
-						return httpx.ErrDatabaseError("failed to update website https", err)
-					}
-				}
-			}
-
-		return nil
-	})
-
-		if err != nil {
-			if appErr, ok := err.(*httpx.AppError); ok {
-				httpx.FailErr(c, appErr)
-			} else {
-				httpx.FailErr(c, httpx.ErrDatabaseError("transaction failed", err))
-			}
-			return
-		}
-
-		// Publish website event (after transaction success)
-		if err := ws.PublishWebsiteEvent("update", gin.H{"id": req.ID}); err != nil {
-			log.Printf("[WebSocket] Failed to publish website event: %v", err)
-		}
-
-		httpx.OK(c, gin.H{"success": true})
-	}
-
-// DeleteRequest 删除请求
-type DeleteRequest struct {
-	IDs []int `json:"ids" binding:"required,min=1"`
-}
-
-// Delete 删除网站
+// func (h *Handler) Update(c *gin.Context) {
+// 	var req UpdateRequest
+// 	if err := c.ShouldBindJSON(&req); err != nil {
+// 		httpx.FailErr(c, httpx.ErrParamInvalid("invalid request body"))
+// 		return
+// 	}
+// 
+// 	// 事务处理
+// 	err := h.db.Transaction(func(tx *gorm.DB) error {
+// 		// 查询website
+// 		var website model.Website
+// 		if err := tx.Preload("Domains").First(&website, req.ID).Error; err != nil {
+// 			if err == gorm.ErrRecordNotFound {
+// 				return httpx.ErrNotFound("website not found")
+// 			}
+// 			return httpx.ErrDatabaseError("failed to query website", err)
+// 		}
+// 
+// 		// 更新基础字段
+// 		updates := make(map[string]interface{})
+// 		if req.LineGroupID > 0 && req.LineGroupID != website.LineGroupID {
+// 			// 切换line_group
+// 			var lineGroup model.LineGroup
+// 			if err := tx.First(&lineGroup, req.LineGroupID).Error; err != nil {
+// 				if err == gorm.ErrRecordNotFound {
+// 					return httpx.ErrNotFound("line group not found")
+// 				}
+// 				return httpx.ErrDatabaseError("failed to query line group", err)
+// 			}
+// 
+// 			// 加载Domain信息以计算CNAME
+// 			var domain model.Domain
+// 			if err := tx.First(&domain, lineGroup.DomainID).Error; err != nil {
+// 				return httpx.ErrDatabaseError("failed to query domain", err)
+// 			}
+// 			cname := lineGroup.CNAMEPrefix + "." + domain.Domain
+// 
+// 			updates["line_group_id"] = req.LineGroupID
+// 
+// 			// 标记旧DNS记录为error
+// 			if err := tx.Model(&model.DomainDNSRecord{}).
+// 				Where("owner_type = ? AND owner_id IN (?)",
+// 					"website_domain",
+// 					tx.Model(&model.WebsiteDomain{}).Select("id").Where("website_id = ?", website.ID)).
+// 				Updates(map[string]interface{}{
+// 					"status":     "error",
+// 					"last_error": "line group changed",
+// 				}).Error; err != nil {
+// 				return httpx.ErrDatabaseError("failed to update DNS records", err)
+// 			}
+// 
+// 			// 生成新DNS记录
+// 			for _, domain := range website.Domains {
+// 				dnsRecord := model.DomainDNSRecord{
+// 					DomainID:  int(lineGroup.DomainID),
+// 					OwnerType: "website_domain",
+// 					OwnerID:   domain.ID,
+// 					Type:      "CNAME",
+// 					Name:      domain.Domain,
+// 					Value:     cname,
+// 					TTL:       600,
+// 					Status:    "pending",
+// 				}
+// 				if err := tx.Create(&dnsRecord).Error; err != nil {
+// 					return httpx.ErrDatabaseError("failed to create DNS record", err)
+// 				}
+// 			}
+// 		}
+// 
+// 		if req.CacheRuleID >= 0 {
+// 			updates["cache_rule_id"] = req.CacheRuleID
+// 		}
+// 
+// 		if req.Status != "" {
+// 			updates["status"] = req.Status
+// 		}
+// 
+// 		// 更新origin_mode
+// 		if req.OriginMode != nil {
+// 			oldMode := website.OriginMode
+// 			newMode := *req.OriginMode
+// 
+// 			// 状态机校验（简化版，实际可能需要更复杂的逻辑）
+// 			if oldMode != newMode {
+// 				// 删除旧origin_set
+// 				if website.OriginSetID.Valid && website.OriginSetID.Int32 > 0 {
+// 					if err := tx.Delete(&model.OriginAddress{}, "origin_set_id = ?", website.OriginSetID.Int32).Error; err != nil {
+// 						return httpx.ErrDatabaseError("failed to delete origin addresses", err)
+// 					}
+// 					if err := tx.Delete(&model.OriginSet{}, website.OriginSetID.Int32).Error; err != nil {
+// 						return httpx.ErrDatabaseError("failed to delete origin set", err)
+// 					}
+// 				}
+// 
+// 				// 创建新origin_set
+// 				if newMode == model.OriginModeGroup {
+// 					if req.OriginGroupID == nil || *req.OriginGroupID <= 0 {
+// 						return httpx.ErrParamMissing("origin_group_id is required for group mode")
+// 					}
+// 					if err := h.createOriginSetFromGroup(tx, website.ID, *req.OriginGroupID); err != nil {
+// 						return err
+// 					}
+// 					updates["origin_mode"] = newMode
+// 					updates["origin_group_id"] = *req.OriginGroupID
+// 					updates["redirect_url"] = ""
+// 					updates["redirect_status_code"] = 0
+// 				} else if newMode == model.OriginModeManual {
+// 					if len(req.OriginAddresses) == 0 {
+// 						return httpx.ErrParamMissing("origin_addresses is required for manual mode")
+// 					}
+// 					if err := h.createOriginSetManual(tx, website.ID, req.OriginAddresses); err != nil {
+// 						return err
+// 					}
+// 					updates["origin_mode"] = newMode
+// 					updates["origin_group_id"] = 0
+// 					updates["redirect_url"] = ""
+// 					updates["redirect_status_code"] = 0
+// 				} else if newMode == model.OriginModeRedirect {
+// 					if req.RedirectURL == nil || *req.RedirectURL == "" {
+// 						return httpx.ErrParamMissing("redirect_url is required for redirect mode")
+// 					}
+// 					updates["origin_mode"] = newMode
+// 					updates["origin_group_id"] = 0
+// 					updates["origin_set_id"] = 0
+// 					updates["redirect_url"] = *req.RedirectURL
+// 					if req.RedirectStatusCode != nil {
+// 						updates["redirect_status_code"] = *req.RedirectStatusCode
+// 					} else {
+// 						updates["redirect_status_code"] = 301
+// 					}
+// 				}
+// 			}
+// 		}
+// 
+// 		// 应用更新
+// 		if len(updates) > 0 {
+// 			if err := tx.Model(&website).Updates(updates).Error; err != nil {
+// 				return httpx.ErrDatabaseError("failed to update website", err)
+// 			}
+// 		}
+// 
+// 		// 更新HTTPS配置
+// 			if req.HTTPS != nil {
+// 				// select模式且enabled：校验证书覆盖
+// 				if req.HTTPS.Enabled && req.HTTPS.CertMode == model.CertModeSelect {
+// 					if err := h.validateCertificateCoverage(tx, req.HTTPS.CertificateID, website.ID); err != nil {
+// 						return err
+// 					}
+// 				}
+// 
+// 				var https model.WebsiteHTTPS
+// 				err := tx.Where("website_id = ?", website.ID).First(&https).Error
+// 				if err == gorm.ErrRecordNotFound {
+// 					// 创建新记录
+// 					https = model.WebsiteHTTPS{
+// 						WebsiteID:      website.ID,
+// 						Enabled:        req.HTTPS.Enabled,
+// 						ForceRedirect:  req.HTTPS.ForceRedirect,
+// 						HSTS:           req.HTTPS.HSTS,
+// 						CertMode:       req.HTTPS.CertMode,
+// 						CertificateID:  req.HTTPS.CertificateID,
+// 						ACMEProviderID: req.HTTPS.ACMEProviderID,
+// 						ACMEAccountID:  req.HTTPS.ACMEAccountID,
+// 					}
+// 					if err := tx.Create(&https).Error; err != nil {
+// 						return httpx.ErrDatabaseError("failed to create website https", err)
+// 					}
+// 				} else if err != nil {
+// 					return httpx.ErrDatabaseError("failed to query website https", err)
+// 				} else {
+// 					// 更新现有记录
+// 					httpsUpdates := map[string]interface{}{
+// 						"enabled":         req.HTTPS.Enabled,
+// 						"force_redirect":  req.HTTPS.ForceRedirect,
+// 						"hsts":            req.HTTPS.HSTS,
+// 						"cert_mode":       req.HTTPS.CertMode,
+// 						"certificate_id":  req.HTTPS.CertificateID,
+// 						"acme_provider_id": req.HTTPS.ACMEProviderID,
+// 						"acme_account_id":  req.HTTPS.ACMEAccountID,
+// 					}
+// 					if err := tx.Model(&https).Updates(httpsUpdates).Error; err != nil {
+// 						return httpx.ErrDatabaseError("failed to update website https", err)
+// 					}
+// 				}
+// 			}
+// 
+// 		return nil
+// 	})
+// 
+// 		if err != nil {
+// 			if appErr, ok := err.(*httpx.AppError); ok {
+// 				httpx.FailErr(c, appErr)
+// 			} else {
+// 				httpx.FailErr(c, httpx.ErrDatabaseError("transaction failed", err))
+// 			}
+// 			return
+// 		}
+// 
+// 		// Publish website event (after transaction success)
+// 		if err := ws.PublishWebsiteEvent("update", gin.H{"id": req.ID}); err != nil {
+// 			log.Printf("[WebSocket] Failed to publish website event: %v", err)
+// 		}
+// 
+// 		httpx.OK(c, gin.H{"success": true})
+// 	}
+// 
+// // DeleteRequest 删除请求
+// type DeleteRequest struct {
+// 	IDs []int `json:"ids" binding:"required,min=1"`
+// }
+// 
+// // Delete 删除网站
 func (h *Handler) Delete(c *gin.Context) {
 	var req DeleteRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
