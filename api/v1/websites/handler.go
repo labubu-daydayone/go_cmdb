@@ -194,342 +194,211 @@ type CreateRequest struct {
 	RedirectStatusCode *int    `json:"redirectStatusCode"` // redirect模式时可选
 }
 
-// OriginAddressInput 回源地址输入
-type OriginAddressInput struct {
-	Role     string `json:"role" binding:"required,oneof=primary backup"`
-	Protocol string `json:"protocol" binding:"required,oneof=http https"`
-	Address  string `json:"address" binding:"required"`
-	Weight   int    `json:"weight"`
-	Enabled  bool   `json:"enabled"`
-}
-
-// HTTPSInput HTTPS配置输入
-type HTTPSInput struct {
-	Enabled       bool   `json:"enabled"`
-	ForceRedirect bool   `json:"force_redirect"`
-	HSTS          bool   `json:"hsts"`
-	CertMode      string `json:"cert_mode" binding:"required,oneof=select acme"`
-	CertificateID int    `json:"certificate_id"`   // select模式时必填
-	ACMEProviderID int   `json:"acme_provider_id"` // acme模式时必填
-	ACMEAccountID  int   `json:"acme_account_id"`  // acme模式时必填
-}
-
-// Create 创建网站
-func (h *Handler) CreateOld(c *gin.Context) {
-	var req CreateRequest
-	if err := c.ShouldBindJSON(&req); err != nil {
-		httpx.FailErr(c, httpx.ErrParamInvalid("invalid request body"))
-		return
-	}
-
-	// 参数校验
-	if err := h.validateCreateRequestOld(&req); err != nil {
-		httpx.FailErr(c, err)
-		return
-	}
-
-	// 事务处理
-	var websiteID int
-	err := h.db.Transaction(func(tx *gorm.DB) error {
-		// 1. 查询line_group
-		var lineGroup model.LineGroup
-		if err := tx.First(&lineGroup, req.LineGroupID).Error; err != nil {
-			if err == gorm.ErrRecordNotFound {
-				return httpx.ErrNotFound("line group not found")
-			}
-			return httpx.ErrDatabaseError("failed to query line group", err)
-		}
-
-		// 加载Domain信息以计算CNAME
-		var domain model.Domain
-		if err := tx.First(&domain, lineGroup.DomainID).Error; err != nil {
-			return httpx.ErrDatabaseError("failed to query domain", err)
-		}
-		cname := lineGroup.CNAMEPrefix + "." + domain.Domain
-			// 2. 检查 domain 是否已存在
-			var existingCount int64
-			if err := tx.Model(&model.Website{}).Where("domain = ?", req.Domain).Count(&existingCount).Error; err != nil {
-				return httpx.ErrDatabaseError("failed to check domain", err)
-			}
-			if existingCount > 0 {
-				return httpx.ErrAlreadyExists("domain already exists")
-			}
-
-			// 3. 创建 website
-			website := model.Website{
-				Domain:      req.Domain,
-				LineGroupID: req.LineGroupID,
-				CacheRuleID: req.CacheRuleID,
-				OriginMode:  req.OriginMode,
-				Status:      model.WebsiteStatusActive,
-			}
-
-			// 根据 originMode 设置字段
-			switch req.OriginMode {
-			case "group":
-				// group 模式：设置 originGroupID 和 originSetID
-				if req.OriginGroupID != nil && *req.OriginGroupID > 0 {
-					website.OriginGroupID = sql.NullInt32{Int32: int32(*req.OriginGroupID), Valid: true}
-				}
-				if req.OriginSetID != nil && *req.OriginSetID > 0 {
-					website.OriginSetID = sql.NullInt32{Int32: int32(*req.OriginSetID), Valid: true}
-				}
-			case "manual":
-				// manual 模式：originGroupID 和 originSetID 保持 NULL
-				// 不设置，保持默认值
-			case "redirect":
-				// redirect 模式：设置 redirectUrl
-				if req.RedirectURL != nil {
-					website.RedirectURL = *req.RedirectURL
-				}
-				if req.RedirectStatusCode != nil {
-					website.RedirectStatusCode = *req.RedirectStatusCode
-				}
-			}
-
-			if err := tx.Omit("origin_group_id", "origin_set_id").Create(&website).Error; err != nil {
-				return httpx.ErrDatabaseError("failed to create website", err)
-			}
-		websiteID = website.ID
-
-		// 3. 创建website_domains
-		for i, domain := range req.Domains {
-			// 检查域名是否已存在
-			var count int64
-			if err := tx.Model(&model.WebsiteDomain{}).Where("domain = ?", domain).Count(&count).Error; err != nil {
-				return httpx.ErrDatabaseError("failed to check domain", err)
-			}
-			if count > 0 {
-				return httpx.ErrAlreadyExists("domain already exists: " + domain)
-			}
-
-			// 创建域名记录
-			wd := model.WebsiteDomain{
-				WebsiteID: website.ID,
-				Domain:    domain,
-				IsPrimary: i == 0, // 第一个域名为主域名
-			}
-			if err := tx.Create(&wd).Error; err != nil {
-				return httpx.ErrDatabaseError("failed to create website domain", err)
-			}
-
-			// 4. 生成DNS记录（CNAME）
-			dnsRecord := model.DomainDNSRecord{
-				DomainID:  int(lineGroup.DomainID),
-				OwnerType: "website_domain",
-				OwnerID:   wd.ID,
-				Type:      "CNAME",
-				Name:      domain, // 完整域名
-				Value:     cname,
-				TTL:       600,
-				Status:    "pending",
-			}
-			if err := tx.Create(&dnsRecord).Error; err != nil {
-				return httpx.ErrDatabaseError("failed to create DNS record", err)
-			}
-		}
-
-		// 5. 根据origin_mode创建origin_set
-		if req.OriginMode == model.OriginModeGroup {
-			// group模式：从origin_group复制
-			if err := h.createOriginSetFromGroup(tx, website.ID, req.OriginGroupID); err != nil {
-				return err
-			}
-		} else if req.OriginMode == model.OriginModeManual {
-			// manual模式：手动创建
-			if err := h.createOriginSetManual(tx, website.ID, req.OriginAddresses); err != nil {
-				return err
-			}
-		}
-
-			// 6. 创建website_https（如果enabled）
-			if req.HTTPS != nil && req.HTTPS.Enabled {
-				// select模式：校验证书覆盖
-				if req.HTTPS.CertMode == model.CertModeSelect {
-					if err := h.validateCertificateCoverage(tx, req.HTTPS.CertificateID, website.ID); err != nil {
-						return err
-					}
-				}
-
-				https := model.WebsiteHTTPS{
-					WebsiteID:      website.ID,
-					Enabled:        true,
-					ForceRedirect:  req.HTTPS.ForceRedirect,
-					HSTS:           req.HTTPS.HSTS,
-					CertMode:       req.HTTPS.CertMode,
-					CertificateID:  req.HTTPS.CertificateID,
-					ACMEProviderID: req.HTTPS.ACMEProviderID,
-					ACMEAccountID:  req.HTTPS.ACMEAccountID,
-				}
-				if err := tx.Create(&https).Error; err != nil {
-					return httpx.ErrDatabaseError("failed to create website https", err)
-				}
-			}
-
-		return nil
-	})
-
-		if err != nil {
-			if appErr, ok := err.(*httpx.AppError); ok {
-				httpx.FailErr(c, appErr)
-			} else {
-				httpx.FailErr(c, httpx.ErrDatabaseError("transaction failed", err))
-			}
-			return
-		}
-
-		// Publish website event (after transaction success)
-		// Note: Broadcast failure should not affect the main flow
-		if err := ws.PublishWebsiteEvent("add", gin.H{"id": websiteID}); err != nil {
-			log.Printf("[WebSocket] Failed to publish website event: %v", err)
-		}
-
-		httpx.OK(c, gin.H{"id": websiteID})
-}
-
-// validateCreateRequest 校验创建请求
-func (h *Handler) validateCreateRequestOld(req *CreateRequest) *httpx.AppError {
-	// 校验origin_mode
-	switch req.OriginMode {
-	case model.OriginModeGroup:
-		if req.OriginGroupID <= 0 {
-			return httpx.ErrParamMissing("origin_group_id is required for group mode")
-		}
-	case model.OriginModeManual:
-		if len(req.OriginAddresses) == 0 {
-			return httpx.ErrParamMissing("origin_addresses is required for manual mode")
-		}
-	case model.OriginModeRedirect:
-		if req.RedirectURL == "" {
-			return httpx.ErrParamMissing("redirect_url is required for redirect mode")
-		}
-		if req.RedirectStatusCode == 0 {
-			req.RedirectStatusCode = 301 // 默认301
-		}
-	}
-
-	// 校验HTTPS配置
-	if req.HTTPS != nil && req.HTTPS.Enabled {
-		if req.HTTPS.CertMode == model.CertModeSelect {
-			if req.HTTPS.CertificateID <= 0 {
-				return httpx.ErrParamMissing("certificate_id is required for select mode")
-			}
-		} else if req.HTTPS.CertMode == model.CertModeACME {
-			if req.HTTPS.ACMEProviderID <= 0 && req.HTTPS.ACMEAccountID <= 0 {
-				return httpx.ErrParamMissing("acme_provider_id or acme_account_id is required for acme mode")
-			}
-			// ACME模式：简单校验域名非空和合法性
-			if len(req.Domains) == 0 {
-				return httpx.ErrParamMissing("domains is required for acme mode")
-			}
-			// 简单域名合法性校验（可选）
-			for _, domain := range req.Domains {
-				if domain == "" {
-					return httpx.ErrParamInvalid("domain cannot be empty")
-				}
-			}
-		}
-	}
-
-	return nil
-}
-
-// createOriginSetFromGroup 从origin_group创建origin_set
-func (h *Handler) createOriginSetFromGroup(tx *gorm.DB, websiteID, originGroupID int) *httpx.AppError {
-	// 查询origin_group
-	var originGroup model.OriginGroup
-	if err := tx.Preload("Addresses").First(&originGroup, originGroupID).Error; err != nil {
-		if err == gorm.ErrRecordNotFound {
-			return httpx.ErrNotFound("origin group not found")
-		}
-		return httpx.ErrDatabaseError("failed to query origin group", err)
-	}
-
-	// 创建origin_set
-	originSet := model.OriginSet{
-		Source:        "group",
-		OriginGroupID: int64(originGroupID),
-	}
-	if err := tx.Create(&originSet).Error; err != nil {
-		return httpx.ErrDatabaseError("failed to create origin set", err)
-	}
-
-	// 复制addresses
-	for _, addr := range originGroup.Addresses {
-		originAddr := model.OriginAddress{
-			OriginSetID: originSet.ID,
-			Role:        addr.Role,
-			Protocol:    addr.Protocol,
-			Address:     addr.Address,
-			Weight:      addr.Weight,
-			Enabled:     addr.Enabled,
-		}
-		if err := tx.Create(&originAddr).Error; err != nil {
-			return httpx.ErrDatabaseError("failed to create origin address", err)
-		}
-	}
-
-	// 更新website的origin_set_id
-	if err := tx.Model(&model.Website{}).Where("id = ?", websiteID).Update("origin_set_id", originSet.ID).Error; err != nil {
-		return httpx.ErrDatabaseError("failed to update website", err)
-	}
-
-	return nil
-}
-
-// createOriginSetManual 手动创建origin_set
-func (h *Handler) createOriginSetManual(tx *gorm.DB, websiteID int, addresses []OriginAddressInput) *httpx.AppError {
-	// 创建origin_set
-	originSet := model.OriginSet{
-		Source:        "manual",
-		OriginGroupID: 0,
-	}
-	if err := tx.Create(&originSet).Error; err != nil {
-		return httpx.ErrDatabaseError("failed to create origin set", err)
-	}
-
-	// 创建addresses
-	for _, addr := range addresses {
-		originAddr := model.OriginAddress{
-			OriginSetID: originSet.ID,
-			Role:        addr.Role,
-			Protocol:    addr.Protocol,
-			Address:     addr.Address,
-			Weight:      addr.Weight,
-			Enabled:     addr.Enabled,
-		}
-		if err := tx.Create(&originAddr).Error; err != nil {
-			return httpx.ErrDatabaseError("failed to create origin address", err)
-		}
-	}
-
-	// 更新website的origin_set_id
-	if err := tx.Model(&model.Website{}).Where("id = ?", websiteID).Update("origin_set_id", originSet.ID).Error; err != nil {
-		return httpx.ErrDatabaseError("failed to update website", err)
-	}
-
-	return nil
-}
-
-// UpdateRequest 更新请求
-type UpdateRequest struct {
-	ID          int    `json:"id" binding:"required"`
-	LineGroupID int    `json:"line_group_id"`
-	CacheRuleID int    `json:"cache_rule_id"`
-	Status      string `json:"status" binding:"omitempty,oneof=active inactive"`
-
-	// 回源配置更新（可选）
-	OriginMode         *string                  `json:"origin_mode"`
-	OriginGroupID      *int                     `json:"origin_group_id"`
-	OriginAddresses    []OriginAddressInput     `json:"origin_addresses"`
-	RedirectURL        *string                  `json:"redirect_url"`
-	RedirectStatusCode *int                     `json:"redirect_status_code"`
-
-	// HTTPS配置更新（可选）
-	HTTPS *HTTPSInput `json:"https"`
-}
-
-// Update 更新网站
+// func (h *Handler) CreateOld(c *gin.Context) {
+// 	var req CreateRequest
+// 	if err := c.ShouldBindJSON(&req); err != nil {
+// 		httpx.FailErr(c, httpx.ErrParamInvalid("invalid request body"))
+// 		return
+// 	}
+// 
+// 	// 参数校验
+// 	if err := h.validateCreateRequestOld(&req); err != nil {
+// 		httpx.FailErr(c, err)
+// 		return
+// 	}
+// 
+// 	// 事务处理
+// 	var websiteID int
+// 	err := h.db.Transaction(func(tx *gorm.DB) error {
+// 		// 1. 查询line_group
+// 		var lineGroup model.LineGroup
+// 		if err := tx.First(&lineGroup, req.LineGroupID).Error; err != nil {
+// 			if err == gorm.ErrRecordNotFound {
+// 				return httpx.ErrNotFound("line group not found")
+// 			}
+// 			return httpx.ErrDatabaseError("failed to query line group", err)
+// 		}
+// 
+// 		// 加载Domain信息以计算CNAME
+// 		var domain model.Domain
+// 		if err := tx.First(&domain, lineGroup.DomainID).Error; err != nil {
+// 			return httpx.ErrDatabaseError("failed to query domain", err)
+// 		}
+// 		cname := lineGroup.CNAMEPrefix + "." + domain.Domain
+// 			// 2. 检查 domain 是否已存在
+// 			var existingCount int64
+// 			if err := tx.Model(&model.Website{}).Where("domain = ?", req.Domain).Count(&existingCount).Error; err != nil {
+// 				return httpx.ErrDatabaseError("failed to check domain", err)
+// 			}
+// 			if existingCount > 0 {
+// 				return httpx.ErrAlreadyExists("domain already exists")
+// 			}
+// 
+// 			// 3. 创建 website
+// 			website := model.Website{
+// 				Domain:      req.Domain,
+// 				LineGroupID: req.LineGroupID,
+// 				CacheRuleID: req.CacheRuleID,
+// 				OriginMode:  req.OriginMode,
+// 				Status:      model.WebsiteStatusActive,
+// 			}
+// 
+// 			// 根据 originMode 设置字段
+// 			switch req.OriginMode {
+// 			case "group":
+// 				// group 模式：设置 originGroupID 和 originSetID
+// 				if req.OriginGroupID != nil && *req.OriginGroupID > 0 {
+// 					website.OriginGroupID = sql.NullInt32{Int32: int32(*req.OriginGroupID), Valid: true}
+// 				}
+// 				if req.OriginSetID != nil && *req.OriginSetID > 0 {
+// 					website.OriginSetID = sql.NullInt32{Int32: int32(*req.OriginSetID), Valid: true}
+// 				}
+// 			case "manual":
+// 				// manual 模式：originGroupID 和 originSetID 保持 NULL
+// 				// 不设置，保持默认值
+// 			case "redirect":
+// 				// redirect 模式：设置 redirectUrl
+// 				if req.RedirectURL != nil {
+// 					website.RedirectURL = *req.RedirectURL
+// 				}
+// 				if req.RedirectStatusCode != nil {
+// 					website.RedirectStatusCode = *req.RedirectStatusCode
+// 				}
+// 			}
+// 
+// 			if err := tx.Omit("origin_group_id", "origin_set_id").Create(&website).Error; err != nil {
+// 				return httpx.ErrDatabaseError("failed to create website", err)
+// 			}
+// 			websiteID = website.ID
+// 
+// 			// 3. 创建 website_domains 记录（主域名）
+// 			// 检查域名是否已存在于 website_domains 表
+// 			var domainCount int64
+// 			if err := tx.Model(&model.WebsiteDomain{}).Where("domain = ?", req.Domain).Count(&domainCount).Error; err != nil {
+// 				return httpx.ErrDatabaseError("failed to check domain in website_domains", err)
+// 			}
+// 			if domainCount > 0 {
+// 				return httpx.ErrAlreadyExists("domain already exists in website_domains")
+// 			}
+// 
+// 			// 创建域名记录
+// 			wd := model.WebsiteDomain{
+// 				WebsiteID: website.ID,
+// 				Domain:    req.Domain,
+// 				IsPrimary: true, // 设置为主域名
+// 			}
+// 			if err := tx.Create(&wd).Error; err != nil {
+// 				return httpx.ErrDatabaseError("failed to create website domain", err)
+// 			}
+// 
+// 			// 4. 生成 DNS 记录（CNAME）
+// 			dnsRecord := model.DomainDNSRecord{
+// 				DomainID:  int(lineGroup.DomainID),
+// 				OwnerType: "website_domain",
+// 				OwnerID:   wd.ID,
+// 				Type:      "CNAME",
+// 				Name:      req.Domain,
+// 				Value:     cname,
+// 				TTL:       600,
+// 				Status:    "pending",
+// 			}
+// 			if err := tx.Create(&dnsRecord).Error; err != nil {
+// 				return httpx.ErrDatabaseError("failed to create DNS record", err)
+// 			}
+// 
+// 			// 6. 创建website_https（如果enabled）
+// 			if req.HTTPS != nil && req.HTTPS.Enabled {
+// 				// select模式：校验证书覆盖
+// 				if req.HTTPS.CertMode == model.CertModeSelect {
+// 					if err := h.validateCertificateCoverage(tx, req.HTTPS.CertificateID, website.ID); err != nil {
+// 						return err
+// 					}
+// 				}
+// 
+// 				https := model.WebsiteHTTPS{
+// 					WebsiteID:      website.ID,
+// 					Enabled:        true,
+// 					ForceRedirect:  req.HTTPS.ForceRedirect,
+// 					HSTS:           req.HTTPS.HSTS,
+// 					CertMode:       req.HTTPS.CertMode,
+// 					CertificateID:  req.HTTPS.CertificateID,
+// 					ACMEProviderID: req.HTTPS.ACMEProviderID,
+// 					ACMEAccountID:  req.HTTPS.ACMEAccountID,
+// 				}
+// 				if err := tx.Create(&https).Error; err != nil {
+// 					return httpx.ErrDatabaseError("failed to create website https", err)
+// 				}
+// 			}
+// 
+// 		return nil
+// 	})
+// 
+// 		if err != nil {
+// 			if appErr, ok := err.(*httpx.AppError); ok {
+// 				httpx.FailErr(c, appErr)
+// 			} else {
+// 				httpx.FailErr(c, httpx.ErrDatabaseError("transaction failed", err))
+// 			}
+// 			return
+// 		}
+// 
+// 		// Publish website event (after transaction success)
+// 		// Note: Broadcast failure should not affect the main flow
+// 		if err := ws.PublishWebsiteEvent("add", gin.H{"id": websiteID}); err != nil {
+// 			log.Printf("[WebSocket] Failed to publish website event: %v", err)
+// 		}
+// 
+// 		httpx.OK(c, gin.H{"id": websiteID})
+// }
+// 
+// // validateCreateRequest 校验创建请求
+// func (h *Handler) validateCreateRequestOld(req *CreateRequest) *httpx.AppError {
+// 	// 校验origin_mode
+// 	switch req.OriginMode {
+// 	case model.OriginModeGroup:
+// 		if req.OriginGroupID <= 0 {
+// 			return httpx.ErrParamMissing("origin_group_id is required for group mode")
+// 		}
+// 	case model.OriginModeManual:
+// 		if len(req.OriginAddresses) == 0 {
+// 			return httpx.ErrParamMissing("origin_addresses is required for manual mode")
+// 		}
+// 	case model.OriginModeRedirect:
+// 		if req.RedirectURL == "" {
+// 			return httpx.ErrParamMissing("redirect_url is required for redirect mode")
+// 		}
+// 		if req.RedirectStatusCode == 0 {
+// 			req.RedirectStatusCode = 301 // 默认301
+// 		}
+// 	}
+// 
+// 	// 校验HTTPS配置
+// 	if req.HTTPS != nil && req.HTTPS.Enabled {
+// 		if req.HTTPS.CertMode == model.CertModeSelect {
+// 			if req.HTTPS.CertificateID <= 0 {
+// 				return httpx.ErrParamMissing("certificate_id is required for select mode")
+// 			}
+// 		} else if req.HTTPS.CertMode == model.CertModeACME {
+// 			if req.HTTPS.ACMEProviderID <= 0 && req.HTTPS.ACMEAccountID <= 0 {
+// 				return httpx.ErrParamMissing("acme_provider_id or acme_account_id is required for acme mode")
+// 			}
+// 			// ACME模式：简单校验域名非空和合法性
+// 			if len(req.Domains) == 0 {
+// 				return httpx.ErrParamMissing("domains is required for acme mode")
+// 			}
+// 			// 简单域名合法性校验（可选）
+// 			for _, domain := range req.Domains {
+// 				if domain == "" {
+// 					return httpx.ErrParamInvalid("domain cannot be empty")
+// 				}
+// 			}
+// 		}
+// 	}
+// 
+// 	return nil
+// }
+// 
+// // createOriginSetFromGroup 从origin_group创建origin_set
 func (h *Handler) Update(c *gin.Context) {
 	var req UpdateRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
