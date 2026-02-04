@@ -1,6 +1,7 @@
 package websites
 
 import (
+	"database/sql"
 	"go_cmdb/internal/httpx"
 	"log"
 	"strconv"
@@ -127,8 +128,8 @@ func (h *Handler) List(c *gin.Context) {
 				LineGroupID:        w.LineGroupID,
 				CacheRuleID:        w.CacheRuleID,
 				OriginMode:         w.OriginMode,
-				OriginGroupID:      model.UVal(w.OriginGroupID),
-				OriginSetID:        model.UVal(w.OriginSetID),
+				OriginGroupID:      int(w.OriginGroupID.Int32),
+				OriginSetID:        int(w.OriginSetID.Int32),
 				RedirectURL:        w.RedirectURL,
 				RedirectStatusCode: w.RedirectStatusCode,
 				Status:             w.Status,
@@ -256,16 +257,18 @@ func (h *Handler) Create(c *gin.Context) {
 			Status:             model.WebsiteStatusActive,
 		}
 
-		// 根据 originMode 设置 origin 字段
-		switch req.OriginMode {
-		case "group":
-			// group 模式：只设置 originGroupID
-			website.OriginGroupID = model.UPtr(req.OriginGroupID)
-			// originSetID 保持 nil
-		case "manual", "redirect":
-			// manual/redirect 模式：originGroupID 和 originSetID 都为 NULL
-			// 保持默认 nil
-		}
+			// 根据 originMode 设置 origin 字段
+			switch req.OriginMode {
+			case "group":
+				// group 模式：只设置 originGroupID
+				if req.OriginGroupID > 0 {
+					website.OriginGroupID = sql.NullInt32{Int32: int32(req.OriginGroupID), Valid: true}
+				}
+				// originSetID 保持 invalid (NULL)
+			case "manual", "redirect":
+				// manual/redirect 模式：originGroupID 和 originSetID 都为 NULL
+				// 保持默认 invalid (NULL)
+			}
 
 		if err := tx.Create(&website).Error; err != nil {
 			return httpx.ErrDatabaseError("failed to create website", err)
@@ -595,11 +598,11 @@ func (h *Handler) Update(c *gin.Context) {
 			// 状态机校验（简化版，实际可能需要更复杂的逻辑）
 			if oldMode != newMode {
 				// 删除旧origin_set
-				if website.OriginSetID != nil && *website.OriginSetID > 0 {
-					if err := tx.Delete(&model.OriginAddress{}, "origin_set_id = ?", website.OriginSetID).Error; err != nil {
+				if website.OriginSetID.Valid && website.OriginSetID.Int32 > 0 {
+					if err := tx.Delete(&model.OriginAddress{}, "origin_set_id = ?", website.OriginSetID.Int32).Error; err != nil {
 						return httpx.ErrDatabaseError("failed to delete origin addresses", err)
 					}
-					if err := tx.Delete(&model.OriginSet{}, website.OriginSetID).Error; err != nil {
+					if err := tx.Delete(&model.OriginSet{}, website.OriginSetID.Int32).Error; err != nil {
 						return httpx.ErrDatabaseError("failed to delete origin set", err)
 					}
 				}

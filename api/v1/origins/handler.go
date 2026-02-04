@@ -258,7 +258,7 @@ func (h *Handler) Update(c *gin.Context) {
 	}
 
 	// 检查是否有origin_set
-	if website.OriginSetID == nil || website.OriginSet == nil {
+	if !website.OriginSetID.Valid || website.OriginSet == nil {
 		httpx.FailErr(c, httpx.ErrNotFound(""))
 		return
 	}
@@ -278,7 +278,7 @@ func (h *Handler) Update(c *gin.Context) {
 	}()
 
 	// 删除旧addresses
-	if err := tx.Where("origin_set_id = ?", *website.OriginSetID).
+	if err := tx.Where("origin_set_id = ?", website.OriginSetID.Int32).
 		Delete(&model.OriginAddress{}).Error; err != nil {
 		tx.Rollback()
 		httpx.FailErr(c, httpx.ErrDatabaseError("", err))
@@ -298,7 +298,7 @@ func (h *Handler) Update(c *gin.Context) {
 		}
 
 		addresses[i] = model.OriginAddress{
-			OriginSetID: *website.OriginSetID,
+			OriginSetID: int(website.OriginSetID.Int32),
 			Role:        addr.Role,
 			Protocol:    addr.Protocol,
 			Address:     addr.Address,
@@ -321,7 +321,7 @@ func (h *Handler) Update(c *gin.Context) {
 
 	// 重新加载完整数据
 	var originSet model.OriginSet
-	if err := h.db.Preload("Addresses").First(&originSet, *website.OriginSetID).Error; err != nil {
+	if err := h.db.Preload("Addresses").First(&originSet, website.OriginSetID.Int32).Error; err != nil {
 		httpx.FailErr(c, httpx.ErrDatabaseError("", err))
 		return
 	}
@@ -355,7 +355,7 @@ func (h *Handler) Delete(c *gin.Context) {
 	}
 
 	// 检查是否有origin_set
-	if website.OriginSetID == nil {
+	if !website.OriginSetID.Valid {
 		httpx.OK(c, gin.H{"message": "no origin_set to delete"})
 		return
 	}
@@ -369,7 +369,7 @@ func (h *Handler) Delete(c *gin.Context) {
 	}()
 
 	// 删除origin_set（级联删除addresses）
-	if err := tx.Delete(&model.OriginSet{}, *website.OriginSetID).Error; err != nil {
+	if err := tx.Delete(&model.OriginSet{}, website.OriginSetID.Int32).Error; err != nil {
 		tx.Rollback()
 		httpx.FailErr(c, httpx.ErrDatabaseError("", err))
 		return
