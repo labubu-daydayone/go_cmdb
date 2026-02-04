@@ -153,6 +153,11 @@ type ReleaseDetail struct {
 
 // GetReleaseDetailResponse 详情查询响应
 type GetReleaseDetailResponse struct {
+	Item GetReleaseDetailItem `json:"item"`
+}
+
+// GetReleaseDetailItem 详情项
+type GetReleaseDetailItem struct {
 	Release ReleaseDetail        `json:"release"`
 	Batches []ReleaseDetailBatch `json:"batches"`
 }
@@ -252,20 +257,22 @@ func (s *Service) GetReleaseDetail(id int64) (*GetReleaseDetailResponse, error) 
 	}
 
 	return &GetReleaseDetailResponse{
-		Release: ReleaseDetail{
-			ID:            task.ID,
-			Type:          string(task.Type),
-			Target:        string(task.Target),
-			Version:       task.Version,
-			Status:        string(task.Status),
-			TotalNodes:    task.TotalNodes,
-			SuccessNodes:  task.SuccessNodes,
-			FailedNodes:   task.FailedNodes,
-			SkippedNodes:  int(skippedNodes),
-			CurrentBatch:  currentBatchValue,
-			CreatedAt:     task.CreatedAt,
-			UpdatedAt:     task.UpdatedAt,
+		Item: GetReleaseDetailItem{
+			Release: ReleaseDetail{
+				ID:            task.ID,
+				Type:          string(task.Type),
+				Target:        string(task.Target),
+				Version:       task.Version,
+				Status:        string(task.Status),
+				TotalNodes:    task.TotalNodes,
+				SuccessNodes:  task.SuccessNodes,
+				FailedNodes:   task.FailedNodes,
+				SkippedNodes:  int(skippedNodes),
+				CurrentBatch:  currentBatchValue,
+				CreatedAt:     task.CreatedAt,
+				UpdatedAt:     task.UpdatedAt,
+			},
+			Batches: batches,
 		},
-		Batches: batches,
 	}, nil
 }

@@ -51,20 +51,20 @@ func (h *Handler) CreateRelease(c *gin.Context) {
 	httpx.OK(c, resp)
 }
 
-// GetRelease 获取发布任务详情
-// GET /api/v1/releases/:id
-func (h *Handler) GetRelease(c *gin.Context) {
+// GetReleaseDetail 获取发布任务详情
+// GET /api/v1/releases/detail?id=xxx
+func (h *Handler) GetReleaseDetail(c *gin.Context) {
 	// 获取releaseID参数
-	releaseID := c.Param("id")
-	if releaseID == "" {
-		httpx.FailErr(c, httpx.ErrParamInvalid("releaseId is required"))
+	releaseIDStr := c.Query("id")
+	if releaseIDStr == "" {
+		httpx.FailErr(c, httpx.ErrParamInvalid("id is required"))
 		return
 	}
 
 	// 转换为int64
 	var id int64
-	if _, err := fmt.Sscanf(releaseID, "%d", &id); err != nil {
-		httpx.FailErr(c, httpx.ErrParamInvalid("invalid releaseId"))
+	if _, err := fmt.Sscanf(releaseIDStr, "%d", &id); err != nil {
+		httpx.FailErr(c, httpx.ErrParamInvalid("invalid id"))
 		return
 	}
 

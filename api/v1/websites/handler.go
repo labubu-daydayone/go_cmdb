@@ -7,6 +7,7 @@ import (
 
 	"go_cmdb/internal/cert"
 	"go_cmdb/internal/model"
+	"go_cmdb/internal/upstream"
 	"go_cmdb/internal/ws"
 
 	"github.com/gin-gonic/gin"
@@ -863,4 +864,63 @@ func (h *Handler) validateCertificateCoverage(tx *gorm.DB, certificateID int, we
 	}
 
 	return nil
+}
+
+// BindOriginSetRequest 绑定 Origin Set 请求
+type BindOriginSetRequest struct {
+	WebsiteID   int64 `json:"websiteId" binding:"required"`
+	OriginSetID int64 `json:"originSetId" binding:"required"`
+}
+
+// BindOriginSetResponse 绑定 Origin Set 响应
+type BindOriginSetResponse struct {
+	Item BindOriginSetItem `json:"item"`
+}
+
+// BindOriginSetItem 绑定 Origin Set 响应项
+type BindOriginSetItem struct {
+	ReleaseID int64 `json:"releaseId"`
+}
+
+// BindOriginSet 绑定 Origin Set 并触发发布
+func (h *Handler) BindOriginSet(c *gin.Context) {
+	var req BindOriginSetRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		httpx.FailErr(c, httpx.ErrParamInvalid("invalid request body"))
+		return
+	}
+
+	// 1. 更新 website 的 origin_set_id
+	err := h.db.Model(&model.Website{}).
+		Where("id = ?", req.WebsiteID).
+		Updates(map[string]interface{}{
+			"origin_set_id": req.OriginSetID,
+			"origin_mode":   "group",
+		}).Error
+	if err != nil {
+		httpx.FailErr(c, httpx.ErrDatabaseError("failed to update website", err))
+		return
+	}
+
+	// 2. 触发发布（这里需要调用 upstream publisher）
+	// 为了避免循环依赖，我们在这里直接调用 publisher
+	publisher := upstream.NewPublisher(h.db)
+	publishResp, err := publisher.Publish(&upstream.PublishRequest{
+		WebsiteID:   req.WebsiteID,
+		OriginSetID: req.OriginSetID,
+	})
+	if err != nil {
+		if appErr, ok := err.(*httpx.AppError); ok {
+			httpx.FailErr(c, appErr)
+		} else {
+			httpx.FailErr(c, httpx.ErrInternalError("failed to publish", err))
+		}
+		return
+	}
+
+	httpx.OK(c, BindOriginSetResponse{
+		Item: BindOriginSetItem{
+			ReleaseID: publishResp.ReleaseID,
+		},
+	})
 }
