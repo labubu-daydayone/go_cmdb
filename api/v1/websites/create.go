@@ -40,14 +40,16 @@ type CreateResultItem struct {
 	WebsiteID             *int     `json:"websiteId"`
 	Domains               []string `json:"domains"`
 	Error                 *string  `json:"error"`
-	ReleaseTaskID         int      `json:"releaseTaskId"`
-	TaskCreated           bool     `json:"taskCreated"`
-	SkipReason            string   `json:"skipReason"`
-	DispatchTriggered     bool     `json:"dispatchTriggered"`
-	TargetNodeCount       int      `json:"targetNodeCount"`
-	CreatedAgentTaskCount int      `json:"createdAgentTaskCount"`
-	SkippedAgentTaskCount int      `json:"skippedAgentTaskCount"`
-	AgentTaskCountAfter   int      `json:"agentTaskCountAfter"`
+	ReleaseTaskID          int      `json:"releaseTaskId"`
+	TaskCreated            bool     `json:"taskCreated"`
+	SkipReason             string   `json:"skipReason"`
+	DispatchTriggered      bool     `json:"dispatchTriggered"`
+	TargetNodeCount        int      `json:"targetNodeCount"`
+	CreatedAgentTaskCount  int      `json:"createdAgentTaskCount"`
+	SkippedAgentTaskCount  int      `json:"skippedAgentTaskCount"`
+	AgentTaskCountAfter    int      `json:"agentTaskCountAfter"`
+	PayloadValid           bool     `json:"payloadValid"`
+	PayloadInvalidReason   string   `json:"payloadInvalidReason"` 
 }
 
 // Create 创建网站
@@ -196,6 +198,8 @@ func (h *Handler) Create(c *gin.Context) {
 					result.CreatedAgentTaskCount = releaseResult.CreatedAgentTaskCount
 					result.SkippedAgentTaskCount = releaseResult.SkippedAgentTaskCount
 					result.AgentTaskCountAfter = releaseResult.AgentTaskCountAfter
+					result.PayloadValid = releaseResult.PayloadValid
+					result.PayloadInvalidReason = releaseResult.PayloadInvalidReason
 				}
 			}
 		}

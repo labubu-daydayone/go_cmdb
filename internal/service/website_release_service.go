@@ -27,14 +27,16 @@ func NewWebsiteReleaseService(db *gorm.DB) *WebsiteReleaseService {
 
 // CreateReleaseTaskResult 创建发布任务结果
 type CreateReleaseTaskResult struct {
-	ReleaseTaskID         int64
-	TaskCreated           bool
-	SkipReason            string
-	DispatchTriggered     bool
-	TargetNodeCount       int
-	CreatedAgentTaskCount int
-	SkippedAgentTaskCount int
-	AgentTaskCountAfter   int
+	ReleaseTaskID          int64
+	TaskCreated            bool
+	SkipReason             string
+	DispatchTriggered      bool
+	TargetNodeCount        int
+	CreatedAgentTaskCount  int
+	SkippedAgentTaskCount  int
+	AgentTaskCountAfter    int
+	PayloadValid           bool
+	PayloadInvalidReason   string
 }
 
 // CreateWebsiteReleaseTaskWithDispatch 创建网站发布任务并派发到 Agent
@@ -111,6 +113,14 @@ func (s *WebsiteReleaseService) CreateWebsiteReleaseTaskWithDispatch(websiteID i
 	result.CreatedAgentTaskCount = dispatchResult.Created
 	result.SkippedAgentTaskCount = dispatchResult.Skipped
 	result.AgentTaskCountAfter = dispatchResult.AgentTaskCountAfter
+
+	// 设置 payload 有效性
+	if dispatchResult.ErrorMsg != "" {
+		result.PayloadValid = false
+		result.PayloadInvalidReason = dispatchResult.ErrorMsg
+	} else {
+		result.PayloadValid = true
+	}
 
 	log.Printf("[WebsiteReleaseService] Dispatch completed: releaseTaskId=%d, targetNodeCount=%d, created=%d, skipped=%d",
 		releaseTask.ID, result.TargetNodeCount, result.CreatedAgentTaskCount, result.SkippedAgentTaskCount)

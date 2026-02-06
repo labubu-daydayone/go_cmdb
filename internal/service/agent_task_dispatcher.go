@@ -76,8 +76,31 @@ func (d *AgentTaskDispatcher) EnsureDispatched(releaseTaskID int64, websiteID in
 	// 6. 标记派发已触发
 	result.DispatchTriggered = true
 
-	// 7. 查询 origin_set_items 获取 origins
-	var origins []map[string]interface{}
+	// 7. 查询网站域名
+	var domains []string
+	var websiteDomains []model.WebsiteDomain
+	if err := d.db.Where("website_id = ?", websiteID).Find(&websiteDomains).Error; err != nil {
+		log.Printf("[Dispatcher] Failed to query website_domains: websiteId=%d, error=%v", websiteID, err)
+	} else {
+		for _, wd := range websiteDomains {
+			domains = append(domains, wd.Domain)
+		}
+	}
+
+	// 域名必填校验
+	if len(domains) == 0 {
+		errMsg := fmt.Sprintf("no domains found for websiteId=%d", websiteID)
+		result.ErrorMsg = errMsg
+		result.DispatchTriggered = false
+		d.db.Model(&releaseTask).Updates(map[string]interface{}{
+			"status":     model.ReleaseTaskStatusFailed,
+			"last_error": errMsg,
+		})
+		return result, nil
+	}
+
+	// 8. 查询 origin_set_items 获取 origins（初始化为空数组而不是 nil）
+	origins := make([]map[string]interface{}, 0)
 	if website.OriginSetID.Valid && website.OriginSetID.Int32 > 0 {
 		var originSetItems []model.OriginSetItem
 		if err := d.db.Where("origin_set_id = ?", website.OriginSetID.Int32).Find(&originSetItems).Error; err != nil {
@@ -109,7 +132,19 @@ func (d *AgentTaskDispatcher) EnsureDispatched(releaseTaskID int64, websiteID in
 		}
 	}
 
-	// 8. 为每个节点创建 agent_task（幂等）
+	// 9. group 模式下 origins 必填校验
+	if website.OriginMode == "group" && len(origins) == 0 {
+		errMsg := fmt.Sprintf("no origins found for group mode: websiteId=%d, originSetId=%d", websiteID, website.OriginSetID.Int32)
+		result.ErrorMsg = errMsg
+		result.DispatchTriggered = false
+		d.db.Model(&releaseTask).Updates(map[string]interface{}{
+			"status":     model.ReleaseTaskStatusFailed,
+			"last_error": errMsg,
+		})
+		return result, nil
+	}
+
+	// 10. 为每个节点创建 agent_task（幂等）
 	for _, nodeID := range targetNodes {
 		idKey := fmt.Sprintf("release-%d-node-%d", releaseTaskID, nodeID)
 
@@ -135,17 +170,41 @@ func (d *AgentTaskDispatcher) EnsureDispatched(releaseTaskID int64, websiteID in
 				continue
 			}
 
-			// 构建 payload
+			// 构建 payload（根据 originMode 构建不同结构）
 			payload := map[string]interface{}{
 				"idKey":         idKey,
 				"releaseTaskId": releaseTaskID,
 				"websiteId":     websiteID,
+				"lineGroupId":   website.LineGroupID,
+				"originMode":    website.OriginMode,
 				"type":          "applyConfig",
 				"traceId":       traceID,
 				"reload":        true,
-				"origins": map[string]interface{}{
+				"domains":       domains,
+			}
+
+			// 根据 originMode 添加特定字段
+			switch website.OriginMode {
+			case "group":
+				if website.OriginGroupID.Valid {
+					payload["originGroupId"] = website.OriginGroupID.Int32
+				}
+				if website.OriginSetID.Valid {
+					payload["originSetId"] = website.OriginSetID.Int32
+				}
+				payload["origins"] = map[string]interface{}{
 					"items": origins,
-				},
+				}
+			case "redirect":
+				payload["redirectUrl"] = website.RedirectURL
+				payload["redirectStatusCode"] = website.RedirectStatusCode
+			case "manual":
+				if website.OriginSetID.Valid {
+					payload["originSetId"] = website.OriginSetID.Int32
+				}
+				payload["origins"] = map[string]interface{}{
+					"items": origins,
+				}
 			}
 			payloadBytes, err := json.Marshal(payload)
 			if err != nil {
