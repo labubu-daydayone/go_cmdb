@@ -864,3 +864,140 @@ func (h *Handler) ToggleSubIP(c *gin.Context) {
 		"message": "sub IP toggled successfully",
 	})
 }
+
+// EnableRequest represents enable node request
+type EnableRequest struct {
+	ID int `json:"id" binding:"required"`
+}
+
+// DisableRequest represents disable node request
+type DisableRequest struct {
+	ID int `json:"id" binding:"required"`
+}
+
+// Enable handles POST /api/v1/nodes/enable
+func (h *Handler) Enable(c *gin.Context) {
+	var req EnableRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		httpx.FailErr(c, httpx.ErrParamMissing(err.Error()))
+		return
+	}
+
+	// Check if node exists
+	var node model.Node
+	if err := h.db.First(&node, req.ID).Error; err != nil {
+		if err == gorm.ErrRecordNotFound {
+			httpx.FailErr(c, httpx.ErrNotFound("node not found"))
+			return
+		}
+		httpx.FailErr(c, httpx.ErrDatabaseError("failed to find node", err))
+		return
+	}
+
+	// Update enabled status (idempotent)
+	if err := h.db.Model(&node).Update("enabled", true).Error; err != nil {
+		httpx.FailErr(c, httpx.ErrDatabaseError("failed to enable node", err))
+		return
+	}
+
+	httpx.OK(c, nil)
+}
+
+// Disable handles POST /api/v1/nodes/disable
+func (h *Handler) Disable(c *gin.Context) {
+	var req DisableRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		httpx.FailErr(c, httpx.ErrParamMissing(err.Error()))
+		return
+	}
+
+	// Check if node exists
+	var node model.Node
+	if err := h.db.First(&node, req.ID).Error; err != nil {
+		if err == gorm.ErrRecordNotFound {
+			httpx.FailErr(c, httpx.ErrNotFound("node not found"))
+			return
+		}
+		httpx.FailErr(c, httpx.ErrDatabaseError("failed to find node", err))
+		return
+	}
+
+	// Update enabled status (idempotent)
+	if err := h.db.Model(&node).Update("enabled", false).Error; err != nil {
+		httpx.FailErr(c, httpx.ErrDatabaseError("failed to disable node", err))
+		return
+	}
+
+	httpx.OK(c, nil)
+}
+
+// GetIdentity handles GET /api/v1/nodes/:id/identity
+func (h *Handler) GetIdentity(c *gin.Context) {
+	nodeID := c.Param("id")
+	if nodeID == "" {
+		httpx.FailErr(c, httpx.ErrParamInvalid("node ID is required"))
+		return
+	}
+
+	// Convert to int
+	var id int
+	if _, err := fmt.Sscanf(nodeID, "%d", &id); err != nil {
+		httpx.FailErr(c, httpx.ErrParamInvalid("invalid node ID"))
+		return
+	}
+
+	// Check if node exists
+	var node model.Node
+	if err := h.db.First(&node, id).Error; err != nil {
+		if err == gorm.ErrRecordNotFound {
+			httpx.FailErr(c, httpx.ErrNotFound("node not found"))
+			return
+		}
+		httpx.FailErr(c, httpx.ErrDatabaseError("failed to find node", err))
+		return
+	}
+
+	// Get identity
+	identity, err := h.identityService.GetIdentityByNodeID(id)
+	if err != nil {
+		httpx.FailErr(c, httpx.ErrNotFound("identity not found"))
+		return
+	}
+
+	httpx.OK(c, identity)
+}
+
+// RevokeIdentity handles POST /api/v1/nodes/:id/identity/revoke
+func (h *Handler) RevokeIdentity(c *gin.Context) {
+	nodeID := c.Param("id")
+	if nodeID == "" {
+		httpx.FailErr(c, httpx.ErrParamInvalid("node ID is required"))
+		return
+	}
+
+	// Convert to int
+	var id int
+	if _, err := fmt.Sscanf(nodeID, "%d", &id); err != nil {
+		httpx.FailErr(c, httpx.ErrParamInvalid("invalid node ID"))
+		return
+	}
+
+	// Check if node exists
+	var node model.Node
+	if err := h.db.First(&node, id).Error; err != nil {
+		if err == gorm.ErrRecordNotFound {
+			httpx.FailErr(c, httpx.ErrNotFound("node not found"))
+			return
+		}
+		httpx.FailErr(c, httpx.ErrDatabaseError("failed to find node", err))
+		return
+	}
+
+	// Revoke identity
+	if err := h.identityService.RevokeIdentity(id); err != nil {
+		httpx.FailErr(c, httpx.ErrDatabaseError("failed to revoke identity", err))
+		return
+	}
+
+	httpx.OK(c, gin.H{"message": "identity revoked"})
+}
