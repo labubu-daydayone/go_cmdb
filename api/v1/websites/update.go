@@ -1,8 +1,11 @@
 package websites
 
 import (
+	"fmt"
 	"go_cmdb/internal/httpx"
 	"go_cmdb/internal/model"
+	"go_cmdb/internal/service"
+	"log"
 
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
@@ -172,14 +175,22 @@ func (h *Handler) Update(c *gin.Context) {
 		return nil
 	})
 
-	if err != nil {
-		if appErr, ok := err.(*httpx.AppError); ok {
-			httpx.FailErr(c, appErr)
-		} else {
-			httpx.FailErr(c, httpx.ErrDatabaseError("failed to update website", err))
+		if err != nil {
+			if appErr, ok := err.(*httpx.AppError); ok {
+				httpx.FailErr(c, appErr)
+			} else {
+				httpx.FailErr(c, httpx.ErrDatabaseError("failed to update website", err))
+			}
+			return
 		}
-		return
-	}
+
+		// 更新成功后触发发布任务
+		releaseService := service.NewWebsiteReleaseService(h.db)
+		traceID := fmt.Sprintf("website_update_%d", req.ID)
+		_, releaseErr := releaseService.CreateWebsiteReleaseTaskWithDispatch(int64(req.ID), traceID)
+		if releaseErr != nil {
+			log.Printf("[Update] Failed to create release task for website %d: %v", req.ID, releaseErr)
+		}
 
 	// 重新查询返回
 	if err := h.db.

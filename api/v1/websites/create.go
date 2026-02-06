@@ -2,8 +2,11 @@ package websites
 
 import (
 	"database/sql"
+	"fmt"
 	"go_cmdb/internal/httpx"
 	"go_cmdb/internal/model"
+	"go_cmdb/internal/service"
+	"log"
 
 	"strings"
 
@@ -32,11 +35,19 @@ type CreateResponse struct {
 
 // CreateResultItem 单行创建结果
 type CreateResultItem struct {
-	Line      int      `json:"line"`
-	Created   bool     `json:"created"`
-	WebsiteID *int     `json:"websiteId"`
-	Domains   []string `json:"domains"`
-	Error     *string  `json:"error"`
+	Line                  int      `json:"line"`
+	Created               bool     `json:"created"`
+	WebsiteID             *int     `json:"websiteId"`
+	Domains               []string `json:"domains"`
+	Error                 *string  `json:"error"`
+	ReleaseTaskID         int      `json:"releaseTaskId"`
+	TaskCreated           bool     `json:"taskCreated"`
+	SkipReason            string   `json:"skipReason"`
+	DispatchTriggered     bool     `json:"dispatchTriggered"`
+	TargetNodeCount       int      `json:"targetNodeCount"`
+	CreatedAgentTaskCount int      `json:"createdAgentTaskCount"`
+	SkippedAgentTaskCount int      `json:"skippedAgentTaskCount"`
+	AgentTaskCountAfter   int      `json:"agentTaskCountAfter"`
 }
 
 // Create 创建网站
@@ -169,7 +180,24 @@ func (h *Handler) Create(c *gin.Context) {
 			result.Error = &errMsg
 			result.Created = false
 		} else {
-
+			// 创建成功后触发发布任务
+			if result.WebsiteID != nil {
+				releaseService := service.NewWebsiteReleaseService(h.db)
+				traceID := fmt.Sprintf("website_create_%d", *result.WebsiteID)
+				releaseResult, releaseErr := releaseService.CreateWebsiteReleaseTaskWithDispatch(int64(*result.WebsiteID), traceID)
+				if releaseErr != nil {
+					log.Printf("[Create] Failed to create release task for website %d: %v", *result.WebsiteID, releaseErr)
+				} else {
+					result.ReleaseTaskID = int(releaseResult.ReleaseTaskID)
+					result.TaskCreated = releaseResult.TaskCreated
+					result.SkipReason = releaseResult.SkipReason
+					result.DispatchTriggered = releaseResult.DispatchTriggered
+					result.TargetNodeCount = releaseResult.TargetNodeCount
+					result.CreatedAgentTaskCount = releaseResult.CreatedAgentTaskCount
+					result.SkippedAgentTaskCount = releaseResult.SkippedAgentTaskCount
+					result.AgentTaskCountAfter = releaseResult.AgentTaskCountAfter
+				}
+			}
 		}
 
 		results = append(results, result)
