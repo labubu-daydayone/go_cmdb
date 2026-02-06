@@ -76,7 +76,40 @@ func (d *AgentTaskDispatcher) EnsureDispatched(releaseTaskID int64, websiteID in
 	// 6. 标记派发已触发
 	result.DispatchTriggered = true
 
-	// 7. 为每个节点创建 agent_task（幂等）
+	// 7. 查询 origin_set_items 获取 origins
+	var origins []map[string]interface{}
+	if website.OriginSetID.Valid && website.OriginSetID.Int32 > 0 {
+		var originSetItems []model.OriginSetItem
+		if err := d.db.Where("origin_set_id = ?", website.OriginSetID.Int32).Find(&originSetItems).Error; err != nil {
+			log.Printf("[Dispatcher] Failed to query origin_set_items: originSetId=%d, error=%v", website.OriginSetID.Int32, err)
+		} else {
+			for _, item := range originSetItems {
+				var snapshotData map[string]interface{}
+				if err := json.Unmarshal([]byte(item.SnapshotJSON), &snapshotData); err != nil {
+					log.Printf("[Dispatcher] Failed to unmarshal snapshot_json: id=%d, error=%v", item.ID, err)
+					continue
+				}
+				// 提取 addresses 数组
+				if addresses, ok := snapshotData["addresses"].([]interface{}); ok {
+					for _, addr := range addresses {
+						if addrMap, ok := addr.(map[string]interface{}); ok {
+							// 只保留稳定字段
+							origin := map[string]interface{}{
+								"address":  addrMap["address"],
+								"role":     addrMap["role"],
+								"weight":   addrMap["weight"],
+								"enabled":  addrMap["enabled"],
+								"protocol": addrMap["protocol"],
+							}
+							origins = append(origins, origin)
+						}
+					}
+				}
+			}
+		}
+	}
+
+	// 8. 为每个节点创建 agent_task（幂等）
 	for _, nodeID := range targetNodes {
 		idKey := fmt.Sprintf("release-%d-node-%d", releaseTaskID, nodeID)
 
@@ -108,9 +141,11 @@ func (d *AgentTaskDispatcher) EnsureDispatched(releaseTaskID int64, websiteID in
 				"releaseTaskId": releaseTaskID,
 				"websiteId":     websiteID,
 				"type":          "applyConfig",
-				"files":         []interface{}{}, // 占位，后续填充
 				"traceId":       traceID,
 				"reload":        true,
+				"origins": map[string]interface{}{
+					"items": origins,
+				},
 			}
 			payloadBytes, err := json.Marshal(payload)
 			if err != nil {
@@ -138,17 +173,17 @@ func (d *AgentTaskDispatcher) EnsureDispatched(releaseTaskID int64, websiteID in
 			log.Printf("[Dispatcher] Created agent_task: idKey=%s, nodeId=%d", idKey, nodeID)
 		}
 
-	// 8. 统计当前 agent_tasks 数量
+	// 9. 统计当前 agent_tasks 数量（使用 JSON_EXTRACT 精确匹配）
 	var agentTaskCount int64
 	d.db.Model(&model.AgentTask{}).
-		Where("payload LIKE ?", "%\\\"releaseTaskId\\\":"+fmt.Sprintf("%d", releaseTaskID)+"%").
+		Where("JSON_EXTRACT(payload, '$.releaseTaskId') = ?", releaseTaskID).
 		Count(&agentTaskCount)
 	result.AgentTaskCountAfter = int(agentTaskCount)
 
-	// 9. 更新 release_task.totalNodes
+	// 10. 更新 release_task.totalNodes
 	d.db.Model(&releaseTask).Update("total_nodes", result.TargetNodeCount)
 
-	// 10. 如果有失败，标记 release_task 失败
+	// 11. 如果有失败，标记 release_task 失败
 	if result.Failed > 0 {
 		d.db.Model(&releaseTask).Updates(map[string]interface{}{
 			"status":     model.ReleaseTaskStatusFailed,
