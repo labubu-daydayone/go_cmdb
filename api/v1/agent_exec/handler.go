@@ -1,10 +1,13 @@
 package agent_exec
 
 import (
+	"encoding/json"
 	"go_cmdb/internal/httpx"
 	"go_cmdb/internal/model"
 	"go_cmdb/internal/service"
+	"log"
 	"strconv"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
@@ -130,12 +133,41 @@ func (h *Handler) Pull(c *gin.Context) {
 		return
 	}
 
-	// Map status to API format
-	for i := range tasks {
-		tasks[i].Status = mapStatusToAPI(tasks[i].Status)
+	// Map status to API format and convert payload to object
+	type AgentTaskResponse struct {
+		ID          int64                  `json:"id"`
+		NodeID      int                    `json:"nodeId"`
+		Type        string                 `json:"type"`
+		Payload     map[string]interface{} `json:"payload"`
+		Status      string                 `json:"status"`
+		LastError   string                 `json:"lastError,omitempty"`
+		CreatedAt   time.Time              `json:"createdAt"`
+		UpdatedAt   time.Time              `json:"updatedAt"`
 	}
 
-	httpx.OK(c, gin.H{"items": tasks})
+	var responseTasks []AgentTaskResponse
+	for i := range tasks {
+		// Parse payload string to object
+		var payloadObj map[string]interface{}
+		if err := json.Unmarshal([]byte(tasks[i].Payload), &payloadObj); err != nil {
+			// Skip tasks with invalid payload and log error
+			log.Printf("[Agent Pull] Skip task %d due to invalid payload: %v", tasks[i].ID, err)
+			continue
+		}
+
+		responseTasks = append(responseTasks, AgentTaskResponse{
+			ID:        int64(tasks[i].ID),
+			NodeID:    int(tasks[i].NodeID),
+			Type:      tasks[i].Type,
+			Payload:   payloadObj,
+			Status:    mapStatusToAPI(tasks[i].Status),
+			LastError: tasks[i].LastError,
+			CreatedAt: tasks[i].CreatedAt,
+			UpdatedAt: tasks[i].UpdatedAt,
+		})
+	}
+
+	httpx.OK(c, gin.H{"items": responseTasks})
 }
 
 // UpdateStatus handles POST /api/v1/agent/tasks/update-status
