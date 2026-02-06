@@ -332,24 +332,28 @@ func (s *ReleaseTaskService) CreateWebsiteReleaseTaskWithDispatch(websiteID int6
 		"website", websiteID, contentHash, model.ReleaseTaskStatusPending, model.ReleaseTaskStatusRunning).
 		First(&existingTask).Error
 
-if err == nil {
-			// 已存在相同任务，补发 agent_tasks
-			util.DebugLog("WEB_RELEASE_DEBUG traceId=%s step=reuse_existing_task releaseTaskId=%d",
-				traceID, existingTask.ID)
-			dispatcher := NewAgentTaskDispatcher(s.db)
-			result, err := dispatcher.EnsureDispatched(existingTask.ID, websiteID, traceID)
-			if err != nil {
-				util.DebugLog("WEB_RELEASE_DEBUG traceId=%s step=dispatch_failed releaseTaskId=%d error=%v",
-					traceID, existingTask.ID, err)
-			} else {
-				util.DebugLog("WEB_RELEASE_DEBUG traceId=%s step=dispatch_success releaseTaskId=%d",
+	if err == nil {
+				// 已存在相同任务，补发 agent_tasks
+				util.DebugLog("WEB_RELEASE_DEBUG traceId=%s step=reuse_existing_task releaseTaskId=%d",
 					traceID, existingTask.ID)
-				dispatchResult = result
-				dispatchResult.TaskCreated = false // Reusing task
-				dispatchResult.DispatchTriggered = true
+				dispatcher := NewAgentTaskDispatcher(s.db)
+				result, err := dispatcher.EnsureDispatched(existingTask.ID, websiteID, traceID)
+				if err != nil {
+					util.DebugLog("WEB_RELEASE_DEBUG traceId=%s step=dispatch_failed releaseTaskId=%d error=%v",
+						traceID, existingTask.ID, err)
+					// 即使 dispatch 失败，也要返回结果
+					if result != nil {
+						dispatchResult = result
+					}
+				} else {
+					util.DebugLog("WEB_RELEASE_DEBUG traceId=%s step=dispatch_success releaseTaskId=%d",
+						traceID, existingTask.ID)
+					dispatchResult = result
+				}
+				// 设置 TaskCreated 为 false，表示复用了旧任务
+				dispatchResult.TaskCreated = false
+				return &existingTask, dispatchResult, nil
 			}
-			return &existingTask, dispatchResult, nil
-		}
 
 	if err != gorm.ErrRecordNotFound {
 		return nil, nil, fmt.Errorf("failed to check existing task: %w", err)
@@ -373,21 +377,31 @@ if err := s.db.Create(&task).Error; err != nil {
 
 	// 派发到 agent_tasks
 	dispatcher := NewAgentTaskDispatcher(s.db)
-result, err := dispatcher.EnsureDispatched(task.ID, websiteID, traceID)
-		if err != nil {
-			util.DebugLog("WEB_RELEASE_DEBUG traceId=%s step=dispatch_failed releaseTaskId=%d error=%v",
-				traceID, task.ID, err)
-		} else {
-			util.DebugLog("WEB_RELEASE_DEBUG traceId=%s step=dispatch_success releaseTaskId=%d",
-				traceID, task.ID)
-			dispatchResult.DispatchTriggered = true
-			dispatchResult.TargetNodeCount = result.TargetNodeCount
-			dispatchResult.AgentTaskCountAfter = result.AgentTaskCountAfter
-			dispatchResult.Created = result.Created
-			dispatchResult.Skipped = result.Skipped
-			dispatchResult.Failed = result.Failed
-			dispatchResult.ErrorMsg = result.ErrorMsg
-		}
+	result, err := dispatcher.EnsureDispatched(task.ID, websiteID, traceID)
+			if err != nil {
+				util.DebugLog("WEB_RELEASE_DEBUG traceId=%s step=dispatch_failed releaseTaskId=%d error=%v",
+					traceID, task.ID, err)
+				// 即使 dispatch 失败，也要返回结果
+				if result != nil {
+					dispatchResult.DispatchTriggered = result.DispatchTriggered
+					dispatchResult.TargetNodeCount = result.TargetNodeCount
+					dispatchResult.AgentTaskCountAfter = result.AgentTaskCountAfter
+					dispatchResult.Created = result.Created
+					dispatchResult.Skipped = result.Skipped
+					dispatchResult.Failed = result.Failed
+					dispatchResult.ErrorMsg = result.ErrorMsg
+				}
+			} else {
+				util.DebugLog("WEB_RELEASE_DEBUG traceId=%s step=dispatch_success releaseTaskId=%d",
+					traceID, task.ID)
+				dispatchResult.DispatchTriggered = result.DispatchTriggered
+				dispatchResult.TargetNodeCount = result.TargetNodeCount
+				dispatchResult.AgentTaskCountAfter = result.AgentTaskCountAfter
+				dispatchResult.Created = result.Created
+				dispatchResult.Skipped = result.Skipped
+				dispatchResult.Failed = result.Failed
+				dispatchResult.ErrorMsg = result.ErrorMsg
+			}
 
 	return &task, dispatchResult, nil
 }

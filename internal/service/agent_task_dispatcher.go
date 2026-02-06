@@ -60,18 +60,23 @@ func (d *AgentTaskDispatcher) EnsureDispatched(releaseTaskID int64, websiteID in
 
 	result.TargetNodeCount = len(targetNodes)
 
-	// 5. 无目标节点时标记失败
+	// 5. 无目标节点时标记失败（断链止血）
 	if result.TargetNodeCount == 0 {
-		errMsg := "no target nodes found"
+		errMsg := fmt.Sprintf("no eligible nodes for lineGroupId=%d", website.LineGroupID)
 		result.ErrorMsg = errMsg
+		result.DispatchTriggered = false
 		d.db.Model(&releaseTask).Updates(map[string]interface{}{
 			"status":     model.ReleaseTaskStatusFailed,
 			"last_error": errMsg,
 		})
-		return result, fmt.Errorf("%s", errMsg)
+		// 不返回错误，让上层接口返回 code=0
+		return result, nil
 	}
 
-	// 6. 为每个节点创建 agent_task（幂等）
+	// 6. 标记派发已触发
+	result.DispatchTriggered = true
+
+	// 7. 为每个节点创建 agent_task（幂等）
 	for _, nodeID := range targetNodes {
 		idKey := fmt.Sprintf("release-%d-node-%d", releaseTaskID, nodeID)
 
@@ -133,17 +138,17 @@ func (d *AgentTaskDispatcher) EnsureDispatched(releaseTaskID int64, websiteID in
 			log.Printf("[Dispatcher] Created agent_task: idKey=%s, nodeId=%d", idKey, nodeID)
 		}
 
-	// 7. 统计当前 agent_tasks 数量
+	// 8. 统计当前 agent_tasks 数量
 	var agentTaskCount int64
 	d.db.Model(&model.AgentTask{}).
 		Where("payload LIKE ?", "%\\\"releaseTaskId\\\":"+fmt.Sprintf("%d", releaseTaskID)+"%").
 		Count(&agentTaskCount)
 	result.AgentTaskCountAfter = int(agentTaskCount)
 
-	// 8. 更新 release_task.totalNodes
+	// 9. 更新 release_task.totalNodes
 	d.db.Model(&releaseTask).Update("total_nodes", result.TargetNodeCount)
 
-	// 9. 如果有失败，标记 release_task 失败
+	// 10. 如果有失败，标记 release_task 失败
 	if result.Failed > 0 {
 		d.db.Model(&releaseTask).Updates(map[string]interface{}{
 			"status":     model.ReleaseTaskStatusFailed,
