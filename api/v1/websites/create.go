@@ -4,7 +4,7 @@ import (
 	"database/sql"
 	"go_cmdb/internal/httpx"
 	"go_cmdb/internal/model"
-	"go_cmdb/internal/service"
+
 	"strings"
 
 	"github.com/gin-gonic/gin"
@@ -169,10 +169,7 @@ func (h *Handler) Create(c *gin.Context) {
 			result.Error = &errMsg
 			result.Created = false
 		} else {
-			// 触发 website_release_task（仅 active 且 originSetId 有效）
-			if req.OriginMode == model.OriginModeGroup && req.OriginSetID != nil && *req.OriginSetID > 0 {
-				h.triggerWebsiteReleaseTask(int64(*result.WebsiteID))
-			}
+
 		}
 
 		results = append(results, result)
@@ -446,11 +443,4 @@ func buildDomainsJSON(domains []string) string {
 	return result
 }
 
-// triggerWebsiteReleaseTask 触发网站发布任务
-func (h *Handler) triggerWebsiteReleaseTask(websiteID int64) {
-	// 异步触发，不阻塞主流程
-	go func() {
-		svc := service.NewWebsiteReleaseTaskService(h.db)
-		_, _ = svc.CreateOrUpdateTask(websiteID)
-	}()
-}
+

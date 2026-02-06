@@ -28,7 +28,7 @@ import (
 	"go_cmdb/api/v1/releases"
 	"go_cmdb/api/v1/risks"
 	"go_cmdb/api/v1/websites"
-	"go_cmdb/api/v1/website_release_tasks"
+
 	bootstrapPkg "go_cmdb/internal/bootstrap"
 	"go_cmdb/internal/config"
 	"go_cmdb/internal/httpx"
@@ -206,15 +206,6 @@ func SetupRouter(r *gin.Engine, db *gorm.DB, cfg *config.Config, acmeWorker *acm
 				websitesGroup.POST("/delete", websitesHandler.Delete)
 				websitesGroup.POST("/bind-origin-set", websitesHandler.BindOriginSet)
 				websitesGroup.POST("/origin-set/bind", websitesHandler.BatchBindOriginSet)
-			}
-
-			// Website Release Tasks routes
-			websiteReleaseTasksHandler := website_release_tasks.NewHandler(db)
-			websiteReleaseTasksGroup := protected.Group("/website-release-tasks")
-			{
-				websiteReleaseTasksGroup.GET("", websiteReleaseTasksHandler.List)
-				websiteReleaseTasksGroup.GET("/:id", websiteReleaseTasksHandler.Detail)
-				websiteReleaseTasksGroup.POST("/retry", websiteReleaseTasksHandler.Retry)
 			}
 
 			// Agent tasks routes

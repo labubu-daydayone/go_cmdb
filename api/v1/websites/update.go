@@ -242,11 +242,6 @@ func (h *Handler) Update(c *gin.Context) {
 		item.HTTPSEnabled = website.HTTPS.Enabled
 	}
 
-	// 触发 website_release_task（仅 active 且 originSetId 有效）
-	if website.Status == model.WebsiteStatusActive && website.OriginMode == model.OriginModeGroup && website.OriginSetID.Valid && website.OriginSetID.Int32 > 0 {
-		h.triggerWebsiteReleaseTask(int64(website.ID))
-	}
-
 	httpx.OK(c, item)
 }
 
