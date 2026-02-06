@@ -311,7 +311,7 @@ func (s *Service) OnCertificateIssued(requestID int, certID int) error {
 
 	for _, node := range nodes {
 		task := &model.AgentTask{
-			NodeID:  node.ID,
+			NodeID:  uint(node.ID),
 			Type:    "apply_config",
 			Payload: fmt.Sprintf(`{"version": %d}`, configVersion.Version),
 			Status:  model.TaskStatusPending,

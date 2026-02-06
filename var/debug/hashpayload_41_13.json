@@ -1,0 +1,1 @@
+{"origins":[{"address":"10.0.0.1:80","role":"primary","weight":10,"enabled":true,"protocol":"http"},{"address":"10.0.0.2:80","role":"primary","weight":20,"enabled":true,"protocol":"http"},{"address":"10.0.0.3:80","role":"primary","weight":15,"enabled":true,"protocol":"http"}]}

@@ -346,29 +346,133 @@ func (h *Handler) BindOriginSet(c *gin.Context) {
 	})
 }
 
-// UpdateRequest 更新请求
-type UpdateRequest struct {
-	ID                 int     `json:"id" binding:"required"`
-	LineGroupID        *int    `json:"lineGroupId"`
-	CacheRuleID        *int    `json:"cacheRuleId"`
-	OriginMode         *string `json:"originMode"`
-	OriginGroupID      *int    `json:"originGroupId"`
-	OriginSetID        *int    `json:"originSetId"`
-	RedirectURL        *string `json:"redirectUrl"`
-	RedirectStatusCode *int    `json:"redirectStatusCode"`
-	Status             *string `json:"status"`
+
+// handleHTTPSConfigUpdate 处理 HTTPS 配置更新（update 专用）
+func (h *Handler) handleHTTPSConfigUpdate(tx *gorm.DB, websiteID int, httpsEnabled *bool, forceRedirect *bool, domains []string) error {
+	// 如果未传 httpsEnabled，不处理
+	if httpsEnabled == nil {
+		return nil
+	}
+
+	// 查找现有的 website_https 记录
+	var websiteHTTPS model.WebsiteHTTPS
+	err := tx.Where("website_id = ?", websiteID).First(&websiteHTTPS).Error
+	
+	oldEnabled := false
+	if err == nil {
+		oldEnabled = websiteHTTPS.Enabled
+	}
+
+	if err == gorm.ErrRecordNotFound {
+		// 创建新记录
+		if !*httpsEnabled {
+			// httpsEnabled=false，创建禁用状态的记录
+			return tx.Exec(
+				"INSERT INTO website_https (website_id, enabled, force_redirect, hsts, cert_mode, certificate_id, acme_provider_id, acme_account_id, created_at, updated_at) VALUES (?, ?, ?, ?, ?, NULL, NULL, NULL, NOW(), NOW())",
+				websiteID, false, false, false, model.CertModeACME,
+			).Error
+		}
+
+		// httpsEnabled=true，创建启用状态的记录
+		forceRedir := false
+		if forceRedirect != nil {
+			forceRedir = *forceRedirect
+		}
+
+		// 获取默认 ACME provider 和 account
+		acmeProviderID, acmeAccountID, err := h.getDefaultACME(tx)
+		if err != nil {
+			return err
+		}
+
+		// 使用 Exec 直接执行 SQL，确保 certificate_id 为 NULL
+		if err := tx.Exec(
+			"INSERT INTO website_https (website_id, enabled, force_redirect, hsts, cert_mode, acme_provider_id, acme_account_id, certificate_id, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, NULL, NOW(), NOW())",
+			websiteID, true, forceRedir, false, model.CertModeACME, acmeProviderID, acmeAccountID,
+		).Error; err != nil {
+			return err
+		}
+
+		// 触发证书申请（false -> true）
+		return h.triggerCertificateRequest(tx, websiteID, acmeAccountID, domains)
+	} else if err != nil {
+		return err
+	}
+
+	// 更新现有记录
+	updates := make(map[string]interface{})
+	
+	if !*httpsEnabled {
+		// httpsEnabled=false，禁用 HTTPS
+		updates["enabled"] = false
+		updates["force_redirect"] = false
+		updates["certificate_id"] = nil
+	} else {
+		// httpsEnabled=true，启用 HTTPS
+		updates["enabled"] = true
+		if forceRedirect != nil {
+			updates["force_redirect"] = *forceRedirect
+		} else {
+			updates["force_redirect"] = false
+		}
+		updates["hsts"] = false
+		updates["cert_mode"] = model.CertModeACME
+		updates["certificate_id"] = nil
+
+		// 如果之前没有设置 ACME，设置默认值
+		if websiteHTTPS.ACMEProviderID == nil || websiteHTTPS.ACMEAccountID == nil {
+			acmeProviderID, acmeAccountID, err := h.getDefaultACME(tx)
+			if err != nil {
+				return err
+			}
+			updates["acme_provider_id"] = acmeProviderID
+			updates["acme_account_id"] = acmeAccountID
+			// 只有在 enabled 从 false -> true 时触发证书申请
+			if !oldEnabled {
+				if err := h.triggerCertificateRequest(tx, websiteID, acmeAccountID, domains); err != nil {
+					return err
+				}
+			}
+		} else {
+			// 只有在 enabled 从 false -> true 时触发证书申请
+			if !oldEnabled {
+				if err := h.triggerCertificateRequest(tx, websiteID, int(*websiteHTTPS.ACMEAccountID), domains); err != nil {
+					return err
+				}
+			}
+		}
+	}
+
+	return tx.Model(&model.WebsiteHTTPS{}).Where("website_id = ?", websiteID).Updates(updates).Error
 }
 
-// Update 更新网站
-func (h *Handler) Update(c *gin.Context) {
-	var req UpdateRequest
-	if err := c.ShouldBindJSON(&req); err != nil {
-		httpx.FailErr(c, httpx.ErrParamInvalid("invalid request body"))
+// WebsiteHTTPSDTO HTTPS 配置 DTO
+type WebsiteHTTPSDTO struct {
+	ID             int    `json:"id"`
+	WebsiteID      int    `json:"websiteId"`
+	Enabled        bool   `json:"enabled"`
+	ForceRedirect  bool   `json:"forceRedirect"`
+	HSTS           bool   `json:"hsts"`
+	CertMode       string `json:"certMode"`
+	CertificateID  *int   `json:"certificateId"`
+	ACMEProviderID *int   `json:"acmeProviderId"`
+	ACMEAccountID  *int   `json:"acmeAccountId"`
+	CreatedAt      string `json:"createdAt"`
+	UpdatedAt      string `json:"updatedAt"`
+}
+
+// GetHTTPS 获取网站 HTTPS 配置
+func (h *Handler) GetHTTPS(c *gin.Context) {
+	idStr := c.Param("id")
+	id, err := strconv.Atoi(idStr)
+	if err != nil {
+		httpx.FailErr(c, httpx.ErrParamInvalid("invalid website id"))
 		return
 	}
 
+	// 检查网站是否存在
 	var website model.Website
-	if err := h.db.First(&website, req.ID).Error; err != nil {
+	if err := h.db.First(&website, id).Error; err != nil {
 		if err == gorm.ErrRecordNotFound {
 			httpx.FailErr(c, httpx.ErrNotFound("website not found"))
 			return
@@ -377,151 +481,53 @@ func (h *Handler) Update(c *gin.Context) {
 		return
 	}
 
-	// 更新字段
-	updates := make(map[string]interface{})
-	if req.LineGroupID != nil {
-		updates["line_group_id"] = *req.LineGroupID
-	}
-	if req.CacheRuleID != nil {
-		updates["cache_rule_id"] = *req.CacheRuleID
-	}
-	if req.OriginMode != nil {
-		updates["origin_mode"] = *req.OriginMode
-	}
-	if req.OriginGroupID != nil {
-		if *req.OriginGroupID > 0 {
-			updates["origin_group_id"] = *req.OriginGroupID
-		} else {
-			updates["origin_group_id"] = nil
-		}
-	}
-	if req.OriginSetID != nil {
-		if *req.OriginSetID > 0 {
-			updates["origin_set_id"] = *req.OriginSetID
-		} else {
-			updates["origin_set_id"] = nil
-		}
-	}
-	if req.RedirectURL != nil {
-		updates["redirect_url"] = *req.RedirectURL
-	}
-	if req.RedirectStatusCode != nil {
-		updates["redirect_status_code"] = *req.RedirectStatusCode
-	}
-	if req.Status != nil {
-		updates["status"] = *req.Status
-	}
-
-	if err := h.db.Model(&website).Updates(updates).Error; err != nil {
-		httpx.FailErr(c, httpx.ErrDatabaseError("failed to update website", err))
+	// 查询 HTTPS 配置
+	var websiteHTTPS model.WebsiteHTTPS
+	err = h.db.Where("website_id = ?", id).First(&websiteHTTPS).Error
+	
+	if err == gorm.ErrRecordNotFound {
+		// 如果没有 HTTPS 配置，返回默认值
+		httpx.OK(c, gin.H{
+			"item": WebsiteHTTPSDTO{
+				WebsiteID:     id,
+				Enabled:       false,
+				ForceRedirect: false,
+				HSTS:          false,
+				CertMode:      model.CertModeACME,
+			},
+		})
 		return
-	}
-
-	// 重新查询
-	if err := h.db.
-		Preload("LineGroup").
-		Preload("OriginGroup").
-		Preload("Domains").
-		Preload("HTTPS").
-		First(&website, req.ID).Error; err != nil {
-		httpx.FailErr(c, httpx.ErrDatabaseError("failed to query updated website", err))
+	} else if err != nil {
+		httpx.FailErr(c, httpx.ErrDatabaseError("failed to query HTTPS config", err))
 		return
 	}
 
 	// 转换为 DTO
-	item := WebsiteDTO{
-		ID:                 website.ID,
-		LineGroupID:        website.LineGroupID,
-		CacheRuleID:        website.CacheRuleID,
-		OriginMode:         website.OriginMode,
-		RedirectURL:        website.RedirectURL,
-		RedirectStatusCode: website.RedirectStatusCode,
-		Status:             website.Status,
-		CreatedAt:          website.CreatedAt,
-		UpdatedAt:          website.UpdatedAt,
+	dto := WebsiteHTTPSDTO{
+		ID:            websiteHTTPS.ID,
+		WebsiteID:     websiteHTTPS.WebsiteID,
+		Enabled:       websiteHTTPS.Enabled,
+		ForceRedirect: websiteHTTPS.ForceRedirect,
+		HSTS:          websiteHTTPS.HSTS,
+		CertMode:      websiteHTTPS.CertMode,
+		CreatedAt:     websiteHTTPS.CreatedAt.Format("2006-01-02T15:04:05-07:00"),
+		UpdatedAt:     websiteHTTPS.UpdatedAt.Format("2006-01-02T15:04:05-07:00"),
 	}
 
-	// OriginGroupID 和 OriginSetID 处理
-	if website.OriginGroupID.Valid {
-		val := int(website.OriginGroupID.Int32)
-		item.OriginGroupID = &val
+	if websiteHTTPS.CertificateID != nil {
+		certID := int(*websiteHTTPS.CertificateID)
+		dto.CertificateID = &certID
 	}
-	if website.OriginSetID.Valid {
-		val := int(website.OriginSetID.Int32)
-		item.OriginSetID = &val
+	if websiteHTTPS.ACMEProviderID != nil {
+		providerID := int(*websiteHTTPS.ACMEProviderID)
+		dto.ACMEProviderID = &providerID
 	}
-
-	// LineGroup名称和CNAME
-	if website.LineGroup != nil {
-		item.LineGroupName = website.LineGroup.Name
-		var domain model.Domain
-		if err := h.db.First(&domain, website.LineGroup.DomainID).Error; err == nil {
-			item.CNAME = website.LineGroup.CNAMEPrefix + "." + domain.Domain
-		}
+	if websiteHTTPS.ACMEAccountID != nil {
+		accountID := int(*websiteHTTPS.ACMEAccountID)
+		dto.ACMEAccountID = &accountID
 	}
 
-	// OriginGroup名称
-	if website.OriginGroup != nil {
-		item.OriginGroupName = website.OriginGroup.Name
-	}
-
-	// 域名列表
-	domains := make([]string, 0, len(website.Domains))
-	for _, d := range website.Domains {
-		domains = append(domains, d.Domain)
-	}
-	item.Domains = domains
-
-	// HTTPS状态
-	if website.HTTPS != nil {
-		item.HTTPSEnabled = website.HTTPS.Enabled
-	}
-
-	httpx.OK(c, item)
-}
-
-// DeleteRequest 删除请求
-type DeleteRequest struct {
-	IDs []int `json:"ids" binding:"required"`
-}
-
-// Delete 删除网站
-func (h *Handler) Delete(c *gin.Context) {
-	var req DeleteRequest
-	if err := c.ShouldBindJSON(&req); err != nil {
-		httpx.FailErr(c, httpx.ErrParamInvalid("invalid request body"))
-		return
-	}
-
-	if len(req.IDs) == 0 {
-		httpx.FailErr(c, httpx.ErrParamInvalid("ids cannot be empty"))
-		return
-	}
-
-	err := h.db.Transaction(func(tx *gorm.DB) error {
-		for _, id := range req.IDs {
-			// 删除 website_domains
-			if err := tx.Where("website_id = ?", id).Delete(&model.WebsiteDomain{}).Error; err != nil {
-				return err
-			}
-
-			// 删除 website_https（如果存在）
-			if err := tx.Where("website_id = ?", id).Delete(&model.WebsiteHTTPS{}).Error; err != nil {
-				return err
-			}
-
-			// 删除 website
-			if err := tx.Delete(&model.Website{}, id).Error; err != nil {
-				return err
-			}
-		}
-		return nil
+	httpx.OK(c, gin.H{
+		"item": dto,
 	})
-
-	if err != nil {
-		httpx.FailErr(c, httpx.ErrDatabaseError("failed to delete websites", err))
-		return
-	}
-
-	httpx.OK(c, nil)
 }

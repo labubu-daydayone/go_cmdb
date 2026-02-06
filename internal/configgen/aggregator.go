@@ -174,7 +174,7 @@ func (a *Aggregator) buildHTTPS(websiteID int) (*HTTPSConfig, error) {
 	}
 
 	// Load certificate if cert_mode is select
-	if websiteHTTPS.CertMode == model.CertModeSelect && websiteHTTPS.CertificateID > 0 {
+	if websiteHTTPS.CertMode == model.CertModeSelect && websiteHTTPS.CertificateID != nil && *websiteHTTPS.CertificateID > 0 {
 		var certificate model.Certificate
 		if err := a.db.First(&certificate, websiteHTTPS.CertificateID).Error; err != nil {
 			if err == gorm.ErrRecordNotFound {
@@ -195,7 +195,7 @@ func (a *Aggregator) buildHTTPS(websiteID int) (*HTTPSConfig, error) {
 		// ACME mode: check if certificate is issued
 		// For now, we disable HTTPS if certificate is not ready
 		// (Future: implement ACME worker to auto-issue certificates)
-		if websiteHTTPS.CertificateID == 0 {
+		if websiteHTTPS.CertificateID == nil || *websiteHTTPS.CertificateID == 0 {
 			config.Enabled = false
 			return config, nil
 		}

@@ -151,7 +151,7 @@ func (p *Publisher) Publish(req *PublishRequest) (*PublishResponse, error) {
 
 			// 创建任务
 			task := &model.AgentTask{
-				NodeID:    nodeID,
+				NodeID:    uint(nodeID),
 				Type:      model.TaskTypeApplyConfig,
 				Payload:   string(payloadJSON),
 				Status:    model.TaskStatusPending,
@@ -187,7 +187,7 @@ func (p *Publisher) Publish(req *PublishRequest) (*PublishResponse, error) {
 			// 创建 reload 任务
 			requestID := fmt.Sprintf("reload_%d_%d_%d", req.WebsiteID, nodeID, time.Now().UnixNano())
 			task := &model.AgentTask{
-				NodeID:    nodeID,
+				NodeID:    uint(nodeID),
 				Type:      model.TaskTypeReload,
 				Payload:   "{}",
 				Status:    model.TaskStatusPending,

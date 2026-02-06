@@ -1,0 +1,285 @@
+2026/01/28 06:14:49 Loading configuration from INI file: /opt/go_cmdb/config.ini
+2026/01/28 06:14:49 ✓ Configuration loaded from INI file
+2026/01/28 06:14:49 ✓ MySQL connected successfully
+2026/01/28 06:14:49 ✓ MySQL connected successfully
+2026/01/28 06:14:49 MIGRATE=0 or not set, migration disabled
+2026/01/28 06:14:49 ✓ JWT initialized
+2026/01/28 06:14:49 ✓ Redis connected successfully
+2026/01/28 06:14:49 ✓ Redis connected successfully
+2026/01/28 06:14:49 ✓ Bootstrap Token Store initialized
+2026/01/28 06:14:49 ✓ CA Manager initialized
+2026/01/28 06:14:49 [RiskScanner] Starting with interval 300 seconds
+2026/01/28 06:14:49 ✓ Risk Scanner initialized
+2026/01/28 06:14:49 ⚠ Release Executor requires mTLS but mTLS is not enabled, skipping executor
+2026/01/28 06:14:49 [DNS Worker] Starting with interval=30s, batch_size=10
+2026/01/28 06:14:49 ✓ DNS Worker initialized
+2026/01/28 06:14:49 [ACME Worker] Starting with interval=40s, batch=50
+2026/01/28 06:14:49 [RiskScanner] Running initial scan...
+2026/01/28 06:14:49 [RiskScanner] Starting scan...
+2026/01/28 06:14:49 ✓ ACME Worker initialized
+2026/01/28 06:14:49 ✓ Certificate Cleaner disabled (CERT_FAILED_CLEANER_ENABLED=0)
+2026/01/28 06:14:49 [WebSocket] Event handlers registered
+2026/01/28 06:14:49 [DNS Worker] Tick: processing DNS records...
+2026/01/28 06:14:49 [WebSocket] Socket.IO server initialized
+2026/01/28 06:14:49 ✓ Socket.IO server initialized
+2026/01/28 06:14:49 ⚠ Failed to create dispatcher: failed to create agent client: mTLS is required but not enabled
+2026/01/28 06:14:49 ⚠ Failed to create dispatcher: failed to create agent client: mTLS is required but not enabled
+2026/01/28 06:14:49 ✓ Server starting on :8080
+2026/01/28 06:14:49 [RiskScanner] Scan completed: 0 risks detected, 0 new, 0 updated
+2026/01/28 06:14:49 [DNS Service] GetDeletionRecords: found 0 records (limit=10, error=<nil>)
+2026/01/28 06:14:49 [DNS Worker] Tick done: present_candidates=0, absent_candidates=0, claimed_running=0, claim_skipped=0, success=0, error=0, deleted=0
+2026/01/28 06:15:19 [DNS Worker] Tick: processing DNS records...
+2026/01/28 06:15:19 [DNS Service] GetDeletionRecords: found 0 records (limit=10, error=<nil>)
+2026/01/28 06:15:19 [DNS Worker] Tick done: present_candidates=0, absent_candidates=0, claimed_running=0, claim_skipped=0, success=0, error=0, deleted=0
+[GIN] 2026/01/28 - 06:15:29 | 200 |  267.140128ms |    173.64.10.36 | POST     "/api/v1/auth/login"
+[GIN] 2026/01/28 - 06:15:30 | 200 |    1.189332ms |   76.38.248.101 | POST     "/api/v1/agents/bootstrap/token/create"
+[GIN] 2026/01/28 - 06:15:39 | 200 |    2.147172ms |   76.38.248.101 | GET      "/bootstrap/agent/install.sh?token=d84b5593cf85cec045b533b45642c1244298c1b7b761bcaecf7fc7beb19c48ac"
+[GIN] 2026/01/28 - 06:15:41 | 200 |    1.848989ms |   76.38.248.101 | GET      "/bootstrap/agent/install.sh?token=d84b5593cf85cec045b533b45642c1244298c1b7b761bcaecf7fc7beb19c48ac"
+2026/01/28 06:15:49 [DNS Worker] Tick: processing DNS records...
+2026/01/28 06:15:49 [DNS Service] GetDeletionRecords: found 0 records (limit=10, error=<nil>)
+2026/01/28 06:15:49 [DNS Worker] Tick done: present_candidates=0, absent_candidates=0, claimed_running=0, claim_skipped=0, success=0, error=0, deleted=0
+[GIN] 2026/01/28 - 06:15:54 | 200 |    1.451029ms |    20.2.140.226 | GET      "/bootstrap/agent/install.sh?token=d84b5593cf85cec045b533b45642c1244298c1b7b761bcaecf7fc7beb19c48ac"
+2026/01/28 06:16:19 [DNS Worker] Tick: processing DNS records...
+2026/01/28 06:16:19 [DNS Service] GetDeletionRecords: found 0 records (limit=10, error=<nil>)
+2026/01/28 06:16:19 [DNS Worker] Tick done: present_candidates=0, absent_candidates=0, claimed_running=0, claim_skipped=0, success=0, error=0, deleted=0
+2026/01/28 06:16:49 [DNS Worker] Tick: processing DNS records...
+2026/01/28 06:16:49 [DNS Service] GetDeletionRecords: found 0 records (limit=10, error=<nil>)
+2026/01/28 06:16:49 [DNS Worker] Tick done: present_candidates=0, absent_candidates=0, claimed_running=0, claim_skipped=0, success=0, error=0, deleted=0
+2026/01/28 06:16:53 [WebSocket] Handshake rejected: No token from 13.228.178.233:61314
+[GIN] 2026/01/28 - 06:16:53 | 401 |      86.083µs |  13.228.178.233 | GET      "/socket.io/?EIO=4&transport=websocket"
+[GIN] 2026/01/28 - 06:16:53 | 200 |    1.625412ms |  13.228.178.233 | GET      "/api/v1/nodes?page=1&pageSize=15"
+2026/01/28 06:16:57 [WebSocket] Handshake rejected: No token from 13.228.178.233:61341
+[GIN] 2026/01/28 - 06:16:57 | 401 |      42.931µs |  13.228.178.233 | GET      "/socket.io/?EIO=4&transport=websocket"
+2026/01/28 06:17:02 [WebSocket] Handshake rejected: No token from 13.228.178.233:61375
+[GIN] 2026/01/28 - 06:17:02 | 401 |      40.717µs |  13.228.178.233 | GET      "/socket.io/?EIO=4&transport=websocket"
+2026/01/28 06:17:08 [WebSocket] Handshake rejected: No token from 13.228.178.233:61405
+[GIN] 2026/01/28 - 06:17:08 | 401 |      92.394µs |  13.228.178.233 | GET      "/socket.io/?EIO=4&transport=websocket"
+2026/01/28 06:17:13 [WebSocket] Handshake rejected: No token from 13.228.178.233:61434
+[GIN] 2026/01/28 - 06:17:13 | 401 |      60.584µs |  13.228.178.233 | GET      "/socket.io/?EIO=4&transport=websocket"
+2026/01/28 06:17:19 [DNS Worker] Tick: processing DNS records...
+2026/01/28 06:17:19 [DNS Service] GetDeletionRecords: found 0 records (limit=10, error=<nil>)
+2026/01/28 06:17:19 [DNS Worker] Tick done: present_candidates=0, absent_candidates=0, claimed_running=0, claim_skipped=0, success=0, error=0, deleted=0
+2026/01/28 06:17:49 [DNS Worker] Tick: processing DNS records...
+2026/01/28 06:17:49 [DNS Service] GetDeletionRecords: found 0 records (limit=10, error=<nil>)
+2026/01/28 06:17:49 [DNS Worker] Tick done: present_candidates=0, absent_candidates=0, claimed_running=0, claim_skipped=0, success=0, error=0, deleted=0
+2026/01/28 06:18:19 [DNS Worker] Tick: processing DNS records...
+2026/01/28 06:18:19 [DNS Service] GetDeletionRecords: found 0 records (limit=10, error=<nil>)
+2026/01/28 06:18:19 [DNS Worker] Tick done: present_candidates=0, absent_candidates=0, claimed_running=0, claim_skipped=0, success=0, error=0, deleted=0
+2026/01/28 06:18:49 [DNS Worker] Tick: processing DNS records...
+2026/01/28 06:18:49 [DNS Service] GetDeletionRecords: found 0 records (limit=10, error=<nil>)
+2026/01/28 06:18:49 [DNS Worker] Tick done: present_candidates=0, absent_candidates=0, claimed_running=0, claim_skipped=0, success=0, error=0, deleted=0
+2026/01/28 06:19:19 [DNS Worker] Tick: processing DNS records...
+2026/01/28 06:19:19 [DNS Service] GetDeletionRecords: found 0 records (limit=10, error=<nil>)
+2026/01/28 06:19:19 [DNS Worker] Tick done: present_candidates=0, absent_candidates=0, claimed_running=0, claim_skipped=0, success=0, error=0, deleted=0
+2026/01/28 06:19:49 [DNS Worker] Tick: processing DNS records...
+2026/01/28 06:19:49 [RiskScanner] Running scheduled scan...
+2026/01/28 06:19:49 [RiskScanner] Starting scan...
+2026/01/28 06:19:49 [DNS Service] GetDeletionRecords: found 0 records (limit=10, error=<nil>)
+2026/01/28 06:19:49 [DNS Worker] Tick done: present_candidates=0, absent_candidates=0, claimed_running=0, claim_skipped=0, success=0, error=0, deleted=0
+2026/01/28 06:19:49 [RiskScanner] Scan completed: 0 risks detected, 0 new, 0 updated
+2026/01/28 06:20:19 [DNS Worker] Tick: processing DNS records...
+2026/01/28 06:20:19 [DNS Service] GetDeletionRecords: found 0 records (limit=10, error=<nil>)
+2026/01/28 06:20:19 [DNS Worker] Tick done: present_candidates=0, absent_candidates=0, claimed_running=0, claim_skipped=0, success=0, error=0, deleted=0
+2026/01/28 06:20:49 [DNS Worker] Tick: processing DNS records...
+2026/01/28 06:20:49 [DNS Service] GetDeletionRecords: found 0 records (limit=10, error=<nil>)
+2026/01/28 06:20:49 [DNS Worker] Tick done: present_candidates=0, absent_candidates=0, claimed_running=0, claim_skipped=0, success=0, error=0, deleted=0
+2026/01/28 06:21:19 [DNS Worker] Tick: processing DNS records...
+2026/01/28 06:21:19 [DNS Service] GetDeletionRecords: found 0 records (limit=10, error=<nil>)
+2026/01/28 06:21:19 [DNS Worker] Tick done: present_candidates=0, absent_candidates=0, claimed_running=0, claim_skipped=0, success=0, error=0, deleted=0
+2026/01/28 06:21:49 [DNS Worker] Tick: processing DNS records...
+2026/01/28 06:21:49 [DNS Service] GetDeletionRecords: found 0 records (limit=10, error=<nil>)
+2026/01/28 06:21:49 [DNS Worker] Tick done: present_candidates=0, absent_candidates=0, claimed_running=0, claim_skipped=0, success=0, error=0, deleted=0
+2026/01/28 06:22:19 [DNS Worker] Tick: processing DNS records...
+2026/01/28 06:22:19 [DNS Service] GetDeletionRecords: found 0 records (limit=10, error=<nil>)
+2026/01/28 06:22:19 [DNS Worker] Tick done: present_candidates=0, absent_candidates=0, claimed_running=0, claim_skipped=0, success=0, error=0, deleted=0
+2026/01/28 06:22:49 [DNS Worker] Tick: processing DNS records...
+2026/01/28 06:22:49 [DNS Service] GetDeletionRecords: found 0 records (limit=10, error=<nil>)
+2026/01/28 06:22:49 [DNS Worker] Tick done: present_candidates=0, absent_candidates=0, claimed_running=0, claim_skipped=0, success=0, error=0, deleted=0
+2026/01/28 06:23:19 [DNS Worker] Tick: processing DNS records...
+2026/01/28 06:23:19 [DNS Service] GetDeletionRecords: found 0 records (limit=10, error=<nil>)
+2026/01/28 06:23:19 [DNS Worker] Tick done: present_candidates=0, absent_candidates=0, claimed_running=0, claim_skipped=0, success=0, error=0, deleted=0
+2026/01/28 06:23:49 [DNS Worker] Tick: processing DNS records...
+2026/01/28 06:23:49 [DNS Service] GetDeletionRecords: found 0 records (limit=10, error=<nil>)
+2026/01/28 06:23:49 [DNS Worker] Tick done: present_candidates=0, absent_candidates=0, claimed_running=0, claim_skipped=0, success=0, error=0, deleted=0
+2026/01/28 06:24:19 [DNS Worker] Tick: processing DNS records...
+2026/01/28 06:24:19 [DNS Service] GetDeletionRecords: found 0 records (limit=10, error=<nil>)
+2026/01/28 06:24:19 [DNS Worker] Tick done: present_candidates=0, absent_candidates=0, claimed_running=0, claim_skipped=0, success=0, error=0, deleted=0
+2026/01/28 06:24:49 [DNS Worker] Tick: processing DNS records...
+2026/01/28 06:24:49 [RiskScanner] Running scheduled scan...
+2026/01/28 06:24:49 [RiskScanner] Starting scan...
+2026/01/28 06:24:49 [DNS Service] GetDeletionRecords: found 0 records (limit=10, error=<nil>)
+2026/01/28 06:24:49 [DNS Worker] Tick done: present_candidates=0, absent_candidates=0, claimed_running=0, claim_skipped=0, success=0, error=0, deleted=0
+2026/01/28 06:24:49 [RiskScanner] Scan completed: 0 risks detected, 0 new, 0 updated
+2026/01/28 06:25:19 [DNS Worker] Tick: processing DNS records...
+2026/01/28 06:25:19 [DNS Service] GetDeletionRecords: found 0 records (limit=10, error=<nil>)
+2026/01/28 06:25:19 [DNS Worker] Tick done: present_candidates=0, absent_candidates=0, claimed_running=0, claim_skipped=0, success=0, error=0, deleted=0
+2026/01/28 06:25:28 [WebSocket] Handshake rejected: No token from 13.228.178.233:64498
+[GIN] 2026/01/28 - 06:25:28 | 401 |      67.097µs |  13.228.178.233 | GET      "/socket.io/?EIO=4&transport=websocket"
+[GIN] 2026/01/28 - 06:25:28 | 200 |    1.481285ms |  13.228.178.233 | GET      "/api/v1/nodes?page=1&pageSize=15"
+2026/01/28 06:25:32 [WebSocket] Handshake rejected: No token from 13.228.178.233:64518
+[GIN] 2026/01/28 - 06:25:32 | 401 |       68.94µs |  13.228.178.233 | GET      "/socket.io/?EIO=4&transport=websocket"
+2026/01/28 06:25:35 [WebSocket] Handshake rejected: No token from 13.228.178.233:64544
+[GIN] 2026/01/28 - 06:25:35 | 401 |      53.501µs |  13.228.178.233 | GET      "/socket.io/?EIO=4&transport=websocket"
+2026/01/28 06:25:40 [WebSocket] Handshake rejected: No token from 13.228.178.233:64574
+[GIN] 2026/01/28 - 06:25:40 | 401 |      65.574µs |  13.228.178.233 | GET      "/socket.io/?EIO=4&transport=websocket"
+2026/01/28 06:25:45 [WebSocket] Handshake rejected: No token from 13.228.178.233:64600
+[GIN] 2026/01/28 - 06:25:45 | 401 |      48.832µs |  13.228.178.233 | GET      "/socket.io/?EIO=4&transport=websocket"
+2026/01/28 06:25:49 [DNS Worker] Tick: processing DNS records...
+2026/01/28 06:25:49 [DNS Service] GetDeletionRecords: found 0 records (limit=10, error=<nil>)
+2026/01/28 06:25:49 [DNS Worker] Tick done: present_candidates=0, absent_candidates=0, claimed_running=0, claim_skipped=0, success=0, error=0, deleted=0
+2026/01/28 06:26:19 [DNS Worker] Tick: processing DNS records...
+2026/01/28 06:26:19 [DNS Service] GetDeletionRecords: found 0 records (limit=10, error=<nil>)
+2026/01/28 06:26:19 [DNS Worker] Tick done: present_candidates=0, absent_candidates=0, claimed_running=0, claim_skipped=0, success=0, error=0, deleted=0
+2026/01/28 06:26:49 [DNS Worker] Tick: processing DNS records...
+2026/01/28 06:26:49 [DNS Service] GetDeletionRecords: found 0 records (limit=10, error=<nil>)
+2026/01/28 06:26:49 [DNS Worker] Tick done: present_candidates=0, absent_candidates=0, claimed_running=0, claim_skipped=0, success=0, error=0, deleted=0
+2026/01/28 06:27:19 [DNS Worker] Tick: processing DNS records...
+2026/01/28 06:27:19 [DNS Service] GetDeletionRecords: found 0 records (limit=10, error=<nil>)
+2026/01/28 06:27:19 [DNS Worker] Tick done: present_candidates=0, absent_candidates=0, claimed_running=0, claim_skipped=0, success=0, error=0, deleted=0
+2026/01/28 06:27:49 [DNS Worker] Tick: processing DNS records...
+2026/01/28 06:27:49 [DNS Service] GetDeletionRecords: found 0 records (limit=10, error=<nil>)
+2026/01/28 06:27:49 [DNS Worker] Tick done: present_candidates=0, absent_candidates=0, claimed_running=0, claim_skipped=0, success=0, error=0, deleted=0
+2026/01/28 06:28:19 [DNS Worker] Tick: processing DNS records...
+2026/01/28 06:28:19 [DNS Service] GetDeletionRecords: found 0 records (limit=10, error=<nil>)
+2026/01/28 06:28:19 [DNS Worker] Tick done: present_candidates=0, absent_candidates=0, claimed_running=0, claim_skipped=0, success=0, error=0, deleted=0
+2026/01/28 06:28:49 [DNS Worker] Tick: processing DNS records...
+2026/01/28 06:28:49 [DNS Service] GetDeletionRecords: found 0 records (limit=10, error=<nil>)
+2026/01/28 06:28:49 [DNS Worker] Tick done: present_candidates=0, absent_candidates=0, claimed_running=0, claim_skipped=0, success=0, error=0, deleted=0
+2026/01/28 06:29:19 [DNS Worker] Tick: processing DNS records...
+2026/01/28 06:29:19 [DNS Service] GetDeletionRecords: found 0 records (limit=10, error=<nil>)
+2026/01/28 06:29:19 [DNS Worker] Tick done: present_candidates=0, absent_candidates=0, claimed_running=0, claim_skipped=0, success=0, error=0, deleted=0
+2026/01/28 06:29:49 [DNS Worker] Tick: processing DNS records...
+2026/01/28 06:29:49 [RiskScanner] Running scheduled scan...
+2026/01/28 06:29:49 [RiskScanner] Starting scan...
+2026/01/28 06:29:49 [DNS Service] GetDeletionRecords: found 0 records (limit=10, error=<nil>)
+2026/01/28 06:29:49 [DNS Worker] Tick done: present_candidates=0, absent_candidates=0, claimed_running=0, claim_skipped=0, success=0, error=0, deleted=0
+2026/01/28 06:29:49 [RiskScanner] Scan completed: 0 risks detected, 0 new, 0 updated
+2026/01/28 06:30:19 [DNS Worker] Tick: processing DNS records...
+2026/01/28 06:30:19 [DNS Service] GetDeletionRecords: found 0 records (limit=10, error=<nil>)
+2026/01/28 06:30:19 [DNS Worker] Tick done: present_candidates=0, absent_candidates=0, claimed_running=0, claim_skipped=0, success=0, error=0, deleted=0
+2026/01/28 06:30:49 [DNS Worker] Tick: processing DNS records...
+2026/01/28 06:30:49 [DNS Service] GetDeletionRecords: found 0 records (limit=10, error=<nil>)
+2026/01/28 06:30:49 [DNS Worker] Tick done: present_candidates=0, absent_candidates=0, claimed_running=0, claim_skipped=0, success=0, error=0, deleted=0
+2026/01/28 06:31:15 [WebSocket] Handshake rejected: No token from 13.228.178.233:50087
+[GIN] 2026/01/28 - 06:31:15 | 401 |      68.029µs |  13.228.178.233 | GET      "/socket.io/?EIO=4&transport=websocket"
+[GIN] 2026/01/28 - 06:31:15 | 200 |     1.92976ms |  13.228.178.233 | GET      "/api/v1/node-groups?page=1&pageSize=15"
+[GIN] 2026/01/28 - 06:31:17 | 200 |    2.931114ms |  13.228.178.233 | GET      "/api/v1/nodes?page=1&pageSize=1000"
+2026/01/28 06:31:19 [DNS Worker] Tick: processing DNS records...
+2026/01/28 06:31:19 [DNS Service] GetDeletionRecords: found 0 records (limit=10, error=<nil>)
+2026/01/28 06:31:19 [DNS Worker] Tick done: present_candidates=0, absent_candidates=0, claimed_running=0, claim_skipped=0, success=0, error=0, deleted=0
+[GIN] 2026/01/28 - 06:31:30 | 200 |    1.525409ms |  13.228.178.233 | GET      "/api/v1/nodes?page=1&pageSize=1000"
+2026/01/28 06:31:49 [DNS Worker] Tick: processing DNS records...
+2026/01/28 06:31:49 [DNS Service] GetDeletionRecords: found 0 records (limit=10, error=<nil>)
+2026/01/28 06:31:49 [DNS Worker] Tick done: present_candidates=0, absent_candidates=0, claimed_running=0, claim_skipped=0, success=0, error=0, deleted=0
+[GIN] 2026/01/28 - 06:31:53 | 400 |      179.99µs |  13.228.178.233 | POST     "/api/v1/node-groups/create"
+2026/01/28 06:32:19 [DNS Worker] Tick: processing DNS records...
+2026/01/28 06:32:19 [DNS Service] GetDeletionRecords: found 0 records (limit=10, error=<nil>)
+2026/01/28 06:32:19 [DNS Worker] Tick done: present_candidates=0, absent_candidates=0, claimed_running=0, claim_skipped=0, success=0, error=0, deleted=0
+2026/01/28 06:32:49 [DNS Worker] Tick: processing DNS records...
+2026/01/28 06:32:49 [DNS Service] GetDeletionRecords: found 0 records (limit=10, error=<nil>)
+2026/01/28 06:32:49 [DNS Worker] Tick done: present_candidates=0, absent_candidates=0, claimed_running=0, claim_skipped=0, success=0, error=0, deleted=0
+2026/01/28 06:33:19 [DNS Worker] Tick: processing DNS records...
+2026/01/28 06:33:19 [DNS Service] GetDeletionRecords: found 0 records (limit=10, error=<nil>)
+2026/01/28 06:33:19 [DNS Worker] Tick done: present_candidates=0, absent_candidates=0, claimed_running=0, claim_skipped=0, success=0, error=0, deleted=0
+2026/01/28 06:33:49 [DNS Worker] Tick: processing DNS records...
+2026/01/28 06:33:49 [DNS Service] GetDeletionRecords: found 0 records (limit=10, error=<nil>)
+2026/01/28 06:33:49 [DNS Worker] Tick done: present_candidates=0, absent_candidates=0, claimed_running=0, claim_skipped=0, success=0, error=0, deleted=0
+2026/01/28 06:34:18 [WebSocket] Handshake rejected: No token from 13.228.178.233:51125
+[GIN] 2026/01/28 - 06:34:18 | 401 |      57.328µs |  13.228.178.233 | GET      "/socket.io/?EIO=4&transport=websocket"
+[GIN] 2026/01/28 - 06:34:18 | 200 |    1.549584ms |  13.228.178.233 | GET      "/api/v1/nodes?page=1&pageSize=15"
+2026/01/28 06:34:19 [DNS Worker] Tick: processing DNS records...
+2026/01/28 06:34:19 [DNS Service] GetDeletionRecords: found 0 records (limit=10, error=<nil>)
+2026/01/28 06:34:19 [DNS Worker] Tick done: present_candidates=0, absent_candidates=0, claimed_running=0, claim_skipped=0, success=0, error=0, deleted=0
+2026/01/28 06:34:49 [RiskScanner] Running scheduled scan...
+2026/01/28 06:34:49 [RiskScanner] Starting scan...
+2026/01/28 06:34:49 [DNS Worker] Tick: processing DNS records...
+2026/01/28 06:34:49 [RiskScanner] Scan completed: 0 risks detected, 0 new, 0 updated
+2026/01/28 06:34:49 [DNS Service] GetDeletionRecords: found 0 records (limit=10, error=<nil>)
+2026/01/28 06:34:49 [DNS Worker] Tick done: present_candidates=0, absent_candidates=0, claimed_running=0, claim_skipped=0, success=0, error=0, deleted=0
+2026/01/28 06:35:19 [DNS Worker] Tick: processing DNS records...
+2026/01/28 06:35:19 [DNS Service] GetDeletionRecords: found 0 records (limit=10, error=<nil>)
+2026/01/28 06:35:19 [DNS Worker] Tick done: present_candidates=0, absent_candidates=0, claimed_running=0, claim_skipped=0, success=0, error=0, deleted=0
+2026/01/28 06:35:49 [DNS Worker] Tick: processing DNS records...
+2026/01/28 06:35:49 [DNS Service] GetDeletionRecords: found 0 records (limit=10, error=<nil>)
+2026/01/28 06:35:49 [DNS Worker] Tick done: present_candidates=0, absent_candidates=0, claimed_running=0, claim_skipped=0, success=0, error=0, deleted=0
+2026/01/28 06:36:19 [DNS Worker] Tick: processing DNS records...
+2026/01/28 06:36:19 [DNS Service] GetDeletionRecords: found 0 records (limit=10, error=<nil>)
+2026/01/28 06:36:19 [DNS Worker] Tick done: present_candidates=0, absent_candidates=0, claimed_running=0, claim_skipped=0, success=0, error=0, deleted=0
+2026/01/28 06:36:49 [DNS Worker] Tick: processing DNS records...
+2026/01/28 06:36:49 [DNS Service] GetDeletionRecords: found 0 records (limit=10, error=<nil>)
+2026/01/28 06:36:49 [DNS Worker] Tick done: present_candidates=0, absent_candidates=0, claimed_running=0, claim_skipped=0, success=0, error=0, deleted=0
+2026/01/28 06:37:19 [DNS Worker] Tick: processing DNS records...
+2026/01/28 06:37:19 [DNS Service] GetDeletionRecords: found 0 records (limit=10, error=<nil>)
+2026/01/28 06:37:19 [DNS Worker] Tick done: present_candidates=0, absent_candidates=0, claimed_running=0, claim_skipped=0, success=0, error=0, deleted=0
+2026/01/28 06:37:49 [DNS Worker] Tick: processing DNS records...
+2026/01/28 06:37:49 [DNS Service] GetDeletionRecords: found 0 records (limit=10, error=<nil>)
+2026/01/28 06:37:49 [DNS Worker] Tick done: present_candidates=0, absent_candidates=0, claimed_running=0, claim_skipped=0, success=0, error=0, deleted=0
+2026/01/28 06:38:19 [DNS Worker] Tick: processing DNS records...
+2026/01/28 06:38:19 [DNS Service] GetDeletionRecords: found 0 records (limit=10, error=<nil>)
+2026/01/28 06:38:19 [DNS Worker] Tick done: present_candidates=0, absent_candidates=0, claimed_running=0, claim_skipped=0, success=0, error=0, deleted=0
+2026/01/28 06:38:49 [DNS Worker] Tick: processing DNS records...
+2026/01/28 06:38:49 [DNS Service] GetDeletionRecords: found 0 records (limit=10, error=<nil>)
+2026/01/28 06:38:49 [DNS Worker] Tick done: present_candidates=0, absent_candidates=0, claimed_running=0, claim_skipped=0, success=0, error=0, deleted=0
+2026/01/28 06:39:19 [DNS Worker] Tick: processing DNS records...
+2026/01/28 06:39:19 [DNS Service] GetDeletionRecords: found 0 records (limit=10, error=<nil>)
+2026/01/28 06:39:19 [DNS Worker] Tick done: present_candidates=0, absent_candidates=0, claimed_running=0, claim_skipped=0, success=0, error=0, deleted=0
+2026/01/28 06:39:49 [DNS Worker] Tick: processing DNS records...
+2026/01/28 06:39:49 [RiskScanner] Running scheduled scan...
+2026/01/28 06:39:49 [RiskScanner] Starting scan...
+2026/01/28 06:39:49 [DNS Service] GetDeletionRecords: found 0 records (limit=10, error=<nil>)
+2026/01/28 06:39:49 [DNS Worker] Tick done: present_candidates=0, absent_candidates=0, claimed_running=0, claim_skipped=0, success=0, error=0, deleted=0
+2026/01/28 06:39:49 [RiskScanner] Scan completed: 0 risks detected, 0 new, 0 updated
+2026/01/28 06:40:19 [DNS Worker] Tick: processing DNS records...
+2026/01/28 06:40:19 [DNS Service] GetDeletionRecords: found 0 records (limit=10, error=<nil>)
+2026/01/28 06:40:19 [DNS Worker] Tick done: present_candidates=0, absent_candidates=0, claimed_running=0, claim_skipped=0, success=0, error=0, deleted=0
+2026/01/28 06:40:49 [DNS Worker] Tick: processing DNS records...
+2026/01/28 06:40:49 [DNS Service] GetDeletionRecords: found 0 records (limit=10, error=<nil>)
+2026/01/28 06:40:49 [DNS Worker] Tick done: present_candidates=0, absent_candidates=0, claimed_running=0, claim_skipped=0, success=0, error=0, deleted=0
+2026/01/28 06:41:19 [DNS Worker] Tick: processing DNS records...
+2026/01/28 06:41:19 [DNS Service] GetDeletionRecords: found 0 records (limit=10, error=<nil>)
+2026/01/28 06:41:19 [DNS Worker] Tick done: present_candidates=0, absent_candidates=0, claimed_running=0, claim_skipped=0, success=0, error=0, deleted=0
+2026/01/28 06:41:49 [DNS Worker] Tick: processing DNS records...
+2026/01/28 06:41:49 [DNS Service] GetDeletionRecords: found 0 records (limit=10, error=<nil>)
+2026/01/28 06:41:49 [DNS Worker] Tick done: present_candidates=0, absent_candidates=0, claimed_running=0, claim_skipped=0, success=0, error=0, deleted=0
+2026/01/28 06:42:19 [DNS Worker] Tick: processing DNS records...
+2026/01/28 06:42:19 [DNS Service] GetDeletionRecords: found 0 records (limit=10, error=<nil>)
+2026/01/28 06:42:19 [DNS Worker] Tick done: present_candidates=0, absent_candidates=0, claimed_running=0, claim_skipped=0, success=0, error=0, deleted=0
+2026/01/28 06:42:49 [DNS Worker] Tick: processing DNS records...
+2026/01/28 06:42:49 [DNS Service] GetDeletionRecords: found 0 records (limit=10, error=<nil>)
+2026/01/28 06:42:49 [DNS Worker] Tick done: present_candidates=0, absent_candidates=0, claimed_running=0, claim_skipped=0, success=0, error=0, deleted=0
+2026/01/28 06:43:19 [DNS Worker] Tick: processing DNS records...
+2026/01/28 06:43:19 [DNS Service] GetDeletionRecords: found 0 records (limit=10, error=<nil>)
+2026/01/28 06:43:19 [DNS Worker] Tick done: present_candidates=0, absent_candidates=0, claimed_running=0, claim_skipped=0, success=0, error=0, deleted=0
+[GIN] 2026/01/28 - 06:43:32 | 200 |      43.472µs |   14.101.128.57 | GET      "/api/v1/ping"
+[GIN] 2026/01/28 - 06:43:43 | 200 |  266.749544ms |   14.101.128.57 | POST     "/api/v1/auth/login"
+[GIN] 2026/01/28 - 06:43:44 | 200 |    1.636406ms |   14.101.128.57 | GET      "/api/v1/nodes?page=1&pageSize=20"
+2026/01/28 06:43:49 [DNS Worker] Tick: processing DNS records...
+2026/01/28 06:43:49 [DNS Service] GetDeletionRecords: found 0 records (limit=10, error=<nil>)
+2026/01/28 06:43:49 [DNS Worker] Tick done: present_candidates=0, absent_candidates=0, claimed_running=0, claim_skipped=0, success=0, error=0, deleted=0
+[GIN] 2026/01/28 - 06:44:18 | 200 |   266.00908ms |   14.101.128.57 | POST     "/api/v1/auth/login"
+2026/01/28 06:44:19 [DNS Worker] Tick: processing DNS records...
+2026/01/28 06:44:19 [DNS Service] GetDeletionRecords: found 0 records (limit=10, error=<nil>)
+2026/01/28 06:44:19 [DNS Worker] Tick done: present_candidates=0, absent_candidates=0, claimed_running=0, claim_skipped=0, success=0, error=0, deleted=0
+[GIN] 2026/01/28 - 06:44:19 | 200 |    1.466059ms |   14.101.128.57 | GET      "/api/v1/nodes?page=1&pageSize=20"
+2026/01/28 06:44:49 [RiskScanner] Running scheduled scan...
+2026/01/28 06:44:49 [DNS Worker] Tick: processing DNS records...
+2026/01/28 06:44:49 [RiskScanner] Starting scan...
+2026/01/28 06:44:49 [RiskScanner] Scan completed: 0 risks detected, 0 new, 0 updated
+2026/01/28 06:44:49 [DNS Service] GetDeletionRecords: found 0 records (limit=10, error=<nil>)
+2026/01/28 06:44:49 [DNS Worker] Tick done: present_candidates=0, absent_candidates=0, claimed_running=0, claim_skipped=0, success=0, error=0, deleted=0
+2026/01/28 06:45:19 [DNS Worker] Tick: processing DNS records...
+2026/01/28 06:45:19 [DNS Service] GetDeletionRecords: found 0 records (limit=10, error=<nil>)
+2026/01/28 06:45:19 [DNS Worker] Tick done: present_candidates=0, absent_candidates=0, claimed_running=0, claim_skipped=0, success=0, error=0, deleted=0
+[GIN] 2026/01/28 - 06:45:27 | 200 |      52.319µs |   14.101.128.57 | GET      "/api/v1/ping"
+[GIN] 2026/01/28 - 06:45:34 | 200 |  267.683805ms |   14.101.128.57 | POST     "/api/v1/auth/login"
+[GIN] 2026/01/28 - 06:45:35 | 200 |    1.777765ms |   14.101.128.57 | GET      "/api/v1/nodes?page=1&pageSize=20"
+2026/01/28 06:45:49 [DNS Worker] Tick: processing DNS records...
+2026/01/28 06:45:49 [DNS Service] GetDeletionRecords: found 0 records (limit=10, error=<nil>)
+2026/01/28 06:45:49 [DNS Worker] Tick done: present_candidates=0, absent_candidates=0, claimed_running=0, claim_skipped=0, success=0, error=0, deleted=0
+[GIN] 2026/01/28 - 06:46:06 | 200 |  266.428914ms |   14.101.128.57 | POST     "/api/v1/auth/login"
+[GIN] 2026/01/28 - 06:46:07 | 404 |         551ns |   14.101.128.57 | POST     "/api/v1/nodes/health/check"
+[GIN] 2026/01/28 - 06:46:15 | 200 |  266.664209ms |   14.101.128.57 | POST     "/api/v1/auth/login"
+[GIN] 2026/01/28 - 06:46:16 | 404 |       1.463µs |   14.101.128.57 | POST     "/api/v1/nodes/health/check"
+2026/01/28 06:46:19 [DNS Worker] Tick: processing DNS records...
+2026/01/28 06:46:19 [DNS Service] GetDeletionRecords: found 0 records (limit=10, error=<nil>)
+2026/01/28 06:46:19 [DNS Worker] Tick done: present_candidates=0, absent_candidates=0, claimed_running=0, claim_skipped=0, success=0, error=0, deleted=0

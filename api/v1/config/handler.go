@@ -72,7 +72,6 @@ func (h *Handler) Apply(c *gin.Context) {
 	}
 
 	// Step 1: Create config version with placeholder payload to get database-generated version ID
-	// This ensures version is globally unique and incrementing
 	configVersion, err := h.configVer.CreateVersion(req.NodeID, "{}", req.Reason)
 	if err != nil {
 		httpx.FailErr(c, httpx.ErrInternalError("failed to create config version", err))
@@ -103,7 +102,7 @@ func (h *Handler) Apply(c *gin.Context) {
 	requestID := uuid.New().String()
 	task := &model.AgentTask{
 		RequestID: requestID,
-		NodeID:    req.NodeID,
+		NodeID:    uint(req.NodeID),
 		Type:      model.TaskTypeApplyConfig,
 		Payload:   payloadJSON,
 		Status:    model.TaskStatusPending,
@@ -125,7 +124,7 @@ func (h *Handler) Apply(c *gin.Context) {
 	// Return response
 	httpx.OK(c, ApplyResponse{
 		Version: configVersion.Version,
-		TaskID:  task.ID,
+		TaskID:  int(task.ID),
 	})
 }
 

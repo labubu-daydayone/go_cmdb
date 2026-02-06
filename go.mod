@@ -2,8 +2,6 @@ module go_cmdb
 
 go 1.24.0
 
-toolchain go1.24.12
-
 require (
 	github.com/gin-gonic/gin v1.10.0
 	github.com/go-acme/lego/v4 v4.31.0
@@ -12,6 +10,7 @@ require (
 	github.com/google/uuid v1.6.0
 	github.com/googollee/go-socket.io v1.7.0
 	github.com/joho/godotenv v1.5.1
+	github.com/sirupsen/logrus v1.9.3
 	golang.org/x/crypto v0.47.0
 	gopkg.in/ini.v1 v1.67.1
 	gorm.io/datatypes v1.2.7

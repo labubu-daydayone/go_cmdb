@@ -42,6 +42,7 @@ func (h *Handler) List(c *gin.Context) {
 	nodeIDStr := c.Query("nodeId")
 	taskType := c.Query("type")
 	status := c.Query("status")
+	releaseTaskIDStr := c.Query("releaseTaskId")
 
 	if page < 1 {
 		page = 1
@@ -69,6 +70,15 @@ func (h *Handler) List(c *gin.Context) {
 	// Filter by status
 	if status != "" {
 		query = query.Where("status = ?", status)
+	}
+
+	// Filter by releaseTaskId (via payload JSON)
+	if releaseTaskIDStr != "" {
+		releaseTaskID, err := strconv.ParseInt(releaseTaskIDStr, 10, 64)
+		if err == nil && releaseTaskID > 0 {
+			// 使用 JSON_EXTRACT 或 LIKE 查询
+			query = query.Where("payload LIKE ?", "%\\\"releaseTaskId\\\":"+releaseTaskIDStr+"%")
+		}
 	}
 
 	// Count total
@@ -155,7 +165,7 @@ func (h *Handler) Create(c *gin.Context) {
 
 	// Create task
 	task := model.AgentTask{
-		NodeID:    req.NodeID,
+		NodeID:    uint(req.NodeID),
 		Type:      req.Type,
 		Payload:   string(req.Payload),
 		Status:    model.TaskStatusPending,

@@ -3,11 +3,18 @@ package release
 import (
 	"fmt"
 	"log"
+	"sync"
 	"time"
 
 	"go_cmdb/internal/agentclient"
 	"go_cmdb/internal/model"
 	"gorm.io/gorm"
+)
+
+var (
+	releaseTaskNodesTableChecked bool
+	releaseTaskNodesTableExists  bool
+	tableCheckMutex              sync.Mutex
 )
 
 // Runner 单个release_task的执行状态机
@@ -38,6 +45,12 @@ func (r *Runner) Run() error {
 
 	log.Printf("[Runner] Found %d batches for release task %d", len(batches), r.task.ID)
 
+	// If no batches found (e.g., table does not exist), skip execution
+	if len(batches) == 0 {
+		log.Printf("[Runner] No batches found for release task %d. Skipping execution (likely due to missing release_task_nodes table).", r.task.ID)
+		return nil
+	}
+
 	// 按batch顺序执行
 	for _, batch := range batches {
 		log.Printf("[Runner] Processing batch %d for release task %d", batch, r.task.ID)
@@ -62,6 +75,29 @@ func (r *Runner) Run() error {
 
 // getAllBatches 获取所有batch（去重并排序）
 func (r *Runner) getAllBatches() ([]int, error) {
+	// Check if release_task_nodes table exists (only once)
+	tableCheckMutex.Lock()
+	if !releaseTaskNodesTableChecked {
+		releaseTaskNodesTableChecked = true
+		var count int64
+		err := r.db.Raw("SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = DATABASE() AND table_name = 'release_task_nodes'").Scan(&count).Error
+		if err != nil {
+			log.Printf("[Runner] Warning: Failed to check if release_task_nodes table exists: %v. Assuming table does not exist and degrading gracefully.", err)
+			releaseTaskNodesTableExists = false
+		} else {
+			releaseTaskNodesTableExists = (count > 0)
+			if !releaseTaskNodesTableExists {
+				log.Printf("[Runner] Warning: Table 'release_task_nodes' does not exist. Degrading to skip release_task_nodes-dependent logic. This warning will only be printed once.")
+			}
+		}
+	}
+	tableCheckMutex.Unlock()
+
+	// If table does not exist, return empty batches to skip the logic
+	if !releaseTaskNodesTableExists {
+		return []int{}, nil
+	}
+
 	var batches []int
 	err := r.db.Model(&model.ReleaseTaskNode{}).
 		Where("release_task_id = ?", r.task.ID).

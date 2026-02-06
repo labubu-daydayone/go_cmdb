@@ -1,0 +1,692 @@
+2026/01/28 06:55:40 Loading configuration from INI file: /opt/go_cmdb/config.ini
+2026/01/28 06:55:40 ✓ Configuration loaded from INI file
+2026/01/28 06:55:40 ✓ MySQL connected successfully
+2026/01/28 06:55:40 ✓ MySQL connected successfully
+2026/01/28 06:55:40 MIGRATE=0 or not set, migration disabled
+2026/01/28 06:55:40 ✓ JWT initialized
+2026/01/28 06:55:40 ✓ Redis connected successfully
+2026/01/28 06:55:40 ✓ Redis connected successfully
+2026/01/28 06:55:40 ✓ Bootstrap Token Store initialized
+2026/01/28 06:55:40 ✓ CA Manager initialized
+2026/01/28 06:55:40 [RiskScanner] Starting with interval 300 seconds
+2026/01/28 06:55:40 ✓ Risk Scanner initialized
+2026/01/28 06:55:40 [RiskScanner] Running initial scan...
+2026/01/28 06:55:40 [RiskScanner] Starting scan...
+2026/01/28 06:55:40 ✓ Release Executor initialized
+2026/01/28 06:55:40 [DNS Worker] Starting with interval=30s, batch_size=10
+2026/01/28 06:55:40 ✓ DNS Worker initialized
+2026/01/28 06:55:40 [ACME Worker] Starting with interval=40s, batch=50
+2026/01/28 06:55:40 ✓ ACME Worker initialized
+2026/01/28 06:55:40 ✓ Certificate Cleaner disabled (CERT_FAILED_CLEANER_ENABLED=0)
+2026/01/28 06:55:40 [WebSocket] Event handlers registered
+2026/01/28 06:55:40 [WebSocket] Socket.IO server initialized
+2026/01/28 06:55:40 ✓ Socket.IO server initialized
+2026/01/28 06:55:40 [DNS Worker] Tick: processing DNS records...
+2026/01/28 06:55:40 [Executor] Starting executor loop (interval=5s)
+2026/01/28 06:55:40 [Executor] Running once...
+time="2026-01-28T06:55:40+08:00" level=info msg="Starting node health worker..." component=node-health-worker
+2026/01/28 06:55:40 ✓ Node Health Worker initialized
+2026/01/28 06:55:40 ✓ Server starting on :8080
+2026/01/28 06:55:40 [RiskScanner] Scan completed: 0 risks detected, 0 new, 0 updated
+
+2026/01/28 06:55:40 [31;1m/opt/go_cmdb/internal/release/executor.go:38 [35;1mError 1146 (42S02): Table 'cdn_control.release_tasks' doesn't exist
+[0m[33m[3.408ms] [34;1m[rows:0][0m SELECT * FROM `release_tasks` WHERE status IN ('pending','running') ORDER BY id ASC
+2026/01/28 06:55:40 [Executor] Failed to query tasks: Error 1146 (42S02): Table 'cdn_control.release_tasks' doesn't exist
+2026/01/28 06:55:40 [Executor] Initial run failed: Error 1146 (42S02): Table 'cdn_control.release_tasks' doesn't exist
+2026/01/28 06:55:40 [DNS Service] GetDeletionRecords: found 0 records (limit=10, error=<nil>)
+2026/01/28 06:55:40 [DNS Worker] Tick done: present_candidates=0, absent_candidates=0, claimed_running=0, claim_skipped=0, success=0, error=0, deleted=0
+2026/01/28 06:55:45 [Executor] Running once...
+
+2026/01/28 06:55:45 [31;1m/opt/go_cmdb/internal/release/executor.go:38 [35;1mError 1146 (42S02): Table 'cdn_control.release_tasks' doesn't exist
+[0m[33m[0.801ms] [34;1m[rows:0][0m SELECT * FROM `release_tasks` WHERE status IN ('pending','running') ORDER BY id ASC
+2026/01/28 06:55:45 [Executor] Failed to query tasks: Error 1146 (42S02): Table 'cdn_control.release_tasks' doesn't exist
+2026/01/28 06:55:45 [Executor] Run failed: Error 1146 (42S02): Table 'cdn_control.release_tasks' doesn't exist
+2026/01/28 06:55:50 [Executor] Running once...
+
+2026/01/28 06:55:50 [31;1m/opt/go_cmdb/internal/release/executor.go:38 [35;1mError 1146 (42S02): Table 'cdn_control.release_tasks' doesn't exist
+[0m[33m[0.630ms] [34;1m[rows:0][0m SELECT * FROM `release_tasks` WHERE status IN ('pending','running') ORDER BY id ASC
+2026/01/28 06:55:50 [Executor] Failed to query tasks: Error 1146 (42S02): Table 'cdn_control.release_tasks' doesn't exist
+2026/01/28 06:55:50 [Executor] Run failed: Error 1146 (42S02): Table 'cdn_control.release_tasks' doesn't exist
+2026/01/28 06:55:55 [Executor] Running once...
+
+2026/01/28 06:55:55 [31;1m/opt/go_cmdb/internal/release/executor.go:38 [35;1mError 1146 (42S02): Table 'cdn_control.release_tasks' doesn't exist
+[0m[33m[0.962ms] [34;1m[rows:0][0m SELECT * FROM `release_tasks` WHERE status IN ('pending','running') ORDER BY id ASC
+2026/01/28 06:55:55 [Executor] Failed to query tasks: Error 1146 (42S02): Table 'cdn_control.release_tasks' doesn't exist
+2026/01/28 06:55:55 [Executor] Run failed: Error 1146 (42S02): Table 'cdn_control.release_tasks' doesn't exist
+2026/01/28 06:56:00 [Executor] Running once...
+
+2026/01/28 06:56:00 [31;1m/opt/go_cmdb/internal/release/executor.go:38 [35;1mError 1146 (42S02): Table 'cdn_control.release_tasks' doesn't exist
+[0m[33m[1.599ms] [34;1m[rows:0][0m SELECT * FROM `release_tasks` WHERE status IN ('pending','running') ORDER BY id ASC
+2026/01/28 06:56:00 [Executor] Failed to query tasks: Error 1146 (42S02): Table 'cdn_control.release_tasks' doesn't exist
+2026/01/28 06:56:00 [Executor] Run failed: Error 1146 (42S02): Table 'cdn_control.release_tasks' doesn't exist
+2026/01/28 06:56:05 [Executor] Running once...
+
+2026/01/28 06:56:05 [31;1m/opt/go_cmdb/internal/release/executor.go:38 [35;1mError 1146 (42S02): Table 'cdn_control.release_tasks' doesn't exist
+[0m[33m[0.658ms] [34;1m[rows:0][0m SELECT * FROM `release_tasks` WHERE status IN ('pending','running') ORDER BY id ASC
+2026/01/28 06:56:05 [Executor] Failed to query tasks: Error 1146 (42S02): Table 'cdn_control.release_tasks' doesn't exist
+2026/01/28 06:56:05 [Executor] Run failed: Error 1146 (42S02): Table 'cdn_control.release_tasks' doesn't exist
+2026/01/28 06:56:10 [Executor] Running once...
+2026/01/28 06:56:10 [DNS Worker] Tick: processing DNS records...
+
+2026/01/28 06:56:10 [31;1m/opt/go_cmdb/internal/release/executor.go:38 [35;1mError 1146 (42S02): Table 'cdn_control.release_tasks' doesn't exist
+[0m[33m[0.738ms] [34;1m[rows:0][0m SELECT * FROM `release_tasks` WHERE status IN ('pending','running') ORDER BY id ASC
+2026/01/28 06:56:10 [Executor] Failed to query tasks: Error 1146 (42S02): Table 'cdn_control.release_tasks' doesn't exist
+2026/01/28 06:56:10 [Executor] Run failed: Error 1146 (42S02): Table 'cdn_control.release_tasks' doesn't exist
+2026/01/28 06:56:10 [DNS Service] GetDeletionRecords: found 0 records (limit=10, error=<nil>)
+2026/01/28 06:56:10 [DNS Worker] Tick done: present_candidates=0, absent_candidates=0, claimed_running=0, claim_skipped=0, success=0, error=0, deleted=0
+2026/01/28 06:56:15 [Executor] Running once...
+
+2026/01/28 06:56:15 [31;1m/opt/go_cmdb/internal/release/executor.go:38 [35;1mError 1146 (42S02): Table 'cdn_control.release_tasks' doesn't exist
+[0m[33m[0.608ms] [34;1m[rows:0][0m SELECT * FROM `release_tasks` WHERE status IN ('pending','running') ORDER BY id ASC
+2026/01/28 06:56:15 [Executor] Failed to query tasks: Error 1146 (42S02): Table 'cdn_control.release_tasks' doesn't exist
+2026/01/28 06:56:15 [Executor] Run failed: Error 1146 (42S02): Table 'cdn_control.release_tasks' doesn't exist
+2026/01/28 06:56:20 [Executor] Running once...
+
+2026/01/28 06:56:20 [31;1m/opt/go_cmdb/internal/release/executor.go:38 [35;1mError 1146 (42S02): Table 'cdn_control.release_tasks' doesn't exist
+[0m[33m[2.124ms] [34;1m[rows:0][0m SELECT * FROM `release_tasks` WHERE status IN ('pending','running') ORDER BY id ASC
+2026/01/28 06:56:20 [Executor] Failed to query tasks: Error 1146 (42S02): Table 'cdn_control.release_tasks' doesn't exist
+2026/01/28 06:56:20 [Executor] Run failed: Error 1146 (42S02): Table 'cdn_control.release_tasks' doesn't exist
+2026/01/28 06:56:25 [Executor] Running once...
+
+2026/01/28 06:56:25 [31;1m/opt/go_cmdb/internal/release/executor.go:38 [35;1mError 1146 (42S02): Table 'cdn_control.release_tasks' doesn't exist
+[0m[33m[0.713ms] [34;1m[rows:0][0m SELECT * FROM `release_tasks` WHERE status IN ('pending','running') ORDER BY id ASC
+2026/01/28 06:56:25 [Executor] Failed to query tasks: Error 1146 (42S02): Table 'cdn_control.release_tasks' doesn't exist
+2026/01/28 06:56:25 [Executor] Run failed: Error 1146 (42S02): Table 'cdn_control.release_tasks' doesn't exist
+[GIN] 2026/01/28 - 06:56:28 | 200 |  267.595922ms |   14.101.128.57 | POST     "/api/v1/auth/login"
+[GIN] 2026/01/28 - 06:56:30 | 200 |    1.582173ms |   14.101.128.57 | GET      "/api/v1/nodes?page=1&pageSize=20"
+2026/01/28 06:56:30 [Executor] Running once...
+
+2026/01/28 06:56:30 [31;1m/opt/go_cmdb/internal/release/executor.go:38 [35;1mError 1146 (42S02): Table 'cdn_control.release_tasks' doesn't exist
+[0m[33m[0.596ms] [34;1m[rows:0][0m SELECT * FROM `release_tasks` WHERE status IN ('pending','running') ORDER BY id ASC
+2026/01/28 06:56:30 [Executor] Failed to query tasks: Error 1146 (42S02): Table 'cdn_control.release_tasks' doesn't exist
+2026/01/28 06:56:30 [Executor] Run failed: Error 1146 (42S02): Table 'cdn_control.release_tasks' doesn't exist
+2026/01/28 06:56:35 [Executor] Running once...
+
+2026/01/28 06:56:35 [31;1m/opt/go_cmdb/internal/release/executor.go:38 [35;1mError 1146 (42S02): Table 'cdn_control.release_tasks' doesn't exist
+[0m[33m[0.663ms] [34;1m[rows:0][0m SELECT * FROM `release_tasks` WHERE status IN ('pending','running') ORDER BY id ASC
+2026/01/28 06:56:35 [Executor] Failed to query tasks: Error 1146 (42S02): Table 'cdn_control.release_tasks' doesn't exist
+2026/01/28 06:56:35 [Executor] Run failed: Error 1146 (42S02): Table 'cdn_control.release_tasks' doesn't exist
+2026/01/28 06:56:40 [Executor] Running once...
+2026/01/28 06:56:40 [DNS Worker] Tick: processing DNS records...
+
+2026/01/28 06:56:40 [31;1m/opt/go_cmdb/internal/release/executor.go:38 [35;1mError 1146 (42S02): Table 'cdn_control.release_tasks' doesn't exist
+[0m[33m[0.744ms] [34;1m[rows:0][0m SELECT * FROM `release_tasks` WHERE status IN ('pending','running') ORDER BY id ASC
+2026/01/28 06:56:40 [Executor] Failed to query tasks: Error 1146 (42S02): Table 'cdn_control.release_tasks' doesn't exist
+2026/01/28 06:56:40 [Executor] Run failed: Error 1146 (42S02): Table 'cdn_control.release_tasks' doesn't exist
+2026/01/28 06:56:40 [DNS Service] GetDeletionRecords: found 0 records (limit=10, error=<nil>)
+2026/01/28 06:56:40 [DNS Worker] Tick done: present_candidates=0, absent_candidates=0, claimed_running=0, claim_skipped=0, success=0, error=0, deleted=0
+[GIN] 2026/01/28 - 06:56:44 | 200 |  266.638578ms |   14.101.128.57 | POST     "/api/v1/auth/login"
+2026/01/28 06:56:44 [WebSocket] Handshake rejected: No token from 13.228.178.233:58979
+[GIN] 2026/01/28 - 06:56:44 | 401 |      61.136µs |  13.228.178.233 | GET      "/socket.io/?EIO=4&transport=websocket"
+[GIN] 2026/01/28 - 06:56:44 | 200 |    1.402338ms |  13.228.178.233 | GET      "/api/v1/nodes?page=1&pageSize=15"
+2026/01/28 06:56:45 [Executor] Running once...
+
+2026/01/28 06:56:45 [31;1m/opt/go_cmdb/internal/release/executor.go:38 [35;1mError 1146 (42S02): Table 'cdn_control.release_tasks' doesn't exist
+[0m[33m[0.502ms] [34;1m[rows:0][0m SELECT * FROM `release_tasks` WHERE status IN ('pending','running') ORDER BY id ASC
+2026/01/28 06:56:45 [Executor] Failed to query tasks: Error 1146 (42S02): Table 'cdn_control.release_tasks' doesn't exist
+2026/01/28 06:56:45 [Executor] Run failed: Error 1146 (42S02): Table 'cdn_control.release_tasks' doesn't exist
+2026/01/28 06:56:47 [WebSocket] Handshake rejected: No token from 13.228.178.233:59004
+[GIN] 2026/01/28 - 06:56:47 | 401 |      58.791µs |  13.228.178.233 | GET      "/socket.io/?EIO=4&transport=websocket"
+[GIN] 2026/01/28 - 06:56:48 | 200 |  3.009632027s |   14.101.128.57 | POST     "/api/v1/nodes/health/check"
+2026/01/28 06:56:50 [Executor] Running once...
+
+2026/01/28 06:56:50 [31;1m/opt/go_cmdb/internal/release/executor.go:38 [35;1mError 1146 (42S02): Table 'cdn_control.release_tasks' doesn't exist
+[0m[33m[0.744ms] [34;1m[rows:0][0m SELECT * FROM `release_tasks` WHERE status IN ('pending','running') ORDER BY id ASC
+2026/01/28 06:56:50 [Executor] Failed to query tasks: Error 1146 (42S02): Table 'cdn_control.release_tasks' doesn't exist
+2026/01/28 06:56:50 [Executor] Run failed: Error 1146 (42S02): Table 'cdn_control.release_tasks' doesn't exist
+2026/01/28 06:56:52 [WebSocket] Handshake rejected: No token from 13.228.178.233:59035
+[GIN] 2026/01/28 - 06:56:52 | 401 |      59.903µs |  13.228.178.233 | GET      "/socket.io/?EIO=4&transport=websocket"
+[GIN] 2026/01/28 - 06:56:52 | 200 |    1.484081ms |  13.228.178.233 | GET      "/api/v1/nodes?page=1&pageSize=15"
+2026/01/28 06:56:55 [Executor] Running once...
+
+2026/01/28 06:56:55 [31;1m/opt/go_cmdb/internal/release/executor.go:38 [35;1mError 1146 (42S02): Table 'cdn_control.release_tasks' doesn't exist
+[0m[33m[0.656ms] [34;1m[rows:0][0m SELECT * FROM `release_tasks` WHERE status IN ('pending','running') ORDER BY id ASC
+2026/01/28 06:56:55 [Executor] Failed to query tasks: Error 1146 (42S02): Table 'cdn_control.release_tasks' doesn't exist
+2026/01/28 06:56:55 [Executor] Run failed: Error 1146 (42S02): Table 'cdn_control.release_tasks' doesn't exist
+2026/01/28 06:56:57 [WebSocket] Handshake rejected: No token from 13.228.178.233:59067
+[GIN] 2026/01/28 - 06:56:57 | 401 |      56.777µs |  13.228.178.233 | GET      "/socket.io/?EIO=4&transport=websocket"
+2026/01/28 06:57:00 [Executor] Running once...
+
+2026/01/28 06:57:00 [31;1m/opt/go_cmdb/internal/release/executor.go:38 [35;1mError 1146 (42S02): Table 'cdn_control.release_tasks' doesn't exist
+[0m[33m[1.960ms] [34;1m[rows:0][0m SELECT * FROM `release_tasks` WHERE status IN ('pending','running') ORDER BY id ASC
+2026/01/28 06:57:00 [Executor] Failed to query tasks: Error 1146 (42S02): Table 'cdn_control.release_tasks' doesn't exist
+2026/01/28 06:57:00 [Executor] Run failed: Error 1146 (42S02): Table 'cdn_control.release_tasks' doesn't exist
+2026/01/28 06:57:03 [WebSocket] Handshake rejected: No token from 13.228.178.233:59095
+[GIN] 2026/01/28 - 06:57:03 | 401 |      59.032µs |  13.228.178.233 | GET      "/socket.io/?EIO=4&transport=websocket"
+2026/01/28 06:57:05 [Executor] Running once...
+
+2026/01/28 06:57:05 [31;1m/opt/go_cmdb/internal/release/executor.go:38 [35;1mError 1146 (42S02): Table 'cdn_control.release_tasks' doesn't exist
+[0m[33m[0.741ms] [34;1m[rows:0][0m SELECT * FROM `release_tasks` WHERE status IN ('pending','running') ORDER BY id ASC
+2026/01/28 06:57:05 [Executor] Failed to query tasks: Error 1146 (42S02): Table 'cdn_control.release_tasks' doesn't exist
+2026/01/28 06:57:05 [Executor] Run failed: Error 1146 (42S02): Table 'cdn_control.release_tasks' doesn't exist
+2026/01/28 06:57:10 [Executor] Running once...
+2026/01/28 06:57:10 [DNS Worker] Tick: processing DNS records...
+
+2026/01/28 06:57:10 [31;1m/opt/go_cmdb/internal/release/executor.go:38 [35;1mError 1146 (42S02): Table 'cdn_control.release_tasks' doesn't exist
+[0m[33m[0.673ms] [34;1m[rows:0][0m SELECT * FROM `release_tasks` WHERE status IN ('pending','running') ORDER BY id ASC
+2026/01/28 06:57:10 [Executor] Failed to query tasks: Error 1146 (42S02): Table 'cdn_control.release_tasks' doesn't exist
+2026/01/28 06:57:10 [Executor] Run failed: Error 1146 (42S02): Table 'cdn_control.release_tasks' doesn't exist
+2026/01/28 06:57:10 [DNS Service] GetDeletionRecords: found 0 records (limit=10, error=<nil>)
+2026/01/28 06:57:10 [DNS Worker] Tick done: present_candidates=0, absent_candidates=0, claimed_running=0, claim_skipped=0, success=0, error=0, deleted=0
+2026/01/28 06:57:15 [Executor] Running once...
+
+2026/01/28 06:57:15 [31;1m/opt/go_cmdb/internal/release/executor.go:38 [35;1mError 1146 (42S02): Table 'cdn_control.release_tasks' doesn't exist
+[0m[33m[0.764ms] [34;1m[rows:0][0m SELECT * FROM `release_tasks` WHERE status IN ('pending','running') ORDER BY id ASC
+2026/01/28 06:57:15 [Executor] Failed to query tasks: Error 1146 (42S02): Table 'cdn_control.release_tasks' doesn't exist
+2026/01/28 06:57:15 [Executor] Run failed: Error 1146 (42S02): Table 'cdn_control.release_tasks' doesn't exist
+[GIN] 2026/01/28 - 06:57:19 | 200 |  266.629639ms |   14.101.128.57 | POST     "/api/v1/auth/login"
+2026/01/28 06:57:20 [Executor] Running once...
+
+2026/01/28 06:57:20 [31;1m/opt/go_cmdb/internal/release/executor.go:38 [35;1mError 1146 (42S02): Table 'cdn_control.release_tasks' doesn't exist
+[0m[33m[0.685ms] [34;1m[rows:0][0m SELECT * FROM `release_tasks` WHERE status IN ('pending','running') ORDER BY id ASC
+2026/01/28 06:57:20 [Executor] Failed to query tasks: Error 1146 (42S02): Table 'cdn_control.release_tasks' doesn't exist
+2026/01/28 06:57:20 [Executor] Run failed: Error 1146 (42S02): Table 'cdn_control.release_tasks' doesn't exist
+[GIN] 2026/01/28 - 06:57:23 | 200 |  3.009571894s |   14.101.128.57 | POST     "/api/v1/nodes/health/check"
+2026/01/28 06:57:25 [Executor] Running once...
+
+2026/01/28 06:57:25 [31;1m/opt/go_cmdb/internal/release/executor.go:38 [35;1mError 1146 (42S02): Table 'cdn_control.release_tasks' doesn't exist
+[0m[33m[0.679ms] [34;1m[rows:0][0m SELECT * FROM `release_tasks` WHERE status IN ('pending','running') ORDER BY id ASC
+2026/01/28 06:57:25 [Executor] Failed to query tasks: Error 1146 (42S02): Table 'cdn_control.release_tasks' doesn't exist
+2026/01/28 06:57:25 [Executor] Run failed: Error 1146 (42S02): Table 'cdn_control.release_tasks' doesn't exist
+2026/01/28 06:57:30 [Executor] Running once...
+
+2026/01/28 06:57:30 [31;1m/opt/go_cmdb/internal/release/executor.go:38 [35;1mError 1146 (42S02): Table 'cdn_control.release_tasks' doesn't exist
+[0m[33m[0.698ms] [34;1m[rows:0][0m SELECT * FROM `release_tasks` WHERE status IN ('pending','running') ORDER BY id ASC
+2026/01/28 06:57:30 [Executor] Failed to query tasks: Error 1146 (42S02): Table 'cdn_control.release_tasks' doesn't exist
+2026/01/28 06:57:30 [Executor] Run failed: Error 1146 (42S02): Table 'cdn_control.release_tasks' doesn't exist
+2026/01/28 06:57:35 [Executor] Running once...
+
+2026/01/28 06:57:35 [31;1m/opt/go_cmdb/internal/release/executor.go:38 [35;1mError 1146 (42S02): Table 'cdn_control.release_tasks' doesn't exist
+[0m[33m[0.643ms] [34;1m[rows:0][0m SELECT * FROM `release_tasks` WHERE status IN ('pending','running') ORDER BY id ASC
+2026/01/28 06:57:35 [Executor] Failed to query tasks: Error 1146 (42S02): Table 'cdn_control.release_tasks' doesn't exist
+2026/01/28 06:57:35 [Executor] Run failed: Error 1146 (42S02): Table 'cdn_control.release_tasks' doesn't exist
+[GIN] 2026/01/28 - 06:57:36 | 200 |  266.334113ms |   14.101.128.57 | POST     "/api/v1/auth/login"
+[GIN] 2026/01/28 - 06:57:37 | 200 |    8.457252ms |   14.101.128.57 | POST     "/api/v1/nodes/update"
+2026/01/28 06:57:40 [Executor] Running once...
+2026/01/28 06:57:40 [DNS Worker] Tick: processing DNS records...
+
+2026/01/28 06:57:40 [31;1m/opt/go_cmdb/internal/release/executor.go:38 [35;1mError 1146 (42S02): Table 'cdn_control.release_tasks' doesn't exist
+[0m[33m[2.250ms] [34;1m[rows:0][0m SELECT * FROM `release_tasks` WHERE status IN ('pending','running') ORDER BY id ASC
+2026/01/28 06:57:40 [Executor] Failed to query tasks: Error 1146 (42S02): Table 'cdn_control.release_tasks' doesn't exist
+2026/01/28 06:57:40 [Executor] Run failed: Error 1146 (42S02): Table 'cdn_control.release_tasks' doesn't exist
+2026/01/28 06:57:40 [DNS Service] GetDeletionRecords: found 0 records (limit=10, error=<nil>)
+2026/01/28 06:57:40 [DNS Worker] Tick done: present_candidates=0, absent_candidates=0, claimed_running=0, claim_skipped=0, success=0, error=0, deleted=0
+[GIN] 2026/01/28 - 06:57:45 | 200 |  266.266639ms |   14.101.128.57 | POST     "/api/v1/auth/login"
+2026/01/28 06:57:45 [Executor] Running once...
+
+2026/01/28 06:57:45 [31;1m/opt/go_cmdb/internal/release/executor.go:38 [35;1mError 1146 (42S02): Table 'cdn_control.release_tasks' doesn't exist
+[0m[33m[0.682ms] [34;1m[rows:0][0m SELECT * FROM `release_tasks` WHERE status IN ('pending','running') ORDER BY id ASC
+2026/01/28 06:57:45 [Executor] Failed to query tasks: Error 1146 (42S02): Table 'cdn_control.release_tasks' doesn't exist
+2026/01/28 06:57:45 [Executor] Run failed: Error 1146 (42S02): Table 'cdn_control.release_tasks' doesn't exist
+[GIN] 2026/01/28 - 06:57:46 | 200 |   12.446001ms |   14.101.128.57 | POST     "/api/v1/nodes/health/check"
+2026/01/28 06:57:50 [Executor] Running once...
+
+2026/01/28 06:57:50 [31;1m/opt/go_cmdb/internal/release/executor.go:38 [35;1mError 1146 (42S02): Table 'cdn_control.release_tasks' doesn't exist
+[0m[33m[0.685ms] [34;1m[rows:0][0m SELECT * FROM `release_tasks` WHERE status IN ('pending','running') ORDER BY id ASC
+2026/01/28 06:57:50 [Executor] Failed to query tasks: Error 1146 (42S02): Table 'cdn_control.release_tasks' doesn't exist
+2026/01/28 06:57:50 [Executor] Run failed: Error 1146 (42S02): Table 'cdn_control.release_tasks' doesn't exist
+2026/01/28 06:57:55 [Executor] Running once...
+
+2026/01/28 06:57:55 [31;1m/opt/go_cmdb/internal/release/executor.go:38 [35;1mError 1146 (42S02): Table 'cdn_control.release_tasks' doesn't exist
+[0m[33m[0.713ms] [34;1m[rows:0][0m SELECT * FROM `release_tasks` WHERE status IN ('pending','running') ORDER BY id ASC
+2026/01/28 06:57:55 [Executor] Failed to query tasks: Error 1146 (42S02): Table 'cdn_control.release_tasks' doesn't exist
+2026/01/28 06:57:55 [Executor] Run failed: Error 1146 (42S02): Table 'cdn_control.release_tasks' doesn't exist
+[GIN] 2026/01/28 - 06:57:59 | 200 |  266.649981ms |   14.101.128.57 | POST     "/api/v1/auth/login"
+[GIN] 2026/01/28 - 06:58:00 | 200 |    9.157469ms |   14.101.128.57 | POST     "/api/v1/nodes/9/identity/revoke"
+2026/01/28 06:58:00 [Executor] Running once...
+
+2026/01/28 06:58:00 [31;1m/opt/go_cmdb/internal/release/executor.go:38 [35;1mError 1146 (42S02): Table 'cdn_control.release_tasks' doesn't exist
+[0m[33m[0.660ms] [34;1m[rows:0][0m SELECT * FROM `release_tasks` WHERE status IN ('pending','running') ORDER BY id ASC
+2026/01/28 06:58:00 [Executor] Failed to query tasks: Error 1146 (42S02): Table 'cdn_control.release_tasks' doesn't exist
+2026/01/28 06:58:00 [Executor] Run failed: Error 1146 (42S02): Table 'cdn_control.release_tasks' doesn't exist
+[GIN] 2026/01/28 - 06:58:01 | 200 |    1.838077ms |   14.101.128.57 | GET      "/api/v1/nodes/9/identity"
+2026/01/28 06:58:05 [Executor] Running once...
+
+2026/01/28 06:58:05 [31;1m/opt/go_cmdb/internal/release/executor.go:38 [35;1mError 1146 (42S02): Table 'cdn_control.release_tasks' doesn't exist
+[0m[33m[0.673ms] [34;1m[rows:0][0m SELECT * FROM `release_tasks` WHERE status IN ('pending','running') ORDER BY id ASC
+2026/01/28 06:58:05 [Executor] Failed to query tasks: Error 1146 (42S02): Table 'cdn_control.release_tasks' doesn't exist
+2026/01/28 06:58:05 [Executor] Run failed: Error 1146 (42S02): Table 'cdn_control.release_tasks' doesn't exist
+2026/01/28 06:58:10 [DNS Worker] Tick: processing DNS records...
+2026/01/28 06:58:10 [Executor] Running once...
+
+2026/01/28 06:58:10 [31;1m/opt/go_cmdb/internal/release/executor.go:38 [35;1mError 1146 (42S02): Table 'cdn_control.release_tasks' doesn't exist
+[0m[33m[0.643ms] [34;1m[rows:0][0m SELECT * FROM `release_tasks` WHERE status IN ('pending','running') ORDER BY id ASC
+2026/01/28 06:58:10 [Executor] Failed to query tasks: Error 1146 (42S02): Table 'cdn_control.release_tasks' doesn't exist
+2026/01/28 06:58:10 [Executor] Run failed: Error 1146 (42S02): Table 'cdn_control.release_tasks' doesn't exist
+2026/01/28 06:58:10 [DNS Service] GetDeletionRecords: found 0 records (limit=10, error=<nil>)
+2026/01/28 06:58:10 [DNS Worker] Tick done: present_candidates=0, absent_candidates=0, claimed_running=0, claim_skipped=0, success=0, error=0, deleted=0
+[GIN] 2026/01/28 - 06:58:13 | 200 |   266.36629ms |   14.101.128.57 | POST     "/api/v1/auth/login"
+[GIN] 2026/01/28 - 06:58:14 | 200 |    1.104564ms |   14.101.128.57 | POST     "/api/v1/agents/bootstrap/token/create"
+2026/01/28 06:58:15 [Executor] Running once...
+
+2026/01/28 06:58:15 [31;1m/opt/go_cmdb/internal/release/executor.go:38 [35;1mError 1146 (42S02): Table 'cdn_control.release_tasks' doesn't exist
+[0m[33m[0.712ms] [34;1m[rows:0][0m SELECT * FROM `release_tasks` WHERE status IN ('pending','running') ORDER BY id ASC
+2026/01/28 06:58:15 [Executor] Failed to query tasks: Error 1146 (42S02): Table 'cdn_control.release_tasks' doesn't exist
+2026/01/28 06:58:15 [Executor] Run failed: Error 1146 (42S02): Table 'cdn_control.release_tasks' doesn't exist
+2026/01/28 06:58:20 [Executor] Running once...
+
+2026/01/28 06:58:20 [31;1m/opt/go_cmdb/internal/release/executor.go:38 [35;1mError 1146 (42S02): Table 'cdn_control.release_tasks' doesn't exist
+[0m[33m[4.433ms] [34;1m[rows:0][0m SELECT * FROM `release_tasks` WHERE status IN ('pending','running') ORDER BY id ASC
+2026/01/28 06:58:20 [Executor] Failed to query tasks: Error 1146 (42S02): Table 'cdn_control.release_tasks' doesn't exist
+2026/01/28 06:58:20 [Executor] Run failed: Error 1146 (42S02): Table 'cdn_control.release_tasks' doesn't exist
+
+2026/01/28 06:58:25 [31;1m/opt/go_cmdb/api/bootstrap/handler.go:74 [35;1mrecord not found
+[0m[33m[0.494ms] [34;1m[rows:0][0m SELECT * FROM `agent_identities` WHERE node_id = 9 AND status = 'active' ORDER BY `agent_identities`.`id` LIMIT 1
+[GIN] 2026/01/28 - 06:58:25 | 404 |    1.526416ms |    20.2.140.226 | GET      "/bootstrap/agent/install.sh?token=a6b952d373a59e9a9ac0c6e2d93544d09971a21ae85091b0748a95239570d35c"
+2026/01/28 06:58:25 [Executor] Running once...
+
+2026/01/28 06:58:25 [31;1m/opt/go_cmdb/internal/release/executor.go:38 [35;1mError 1146 (42S02): Table 'cdn_control.release_tasks' doesn't exist
+[0m[33m[0.714ms] [34;1m[rows:0][0m SELECT * FROM `release_tasks` WHERE status IN ('pending','running') ORDER BY id ASC
+2026/01/28 06:58:25 [Executor] Failed to query tasks: Error 1146 (42S02): Table 'cdn_control.release_tasks' doesn't exist
+2026/01/28 06:58:25 [Executor] Run failed: Error 1146 (42S02): Table 'cdn_control.release_tasks' doesn't exist
+2026/01/28 06:58:30 [Executor] Running once...
+
+2026/01/28 06:58:30 [31;1m/opt/go_cmdb/internal/release/executor.go:38 [35;1mError 1146 (42S02): Table 'cdn_control.release_tasks' doesn't exist
+[0m[33m[0.727ms] [34;1m[rows:0][0m SELECT * FROM `release_tasks` WHERE status IN ('pending','running') ORDER BY id ASC
+2026/01/28 06:58:30 [Executor] Failed to query tasks: Error 1146 (42S02): Table 'cdn_control.release_tasks' doesn't exist
+2026/01/28 06:58:30 [Executor] Run failed: Error 1146 (42S02): Table 'cdn_control.release_tasks' doesn't exist
+2026/01/28 06:58:35 [Executor] Running once...
+
+2026/01/28 06:58:35 [31;1m/opt/go_cmdb/internal/release/executor.go:38 [35;1mError 1146 (42S02): Table 'cdn_control.release_tasks' doesn't exist
+[0m[33m[0.687ms] [34;1m[rows:0][0m SELECT * FROM `release_tasks` WHERE status IN ('pending','running') ORDER BY id ASC
+2026/01/28 06:58:35 [Executor] Failed to query tasks: Error 1146 (42S02): Table 'cdn_control.release_tasks' doesn't exist
+2026/01/28 06:58:35 [Executor] Run failed: Error 1146 (42S02): Table 'cdn_control.release_tasks' doesn't exist
+2026/01/28 06:58:36 [WebSocket] Handshake rejected: No token from 13.228.178.233:59859
+[GIN] 2026/01/28 - 06:58:36 | 401 |       41.91µs |  13.228.178.233 | GET      "/socket.io/?EIO=4&transport=websocket"
+[GIN] 2026/01/28 - 06:58:36 | 200 |    1.379901ms |  13.228.178.233 | GET      "/api/v1/nodes?page=1&pageSize=15"
+[GIN] 2026/01/28 - 06:58:38 | 200 |  266.921114ms |   14.101.128.57 | POST     "/api/v1/auth/login"
+
+2026/01/28 06:58:39 [31;1m/opt/go_cmdb/api/v1/nodes/handler.go:454 [35;1mrecord not found
+[0m[33m[0.508ms] [34;1m[rows:0][0m SELECT * FROM `agent_identities` WHERE node_id = 9 AND status = 'active' ORDER BY `agent_identities`.`id` LIMIT 1
+[GIN] 2026/01/28 - 06:58:39 | 200 |    2.826211ms |   14.101.128.57 | GET      "/api/v1/nodes/9"
+2026/01/28 06:58:40 [WebSocket] Handshake rejected: No token from 13.228.178.233:59885
+[GIN] 2026/01/28 - 06:58:40 | 401 |      55.514µs |  13.228.178.233 | GET      "/socket.io/?EIO=4&transport=websocket"
+2026/01/28 06:58:40 [DNS Worker] Tick: processing DNS records...
+2026/01/28 06:58:40 [Executor] Running once...
+2026/01/28 06:58:40 [DNS Service] GetDeletionRecords: found 0 records (limit=10, error=<nil>)
+2026/01/28 06:58:40 [DNS Worker] Tick done: present_candidates=0, absent_candidates=0, claimed_running=0, claim_skipped=0, success=0, error=0, deleted=0
+
+2026/01/28 06:58:40 [31;1m/opt/go_cmdb/internal/release/executor.go:38 [35;1mError 1146 (42S02): Table 'cdn_control.release_tasks' doesn't exist
+[0m[33m[2.192ms] [34;1m[rows:0][0m SELECT * FROM `release_tasks` WHERE status IN ('pending','running') ORDER BY id ASC
+2026/01/28 06:58:40 [Executor] Failed to query tasks: Error 1146 (42S02): Table 'cdn_control.release_tasks' doesn't exist
+2026/01/28 06:58:40 [Executor] Run failed: Error 1146 (42S02): Table 'cdn_control.release_tasks' doesn't exist
+2026/01/28 06:58:45 [WebSocket] Handshake rejected: No token from 13.228.178.233:59916
+[GIN] 2026/01/28 - 06:58:45 | 401 |      53.581µs |  13.228.178.233 | GET      "/socket.io/?EIO=4&transport=websocket"
+2026/01/28 06:58:45 [Executor] Running once...
+
+2026/01/28 06:58:45 [31;1m/opt/go_cmdb/internal/release/executor.go:38 [35;1mError 1146 (42S02): Table 'cdn_control.release_tasks' doesn't exist
+[0m[33m[0.818ms] [34;1m[rows:0][0m SELECT * FROM `release_tasks` WHERE status IN ('pending','running') ORDER BY id ASC
+2026/01/28 06:58:45 [Executor] Failed to query tasks: Error 1146 (42S02): Table 'cdn_control.release_tasks' doesn't exist
+2026/01/28 06:58:45 [Executor] Run failed: Error 1146 (42S02): Table 'cdn_control.release_tasks' doesn't exist
+2026/01/28 06:58:50 [WebSocket] Handshake rejected: No token from 13.228.178.233:59944
+[GIN] 2026/01/28 - 06:58:50 | 401 |      55.746µs |  13.228.178.233 | GET      "/socket.io/?EIO=4&transport=websocket"
+2026/01/28 06:58:50 [Executor] Running once...
+
+2026/01/28 06:58:50 [31;1m/opt/go_cmdb/internal/release/executor.go:38 [35;1mError 1146 (42S02): Table 'cdn_control.release_tasks' doesn't exist
+[0m[33m[0.657ms] [34;1m[rows:0][0m SELECT * FROM `release_tasks` WHERE status IN ('pending','running') ORDER BY id ASC
+2026/01/28 06:58:50 [Executor] Failed to query tasks: Error 1146 (42S02): Table 'cdn_control.release_tasks' doesn't exist
+2026/01/28 06:58:50 [Executor] Run failed: Error 1146 (42S02): Table 'cdn_control.release_tasks' doesn't exist
+2026/01/28 06:58:55 [WebSocket] Handshake rejected: No token from 13.228.178.233:59979
+[GIN] 2026/01/28 - 06:58:55 | 401 |      99.618µs |  13.228.178.233 | GET      "/socket.io/?EIO=4&transport=websocket"
+2026/01/28 06:58:55 [Executor] Running once...
+
+2026/01/28 06:58:55 [31;1m/opt/go_cmdb/internal/release/executor.go:38 [35;1mError 1146 (42S02): Table 'cdn_control.release_tasks' doesn't exist
+[0m[33m[0.600ms] [34;1m[rows:0][0m SELECT * FROM `release_tasks` WHERE status IN ('pending','running') ORDER BY id ASC
+2026/01/28 06:58:55 [Executor] Failed to query tasks: Error 1146 (42S02): Table 'cdn_control.release_tasks' doesn't exist
+2026/01/28 06:58:55 [Executor] Run failed: Error 1146 (42S02): Table 'cdn_control.release_tasks' doesn't exist
+2026/01/28 06:59:00 [Executor] Running once...
+
+2026/01/28 06:59:00 [31;1m/opt/go_cmdb/internal/release/executor.go:38 [35;1mError 1146 (42S02): Table 'cdn_control.release_tasks' doesn't exist
+[0m[33m[2.535ms] [34;1m[rows:0][0m SELECT * FROM `release_tasks` WHERE status IN ('pending','running') ORDER BY id ASC
+2026/01/28 06:59:00 [Executor] Failed to query tasks: Error 1146 (42S02): Table 'cdn_control.release_tasks' doesn't exist
+2026/01/28 06:59:00 [Executor] Run failed: Error 1146 (42S02): Table 'cdn_control.release_tasks' doesn't exist
+2026/01/28 06:59:05 [Executor] Running once...
+
+2026/01/28 06:59:05 [31;1m/opt/go_cmdb/internal/release/executor.go:38 [35;1mError 1146 (42S02): Table 'cdn_control.release_tasks' doesn't exist
+[0m[33m[0.692ms] [34;1m[rows:0][0m SELECT * FROM `release_tasks` WHERE status IN ('pending','running') ORDER BY id ASC
+2026/01/28 06:59:05 [Executor] Failed to query tasks: Error 1146 (42S02): Table 'cdn_control.release_tasks' doesn't exist
+2026/01/28 06:59:05 [Executor] Run failed: Error 1146 (42S02): Table 'cdn_control.release_tasks' doesn't exist
+2026/01/28 06:59:10 [Executor] Running once...
+2026/01/28 06:59:10 [DNS Worker] Tick: processing DNS records...
+
+2026/01/28 06:59:10 [31;1m/opt/go_cmdb/internal/release/executor.go:38 [35;1mError 1146 (42S02): Table 'cdn_control.release_tasks' doesn't exist
+[0m[33m[0.738ms] [34;1m[rows:0][0m SELECT * FROM `release_tasks` WHERE status IN ('pending','running') ORDER BY id ASC
+2026/01/28 06:59:10 [Executor] Failed to query tasks: Error 1146 (42S02): Table 'cdn_control.release_tasks' doesn't exist
+2026/01/28 06:59:10 [Executor] Run failed: Error 1146 (42S02): Table 'cdn_control.release_tasks' doesn't exist
+2026/01/28 06:59:10 [DNS Service] GetDeletionRecords: found 0 records (limit=10, error=<nil>)
+2026/01/28 06:59:10 [DNS Worker] Tick done: present_candidates=0, absent_candidates=0, claimed_running=0, claim_skipped=0, success=0, error=0, deleted=0
+2026/01/28 06:59:14 [WebSocket] Handshake rejected: No token from 13.228.178.233:60324
+[GIN] 2026/01/28 - 06:59:14 | 401 |      60.544µs |  13.228.178.233 | GET      "/socket.io/?EIO=4&transport=websocket"
+[GIN] 2026/01/28 - 06:59:14 | 200 |    1.426189ms |  13.228.178.233 | GET      "/api/v1/nodes?page=1&pageSize=15"
+2026/01/28 06:59:15 [Executor] Running once...
+
+2026/01/28 06:59:15 [31;1m/opt/go_cmdb/internal/release/executor.go:38 [35;1mError 1146 (42S02): Table 'cdn_control.release_tasks' doesn't exist
+[0m[33m[0.698ms] [34;1m[rows:0][0m SELECT * FROM `release_tasks` WHERE status IN ('pending','running') ORDER BY id ASC
+2026/01/28 06:59:15 [Executor] Failed to query tasks: Error 1146 (42S02): Table 'cdn_control.release_tasks' doesn't exist
+2026/01/28 06:59:15 [Executor] Run failed: Error 1146 (42S02): Table 'cdn_control.release_tasks' doesn't exist
+2026/01/28 06:59:18 [WebSocket] Handshake rejected: No token from 13.228.178.233:60353
+[GIN] 2026/01/28 - 06:59:18 | 401 |      57.168µs |  13.228.178.233 | GET      "/socket.io/?EIO=4&transport=websocket"
+2026/01/28 06:59:20 [Executor] Running once...
+
+2026/01/28 06:59:20 [31;1m/opt/go_cmdb/internal/release/executor.go:38 [35;1mError 1146 (42S02): Table 'cdn_control.release_tasks' doesn't exist
+[0m[33m[0.676ms] [34;1m[rows:0][0m SELECT * FROM `release_tasks` WHERE status IN ('pending','running') ORDER BY id ASC
+2026/01/28 06:59:20 [Executor] Failed to query tasks: Error 1146 (42S02): Table 'cdn_control.release_tasks' doesn't exist
+2026/01/28 06:59:20 [Executor] Run failed: Error 1146 (42S02): Table 'cdn_control.release_tasks' doesn't exist
+2026/01/28 06:59:23 [WebSocket] Handshake rejected: No token from 13.228.178.233:60389
+[GIN] 2026/01/28 - 06:59:23 | 401 |      66.065µs |  13.228.178.233 | GET      "/socket.io/?EIO=4&transport=websocket"
+2026/01/28 06:59:25 [Executor] Running once...
+
+2026/01/28 06:59:25 [31;1m/opt/go_cmdb/internal/release/executor.go:38 [35;1mError 1146 (42S02): Table 'cdn_control.release_tasks' doesn't exist
+[0m[33m[0.675ms] [34;1m[rows:0][0m SELECT * FROM `release_tasks` WHERE status IN ('pending','running') ORDER BY id ASC
+2026/01/28 06:59:25 [Executor] Failed to query tasks: Error 1146 (42S02): Table 'cdn_control.release_tasks' doesn't exist
+2026/01/28 06:59:25 [Executor] Run failed: Error 1146 (42S02): Table 'cdn_control.release_tasks' doesn't exist
+2026/01/28 06:59:29 [WebSocket] Handshake rejected: No token from 13.228.178.233:60420
+[GIN] 2026/01/28 - 06:59:29 | 401 |      55.465µs |  13.228.178.233 | GET      "/socket.io/?EIO=4&transport=websocket"
+2026/01/28 06:59:30 [Executor] Running once...
+
+2026/01/28 06:59:30 [31;1m/opt/go_cmdb/internal/release/executor.go:38 [35;1mError 1146 (42S02): Table 'cdn_control.release_tasks' doesn't exist
+[0m[33m[0.668ms] [34;1m[rows:0][0m SELECT * FROM `release_tasks` WHERE status IN ('pending','running') ORDER BY id ASC
+2026/01/28 06:59:30 [Executor] Failed to query tasks: Error 1146 (42S02): Table 'cdn_control.release_tasks' doesn't exist
+2026/01/28 06:59:30 [Executor] Run failed: Error 1146 (42S02): Table 'cdn_control.release_tasks' doesn't exist
+2026/01/28 06:59:34 [WebSocket] Handshake rejected: No token from 13.228.178.233:60448
+[GIN] 2026/01/28 - 06:59:34 | 401 |       53.14µs |  13.228.178.233 | GET      "/socket.io/?EIO=4&transport=websocket"
+2026/01/28 06:59:35 [Executor] Running once...
+
+2026/01/28 06:59:35 [31;1m/opt/go_cmdb/internal/release/executor.go:38 [35;1mError 1146 (42S02): Table 'cdn_control.release_tasks' doesn't exist
+[0m[33m[0.644ms] [34;1m[rows:0][0m SELECT * FROM `release_tasks` WHERE status IN ('pending','running') ORDER BY id ASC
+2026/01/28 06:59:35 [Executor] Failed to query tasks: Error 1146 (42S02): Table 'cdn_control.release_tasks' doesn't exist
+2026/01/28 06:59:35 [Executor] Run failed: Error 1146 (42S02): Table 'cdn_control.release_tasks' doesn't exist
+2026/01/28 06:59:40 [Executor] Running once...
+2026/01/28 06:59:40 [DNS Worker] Tick: processing DNS records...
+
+2026/01/28 06:59:40 [31;1m/opt/go_cmdb/internal/release/executor.go:38 [35;1mError 1146 (42S02): Table 'cdn_control.release_tasks' doesn't exist
+[0m[33m[0.719ms] [34;1m[rows:0][0m SELECT * FROM `release_tasks` WHERE status IN ('pending','running') ORDER BY id ASC
+2026/01/28 06:59:40 [Executor] Failed to query tasks: Error 1146 (42S02): Table 'cdn_control.release_tasks' doesn't exist
+2026/01/28 06:59:40 [Executor] Run failed: Error 1146 (42S02): Table 'cdn_control.release_tasks' doesn't exist
+2026/01/28 06:59:40 [DNS Service] GetDeletionRecords: found 0 records (limit=10, error=<nil>)
+2026/01/28 06:59:40 [DNS Worker] Tick done: present_candidates=0, absent_candidates=0, claimed_running=0, claim_skipped=0, success=0, error=0, deleted=0
+2026/01/28 06:59:45 [Executor] Running once...
+
+2026/01/28 06:59:45 [31;1m/opt/go_cmdb/internal/release/executor.go:38 [35;1mError 1146 (42S02): Table 'cdn_control.release_tasks' doesn't exist
+[0m[33m[0.670ms] [34;1m[rows:0][0m SELECT * FROM `release_tasks` WHERE status IN ('pending','running') ORDER BY id ASC
+2026/01/28 06:59:45 [Executor] Failed to query tasks: Error 1146 (42S02): Table 'cdn_control.release_tasks' doesn't exist
+2026/01/28 06:59:45 [Executor] Run failed: Error 1146 (42S02): Table 'cdn_control.release_tasks' doesn't exist
+2026/01/28 06:59:50 [Executor] Running once...
+
+2026/01/28 06:59:50 [31;1m/opt/go_cmdb/internal/release/executor.go:38 [35;1mError 1146 (42S02): Table 'cdn_control.release_tasks' doesn't exist
+[0m[33m[0.784ms] [34;1m[rows:0][0m SELECT * FROM `release_tasks` WHERE status IN ('pending','running') ORDER BY id ASC
+2026/01/28 06:59:50 [Executor] Failed to query tasks: Error 1146 (42S02): Table 'cdn_control.release_tasks' doesn't exist
+2026/01/28 06:59:50 [Executor] Run failed: Error 1146 (42S02): Table 'cdn_control.release_tasks' doesn't exist
+2026/01/28 06:59:55 [Executor] Running once...
+
+2026/01/28 06:59:55 [31;1m/opt/go_cmdb/internal/release/executor.go:38 [35;1mError 1146 (42S02): Table 'cdn_control.release_tasks' doesn't exist
+[0m[33m[0.702ms] [34;1m[rows:0][0m SELECT * FROM `release_tasks` WHERE status IN ('pending','running') ORDER BY id ASC
+2026/01/28 06:59:55 [Executor] Failed to query tasks: Error 1146 (42S02): Table 'cdn_control.release_tasks' doesn't exist
+2026/01/28 06:59:55 [Executor] Run failed: Error 1146 (42S02): Table 'cdn_control.release_tasks' doesn't exist
+2026/01/28 07:00:00 [Executor] Running once...
+
+2026/01/28 07:00:00 [31;1m/opt/go_cmdb/internal/release/executor.go:38 [35;1mError 1146 (42S02): Table 'cdn_control.release_tasks' doesn't exist
+[0m[33m[0.676ms] [34;1m[rows:0][0m SELECT * FROM `release_tasks` WHERE status IN ('pending','running') ORDER BY id ASC
+2026/01/28 07:00:00 [Executor] Failed to query tasks: Error 1146 (42S02): Table 'cdn_control.release_tasks' doesn't exist
+2026/01/28 07:00:00 [Executor] Run failed: Error 1146 (42S02): Table 'cdn_control.release_tasks' doesn't exist
+2026/01/28 07:00:05 [Executor] Running once...
+
+2026/01/28 07:00:05 [31;1m/opt/go_cmdb/internal/release/executor.go:38 [35;1mError 1146 (42S02): Table 'cdn_control.release_tasks' doesn't exist
+[0m[33m[0.803ms] [34;1m[rows:0][0m SELECT * FROM `release_tasks` WHERE status IN ('pending','running') ORDER BY id ASC
+2026/01/28 07:00:05 [Executor] Failed to query tasks: Error 1146 (42S02): Table 'cdn_control.release_tasks' doesn't exist
+2026/01/28 07:00:05 [Executor] Run failed: Error 1146 (42S02): Table 'cdn_control.release_tasks' doesn't exist
+[GIN] 2026/01/28 - 07:00:10 | 200 |  266.663865ms |   14.101.128.57 | POST     "/api/v1/auth/login"
+2026/01/28 07:00:10 [Executor] Running once...
+2026/01/28 07:00:10 [DNS Worker] Tick: processing DNS records...
+
+2026/01/28 07:00:10 [31;1m/opt/go_cmdb/internal/release/executor.go:38 [35;1mError 1146 (42S02): Table 'cdn_control.release_tasks' doesn't exist
+[0m[33m[0.713ms] [34;1m[rows:0][0m SELECT * FROM `release_tasks` WHERE status IN ('pending','running') ORDER BY id ASC
+2026/01/28 07:00:10 [Executor] Failed to query tasks: Error 1146 (42S02): Table 'cdn_control.release_tasks' doesn't exist
+2026/01/28 07:00:10 [Executor] Run failed: Error 1146 (42S02): Table 'cdn_control.release_tasks' doesn't exist
+2026/01/28 07:00:10 [DNS Service] GetDeletionRecords: found 0 records (limit=10, error=<nil>)
+2026/01/28 07:00:10 [DNS Worker] Tick done: present_candidates=0, absent_candidates=0, claimed_running=0, claim_skipped=0, success=0, error=0, deleted=0
+[GIN] 2026/01/28 - 07:00:11 | 200 |    8.367299ms |   14.101.128.57 | POST     "/api/v1/nodes/update"
+2026/01/28 07:00:15 [Executor] Running once...
+
+2026/01/28 07:00:15 [31;1m/opt/go_cmdb/internal/release/executor.go:38 [35;1mError 1146 (42S02): Table 'cdn_control.release_tasks' doesn't exist
+[0m[33m[0.682ms] [34;1m[rows:0][0m SELECT * FROM `release_tasks` WHERE status IN ('pending','running') ORDER BY id ASC
+2026/01/28 07:00:15 [Executor] Failed to query tasks: Error 1146 (42S02): Table 'cdn_control.release_tasks' doesn't exist
+2026/01/28 07:00:15 [Executor] Run failed: Error 1146 (42S02): Table 'cdn_control.release_tasks' doesn't exist
+[GIN] 2026/01/28 - 07:00:19 | 200 |  266.321373ms |   14.101.128.57 | POST     "/api/v1/auth/login"
+
+2026/01/28 07:00:20 [31;1m/opt/go_cmdb/api/v1/nodes/handler.go:454 [35;1mrecord not found
+[0m[33m[0.530ms] [34;1m[rows:0][0m SELECT * FROM `agent_identities` WHERE node_id = 9 AND status = 'active' ORDER BY `agent_identities`.`id` LIMIT 1
+[GIN] 2026/01/28 - 07:00:20 | 200 |    2.307143ms |   14.101.128.57 | GET      "/api/v1/nodes/9"
+2026/01/28 07:00:20 [Executor] Running once...
+
+2026/01/28 07:00:20 [31;1m/opt/go_cmdb/internal/release/executor.go:38 [35;1mError 1146 (42S02): Table 'cdn_control.release_tasks' doesn't exist
+[0m[33m[0.719ms] [34;1m[rows:0][0m SELECT * FROM `release_tasks` WHERE status IN ('pending','running') ORDER BY id ASC
+2026/01/28 07:00:20 [Executor] Failed to query tasks: Error 1146 (42S02): Table 'cdn_control.release_tasks' doesn't exist
+2026/01/28 07:00:20 [Executor] Run failed: Error 1146 (42S02): Table 'cdn_control.release_tasks' doesn't exist
+2026/01/28 07:00:22 [WebSocket] Handshake rejected: No token from 13.228.178.233:60965
+[GIN] 2026/01/28 - 07:00:22 | 401 |      47.589µs |  13.228.178.233 | GET      "/socket.io/?EIO=4&transport=websocket"
+[GIN] 2026/01/28 - 07:00:22 | 200 |     1.45109ms |  13.228.178.233 | GET      "/api/v1/nodes?page=1&pageSize=15"
+2026/01/28 07:00:24 [WebSocket] Handshake rejected: No token from 13.228.178.233:60980
+[GIN] 2026/01/28 - 07:00:24 | 401 |      60.404µs |  13.228.178.233 | GET      "/socket.io/?EIO=4&transport=websocket"
+2026/01/28 07:00:25 [Executor] Running once...
+
+2026/01/28 07:00:25 [31;1m/opt/go_cmdb/internal/release/executor.go:38 [35;1mError 1146 (42S02): Table 'cdn_control.release_tasks' doesn't exist
+[0m[33m[0.676ms] [34;1m[rows:0][0m SELECT * FROM `release_tasks` WHERE status IN ('pending','running') ORDER BY id ASC
+2026/01/28 07:00:25 [Executor] Failed to query tasks: Error 1146 (42S02): Table 'cdn_control.release_tasks' doesn't exist
+2026/01/28 07:00:25 [Executor] Run failed: Error 1146 (42S02): Table 'cdn_control.release_tasks' doesn't exist
+[GIN] 2026/01/28 - 07:00:28 | 200 |  266.067322ms |   14.101.128.57 | POST     "/api/v1/auth/login"
+
+2026/01/28 07:00:29 [31;1m/opt/go_cmdb/api/v1/nodes/handler.go:504 [35;1mError 1451 (23000): Cannot delete or update a parent row: a foreign key constraint fails (`cdn_control`.`node_sub_ips`, CONSTRAINT `fk_node_sub_ips_node` FOREIGN KEY (`node_id`) REFERENCES `nodes` (`id`))
+[0m[33m[8.807ms] [34;1m[rows:0][0m DELETE FROM `nodes` WHERE `nodes`.`id` = 9
+2026/01/28 07:00:29 [ERROR] failed to delete nodes (code=5002, internal_err=Error 1451 (23000): Cannot delete or update a parent row: a foreign key constraint fails (`cdn_control`.`node_sub_ips`, CONSTRAINT `fk_node_sub_ips_node` FOREIGN KEY (`node_id`) REFERENCES `nodes` (`id`)))
+[GIN] 2026/01/28 - 07:00:29 | 500 |    9.036156ms |   14.101.128.57 | POST     "/api/v1/nodes/delete"
+2026/01/28 07:00:30 [WebSocket] Handshake rejected: No token from 13.228.178.233:61010
+[GIN] 2026/01/28 - 07:00:30 | 401 |      51.608µs |  13.228.178.233 | GET      "/socket.io/?EIO=4&transport=websocket"
+
+2026/01/28 07:00:30 [31;1m/opt/go_cmdb/internal/nodes/identity_service.go:97 [35;1mrecord not found
+[0m[33m[0.467ms] [34;1m[rows:0][0m SELECT * FROM `agent_identities` WHERE node_id = 10 ORDER BY `agent_identities`.`id` LIMIT 1
+[GIN] 2026/01/28 - 07:00:30 | 200 |   57.503847ms |   14.101.128.57 | POST     "/api/v1/nodes/create"
+2026/01/28 07:00:30 [Executor] Running once...
+
+2026/01/28 07:00:30 [31;1m/opt/go_cmdb/internal/release/executor.go:38 [35;1mError 1146 (42S02): Table 'cdn_control.release_tasks' doesn't exist
+[0m[33m[0.670ms] [34;1m[rows:0][0m SELECT * FROM `release_tasks` WHERE status IN ('pending','running') ORDER BY id ASC
+2026/01/28 07:00:30 [Executor] Failed to query tasks: Error 1146 (42S02): Table 'cdn_control.release_tasks' doesn't exist
+2026/01/28 07:00:30 [Executor] Run failed: Error 1146 (42S02): Table 'cdn_control.release_tasks' doesn't exist
+2026/01/28 07:00:35 [WebSocket] Handshake rejected: No token from 13.228.178.233:61041
+[GIN] 2026/01/28 - 07:00:35 | 401 |      68.169µs |  13.228.178.233 | GET      "/socket.io/?EIO=4&transport=websocket"
+2026/01/28 07:00:35 [Executor] Running once...
+
+2026/01/28 07:00:35 [31;1m/opt/go_cmdb/internal/release/executor.go:38 [35;1mError 1146 (42S02): Table 'cdn_control.release_tasks' doesn't exist
+[0m[33m[0.739ms] [34;1m[rows:0][0m SELECT * FROM `release_tasks` WHERE status IN ('pending','running') ORDER BY id ASC
+2026/01/28 07:00:35 [Executor] Failed to query tasks: Error 1146 (42S02): Table 'cdn_control.release_tasks' doesn't exist
+2026/01/28 07:00:35 [Executor] Run failed: Error 1146 (42S02): Table 'cdn_control.release_tasks' doesn't exist
+[GIN] 2026/01/28 - 07:00:38 | 200 |  266.824154ms |   14.101.128.57 | POST     "/api/v1/auth/login"
+[GIN] 2026/01/28 - 07:00:39 | 200 |    1.136765ms |   14.101.128.57 | POST     "/api/v1/agents/bootstrap/token/create"
+2026/01/28 07:00:40 [WebSocket] Handshake rejected: No token from 13.228.178.233:61071
+[GIN] 2026/01/28 - 07:00:40 | 401 |      60.885µs |  13.228.178.233 | GET      "/socket.io/?EIO=4&transport=websocket"
+2026/01/28 07:00:40 [RiskScanner] Running scheduled scan...
+2026/01/28 07:00:40 [RiskScanner] Starting scan...
+2026/01/28 07:00:40 [Executor] Running once...
+2026/01/28 07:00:40 [DNS Worker] Tick: processing DNS records...
+
+2026/01/28 07:00:40 [31;1m/opt/go_cmdb/internal/release/executor.go:38 [35;1mError 1146 (42S02): Table 'cdn_control.release_tasks' doesn't exist
+[0m[33m[0.631ms] [34;1m[rows:0][0m SELECT * FROM `release_tasks` WHERE status IN ('pending','running') ORDER BY id ASC
+2026/01/28 07:00:40 [Executor] Failed to query tasks: Error 1146 (42S02): Table 'cdn_control.release_tasks' doesn't exist
+2026/01/28 07:00:40 [Executor] Run failed: Error 1146 (42S02): Table 'cdn_control.release_tasks' doesn't exist
+2026/01/28 07:00:40 [RiskScanner] Scan completed: 0 risks detected, 0 new, 0 updated
+2026/01/28 07:00:40 [DNS Service] GetDeletionRecords: found 0 records (limit=10, error=<nil>)
+2026/01/28 07:00:40 [DNS Worker] Tick done: present_candidates=0, absent_candidates=0, claimed_running=0, claim_skipped=0, success=0, error=0, deleted=0
+2026/01/28 07:00:45 [Executor] Running once...
+
+2026/01/28 07:00:45 [31;1m/opt/go_cmdb/internal/release/executor.go:38 [35;1mError 1146 (42S02): Table 'cdn_control.release_tasks' doesn't exist
+[0m[33m[0.775ms] [34;1m[rows:0][0m SELECT * FROM `release_tasks` WHERE status IN ('pending','running') ORDER BY id ASC
+2026/01/28 07:00:45 [Executor] Failed to query tasks: Error 1146 (42S02): Table 'cdn_control.release_tasks' doesn't exist
+2026/01/28 07:00:45 [Executor] Run failed: Error 1146 (42S02): Table 'cdn_control.release_tasks' doesn't exist
+[GIN] 2026/01/28 - 07:00:49 | 200 |    1.510936ms |    20.2.140.226 | GET      "/bootstrap/agent/install.sh?token=edf0c911a4424ff72b2de3e05b2376d3d3c77580526ce83d4bf40b27ebb2e94d"
+2026/01/28 07:00:50 [Executor] Running once...
+
+2026/01/28 07:00:50 [31;1m/opt/go_cmdb/internal/release/executor.go:38 [35;1mError 1146 (42S02): Table 'cdn_control.release_tasks' doesn't exist
+[0m[33m[0.719ms] [34;1m[rows:0][0m SELECT * FROM `release_tasks` WHERE status IN ('pending','running') ORDER BY id ASC
+2026/01/28 07:00:50 [Executor] Failed to query tasks: Error 1146 (42S02): Table 'cdn_control.release_tasks' doesn't exist
+2026/01/28 07:00:50 [Executor] Run failed: Error 1146 (42S02): Table 'cdn_control.release_tasks' doesn't exist
+2026/01/28 07:00:55 [Executor] Running once...
+
+2026/01/28 07:00:55 [31;1m/opt/go_cmdb/internal/release/executor.go:38 [35;1mError 1146 (42S02): Table 'cdn_control.release_tasks' doesn't exist
+[0m[33m[0.709ms] [34;1m[rows:0][0m SELECT * FROM `release_tasks` WHERE status IN ('pending','running') ORDER BY id ASC
+2026/01/28 07:00:55 [Executor] Failed to query tasks: Error 1146 (42S02): Table 'cdn_control.release_tasks' doesn't exist
+2026/01/28 07:00:55 [Executor] Run failed: Error 1146 (42S02): Table 'cdn_control.release_tasks' doesn't exist
+2026/01/28 07:01:00 [Executor] Running once...
+
+2026/01/28 07:01:00 [31;1m/opt/go_cmdb/internal/release/executor.go:38 [35;1mError 1146 (42S02): Table 'cdn_control.release_tasks' doesn't exist
+[0m[33m[2.304ms] [34;1m[rows:0][0m SELECT * FROM `release_tasks` WHERE status IN ('pending','running') ORDER BY id ASC
+2026/01/28 07:01:00 [Executor] Failed to query tasks: Error 1146 (42S02): Table 'cdn_control.release_tasks' doesn't exist
+2026/01/28 07:01:00 [Executor] Run failed: Error 1146 (42S02): Table 'cdn_control.release_tasks' doesn't exist
+[GIN] 2026/01/28 - 07:01:03 | 200 |    1.039823ms |    20.2.140.226 | GET      "/bootstrap/agent/pki/ca.crt?token=edf0c911a4424ff72b2de3e05b2376d3d3c77580526ce83d4bf40b27ebb2e94d"
+[GIN] 2026/01/28 - 07:01:03 | 200 |     650.779µs |    20.2.140.226 | GET      "/bootstrap/agent/pki/client.crt?token=edf0c911a4424ff72b2de3e05b2376d3d3c77580526ce83d4bf40b27ebb2e94d"
+[GIN] 2026/01/28 - 07:01:03 | 200 |     663.603µs |    20.2.140.226 | GET      "/bootstrap/agent/pki/client.key?token=edf0c911a4424ff72b2de3e05b2376d3d3c77580526ce83d4bf40b27ebb2e94d"
+2026/01/28 07:01:05 [Executor] Running once...
+
+2026/01/28 07:01:05 [31;1m/opt/go_cmdb/internal/release/executor.go:38 [35;1mError 1146 (42S02): Table 'cdn_control.release_tasks' doesn't exist
+[0m[33m[0.671ms] [34;1m[rows:0][0m SELECT * FROM `release_tasks` WHERE status IN ('pending','running') ORDER BY id ASC
+2026/01/28 07:01:05 [Executor] Failed to query tasks: Error 1146 (42S02): Table 'cdn_control.release_tasks' doesn't exist
+2026/01/28 07:01:05 [Executor] Run failed: Error 1146 (42S02): Table 'cdn_control.release_tasks' doesn't exist
+2026/01/28 07:01:10 [Executor] Running once...
+2026/01/28 07:01:10 [DNS Worker] Tick: processing DNS records...
+
+2026/01/28 07:01:10 [31;1m/opt/go_cmdb/internal/release/executor.go:38 [35;1mError 1146 (42S02): Table 'cdn_control.release_tasks' doesn't exist
+[0m[33m[0.655ms] [34;1m[rows:0][0m SELECT * FROM `release_tasks` WHERE status IN ('pending','running') ORDER BY id ASC
+2026/01/28 07:01:10 [Executor] Failed to query tasks: Error 1146 (42S02): Table 'cdn_control.release_tasks' doesn't exist
+2026/01/28 07:01:10 [Executor] Run failed: Error 1146 (42S02): Table 'cdn_control.release_tasks' doesn't exist
+2026/01/28 07:01:10 [DNS Service] GetDeletionRecords: found 0 records (limit=10, error=<nil>)
+2026/01/28 07:01:10 [DNS Worker] Tick done: present_candidates=0, absent_candidates=0, claimed_running=0, claim_skipped=0, success=0, error=0, deleted=0
+2026/01/28 07:01:15 [Executor] Running once...
+
+2026/01/28 07:01:15 [31;1m/opt/go_cmdb/internal/release/executor.go:38 [35;1mError 1146 (42S02): Table 'cdn_control.release_tasks' doesn't exist
+[0m[33m[0.661ms] [34;1m[rows:0][0m SELECT * FROM `release_tasks` WHERE status IN ('pending','running') ORDER BY id ASC
+2026/01/28 07:01:15 [Executor] Failed to query tasks: Error 1146 (42S02): Table 'cdn_control.release_tasks' doesn't exist
+2026/01/28 07:01:15 [Executor] Run failed: Error 1146 (42S02): Table 'cdn_control.release_tasks' doesn't exist
+[GIN] 2026/01/28 - 07:01:17 | 200 |  266.097341ms |   14.101.128.57 | POST     "/api/v1/auth/login"
+[GIN] 2026/01/28 - 07:01:18 | 200 |   10.733429ms |   14.101.128.57 | POST     "/api/v1/nodes/health/check"
+2026/01/28 07:01:20 [Executor] Running once...
+
+2026/01/28 07:01:20 [31;1m/opt/go_cmdb/internal/release/executor.go:38 [35;1mError 1146 (42S02): Table 'cdn_control.release_tasks' doesn't exist
+[0m[33m[0.626ms] [34;1m[rows:0][0m SELECT * FROM `release_tasks` WHERE status IN ('pending','running') ORDER BY id ASC
+2026/01/28 07:01:20 [Executor] Failed to query tasks: Error 1146 (42S02): Table 'cdn_control.release_tasks' doesn't exist
+2026/01/28 07:01:20 [Executor] Run failed: Error 1146 (42S02): Table 'cdn_control.release_tasks' doesn't exist
+2026/01/28 07:01:25 [Executor] Running once...
+
+2026/01/28 07:01:25 [31;1m/opt/go_cmdb/internal/release/executor.go:38 [35;1mError 1146 (42S02): Table 'cdn_control.release_tasks' doesn't exist
+[0m[33m[0.696ms] [34;1m[rows:0][0m SELECT * FROM `release_tasks` WHERE status IN ('pending','running') ORDER BY id ASC
+2026/01/28 07:01:25 [Executor] Failed to query tasks: Error 1146 (42S02): Table 'cdn_control.release_tasks' doesn't exist
+2026/01/28 07:01:25 [Executor] Run failed: Error 1146 (42S02): Table 'cdn_control.release_tasks' doesn't exist
+2026/01/28 07:01:30 [Executor] Running once...
+
+2026/01/28 07:01:30 [31;1m/opt/go_cmdb/internal/release/executor.go:38 [35;1mError 1146 (42S02): Table 'cdn_control.release_tasks' doesn't exist
+[0m[33m[0.671ms] [34;1m[rows:0][0m SELECT * FROM `release_tasks` WHERE status IN ('pending','running') ORDER BY id ASC
+2026/01/28 07:01:30 [Executor] Failed to query tasks: Error 1146 (42S02): Table 'cdn_control.release_tasks' doesn't exist
+2026/01/28 07:01:30 [Executor] Run failed: Error 1146 (42S02): Table 'cdn_control.release_tasks' doesn't exist
+2026/01/28 07:01:35 [Executor] Running once...
+
+2026/01/28 07:01:35 [31;1m/opt/go_cmdb/internal/release/executor.go:38 [35;1mError 1146 (42S02): Table 'cdn_control.release_tasks' doesn't exist
+[0m[33m[0.676ms] [34;1m[rows:0][0m SELECT * FROM `release_tasks` WHERE status IN ('pending','running') ORDER BY id ASC
+2026/01/28 07:01:35 [Executor] Failed to query tasks: Error 1146 (42S02): Table 'cdn_control.release_tasks' doesn't exist
+2026/01/28 07:01:35 [Executor] Run failed: Error 1146 (42S02): Table 'cdn_control.release_tasks' doesn't exist
+2026/01/28 07:01:40 [Executor] Running once...
+2026/01/28 07:01:40 [DNS Worker] Tick: processing DNS records...
+
+2026/01/28 07:01:40 [31;1m/opt/go_cmdb/internal/release/executor.go:38 [35;1mError 1146 (42S02): Table 'cdn_control.release_tasks' doesn't exist
+[0m[33m[2.358ms] [34;1m[rows:0][0m SELECT * FROM `release_tasks` WHERE status IN ('pending','running') ORDER BY id ASC
+2026/01/28 07:01:40 [Executor] Failed to query tasks: Error 1146 (42S02): Table 'cdn_control.release_tasks' doesn't exist
+2026/01/28 07:01:40 [Executor] Run failed: Error 1146 (42S02): Table 'cdn_control.release_tasks' doesn't exist
+2026/01/28 07:01:40 [DNS Service] GetDeletionRecords: found 0 records (limit=10, error=<nil>)
+2026/01/28 07:01:40 [DNS Worker] Tick done: present_candidates=0, absent_candidates=0, claimed_running=0, claim_skipped=0, success=0, error=0, deleted=0
+2026/01/28 07:01:45 [Executor] Running once...
+
+2026/01/28 07:01:45 [31;1m/opt/go_cmdb/internal/release/executor.go:38 [35;1mError 1146 (42S02): Table 'cdn_control.release_tasks' doesn't exist
+[0m[33m[0.644ms] [34;1m[rows:0][0m SELECT * FROM `release_tasks` WHERE status IN ('pending','running') ORDER BY id ASC
+2026/01/28 07:01:45 [Executor] Failed to query tasks: Error 1146 (42S02): Table 'cdn_control.release_tasks' doesn't exist
+2026/01/28 07:01:45 [Executor] Run failed: Error 1146 (42S02): Table 'cdn_control.release_tasks' doesn't exist
+2026/01/28 07:01:50 [Executor] Running once...
+
+2026/01/28 07:01:50 [31;1m/opt/go_cmdb/internal/release/executor.go:38 [35;1mError 1146 (42S02): Table 'cdn_control.release_tasks' doesn't exist
+[0m[33m[0.660ms] [34;1m[rows:0][0m SELECT * FROM `release_tasks` WHERE status IN ('pending','running') ORDER BY id ASC
+2026/01/28 07:01:50 [Executor] Failed to query tasks: Error 1146 (42S02): Table 'cdn_control.release_tasks' doesn't exist
+2026/01/28 07:01:50 [Executor] Run failed: Error 1146 (42S02): Table 'cdn_control.release_tasks' doesn't exist
+2026/01/28 07:01:55 [Executor] Running once...
+
+2026/01/28 07:01:55 [31;1m/opt/go_cmdb/internal/release/executor.go:38 [35;1mError 1146 (42S02): Table 'cdn_control.release_tasks' doesn't exist
+[0m[33m[0.621ms] [34;1m[rows:0][0m SELECT * FROM `release_tasks` WHERE status IN ('pending','running') ORDER BY id ASC
+2026/01/28 07:01:55 [Executor] Failed to query tasks: Error 1146 (42S02): Table 'cdn_control.release_tasks' doesn't exist
+2026/01/28 07:01:55 [Executor] Run failed: Error 1146 (42S02): Table 'cdn_control.release_tasks' doesn't exist
+2026/01/28 07:02:00 [Executor] Running once...
+
+2026/01/28 07:02:00 [31;1m/opt/go_cmdb/internal/release/executor.go:38 [35;1mError 1146 (42S02): Table 'cdn_control.release_tasks' doesn't exist
+[0m[33m[0.658ms] [34;1m[rows:0][0m SELECT * FROM `release_tasks` WHERE status IN ('pending','running') ORDER BY id ASC
+2026/01/28 07:02:00 [Executor] Failed to query tasks: Error 1146 (42S02): Table 'cdn_control.release_tasks' doesn't exist
+2026/01/28 07:02:00 [Executor] Run failed: Error 1146 (42S02): Table 'cdn_control.release_tasks' doesn't exist
+2026/01/28 07:02:05 [Executor] Running once...
+
+2026/01/28 07:02:05 [31;1m/opt/go_cmdb/internal/release/executor.go:38 [35;1mError 1146 (42S02): Table 'cdn_control.release_tasks' doesn't exist
+[0m[33m[0.672ms] [34;1m[rows:0][0m SELECT * FROM `release_tasks` WHERE status IN ('pending','running') ORDER BY id ASC
+2026/01/28 07:02:05 [Executor] Failed to query tasks: Error 1146 (42S02): Table 'cdn_control.release_tasks' doesn't exist
+2026/01/28 07:02:05 [Executor] Run failed: Error 1146 (42S02): Table 'cdn_control.release_tasks' doesn't exist
+2026/01/28 07:02:10 [Executor] Running once...
+2026/01/28 07:02:10 [DNS Worker] Tick: processing DNS records...
+
+2026/01/28 07:02:10 [31;1m/opt/go_cmdb/internal/release/executor.go:38 [35;1mError 1146 (42S02): Table 'cdn_control.release_tasks' doesn't exist
+[0m[33m[0.746ms] [34;1m[rows:0][0m SELECT * FROM `release_tasks` WHERE status IN ('pending','running') ORDER BY id ASC
+2026/01/28 07:02:10 [Executor] Failed to query tasks: Error 1146 (42S02): Table 'cdn_control.release_tasks' doesn't exist
+2026/01/28 07:02:10 [Executor] Run failed: Error 1146 (42S02): Table 'cdn_control.release_tasks' doesn't exist
+2026/01/28 07:02:10 [DNS Service] GetDeletionRecords: found 0 records (limit=10, error=<nil>)
+2026/01/28 07:02:10 [DNS Worker] Tick done: present_candidates=0, absent_candidates=0, claimed_running=0, claim_skipped=0, success=0, error=0, deleted=0
+2026/01/28 07:02:15 [Executor] Running once...
+
+2026/01/28 07:02:15 [31;1m/opt/go_cmdb/internal/release/executor.go:38 [35;1mError 1146 (42S02): Table 'cdn_control.release_tasks' doesn't exist
+[0m[33m[0.667ms] [34;1m[rows:0][0m SELECT * FROM `release_tasks` WHERE status IN ('pending','running') ORDER BY id ASC
+2026/01/28 07:02:15 [Executor] Failed to query tasks: Error 1146 (42S02): Table 'cdn_control.release_tasks' doesn't exist
+2026/01/28 07:02:15 [Executor] Run failed: Error 1146 (42S02): Table 'cdn_control.release_tasks' doesn't exist
+2026/01/28 07:02:20 [Executor] Running once...
+
+2026/01/28 07:02:20 [31;1m/opt/go_cmdb/internal/release/executor.go:38 [35;1mError 1146 (42S02): Table 'cdn_control.release_tasks' doesn't exist
+[0m[33m[0.650ms] [34;1m[rows:0][0m SELECT * FROM `release_tasks` WHERE status IN ('pending','running') ORDER BY id ASC
+2026/01/28 07:02:20 [Executor] Failed to query tasks: Error 1146 (42S02): Table 'cdn_control.release_tasks' doesn't exist
+2026/01/28 07:02:20 [Executor] Run failed: Error 1146 (42S02): Table 'cdn_control.release_tasks' doesn't exist
+2026/01/28 07:02:25 [Executor] Running once...
+
+2026/01/28 07:02:25 [31;1m/opt/go_cmdb/internal/release/executor.go:38 [35;1mError 1146 (42S02): Table 'cdn_control.release_tasks' doesn't exist
+[0m[33m[0.679ms] [34;1m[rows:0][0m SELECT * FROM `release_tasks` WHERE status IN ('pending','running') ORDER BY id ASC
+2026/01/28 07:02:25 [Executor] Failed to query tasks: Error 1146 (42S02): Table 'cdn_control.release_tasks' doesn't exist
+2026/01/28 07:02:25 [Executor] Run failed: Error 1146 (42S02): Table 'cdn_control.release_tasks' doesn't exist
+2026/01/28 07:02:30 [Executor] Running once...
+
+2026/01/28 07:02:30 [31;1m/opt/go_cmdb/internal/release/executor.go:38 [35;1mError 1146 (42S02): Table 'cdn_control.release_tasks' doesn't exist
+[0m[33m[0.698ms] [34;1m[rows:0][0m SELECT * FROM `release_tasks` WHERE status IN ('pending','running') ORDER BY id ASC
+2026/01/28 07:02:30 [Executor] Failed to query tasks: Error 1146 (42S02): Table 'cdn_control.release_tasks' doesn't exist
+2026/01/28 07:02:30 [Executor] Run failed: Error 1146 (42S02): Table 'cdn_control.release_tasks' doesn't exist
+2026/01/28 07:02:35 [Executor] Running once...
+
+2026/01/28 07:02:35 [31;1m/opt/go_cmdb/internal/release/executor.go:38 [35;1mError 1146 (42S02): Table 'cdn_control.release_tasks' doesn't exist
+[0m[33m[0.636ms] [34;1m[rows:0][0m SELECT * FROM `release_tasks` WHERE status IN ('pending','running') ORDER BY id ASC
+2026/01/28 07:02:35 [Executor] Failed to query tasks: Error 1146 (42S02): Table 'cdn_control.release_tasks' doesn't exist
+2026/01/28 07:02:35 [Executor] Run failed: Error 1146 (42S02): Table 'cdn_control.release_tasks' doesn't exist
+2026/01/28 07:02:40 [DNS Worker] Tick: processing DNS records...
+2026/01/28 07:02:40 [Executor] Running once...
+
+2026/01/28 07:02:40 [31;1m/opt/go_cmdb/internal/release/executor.go:38 [35;1mError 1146 (42S02): Table 'cdn_control.release_tasks' doesn't exist
+[0m[33m[0.789ms] [34;1m[rows:0][0m SELECT * FROM `release_tasks` WHERE status IN ('pending','running') ORDER BY id ASC
+2026/01/28 07:02:40 [Executor] Failed to query tasks: Error 1146 (42S02): Table 'cdn_control.release_tasks' doesn't exist
+2026/01/28 07:02:40 [Executor] Run failed: Error 1146 (42S02): Table 'cdn_control.release_tasks' doesn't exist
+2026/01/28 07:02:40 [DNS Service] GetDeletionRecords: found 0 records (limit=10, error=<nil>)
+2026/01/28 07:02:40 [DNS Worker] Tick done: present_candidates=0, absent_candidates=0, claimed_running=0, claim_skipped=0, success=0, error=0, deleted=0
+2026/01/28 07:02:45 [Executor] Running once...
+
+2026/01/28 07:02:45 [31;1m/opt/go_cmdb/internal/release/executor.go:38 [35;1mError 1146 (42S02): Table 'cdn_control.release_tasks' doesn't exist
+[0m[33m[0.593ms] [34;1m[rows:0][0m SELECT * FROM `release_tasks` WHERE status IN ('pending','running') ORDER BY id ASC
+2026/01/28 07:02:45 [Executor] Failed to query tasks: Error 1146 (42S02): Table 'cdn_control.release_tasks' doesn't exist
+2026/01/28 07:02:45 [Executor] Run failed: Error 1146 (42S02): Table 'cdn_control.release_tasks' doesn't exist
+2026/01/28 07:02:50 [Executor] Running once...
+
+2026/01/28 07:02:50 [31;1m/opt/go_cmdb/internal/release/executor.go:38 [35;1mError 1146 (42S02): Table 'cdn_control.release_tasks' doesn't exist
+[0m[33m[0.555ms] [34;1m[rows:0][0m SELECT * FROM `release_tasks` WHERE status IN ('pending','running') ORDER BY id ASC
+2026/01/28 07:02:50 [Executor] Failed to query tasks: Error 1146 (42S02): Table 'cdn_control.release_tasks' doesn't exist
+2026/01/28 07:02:50 [Executor] Run failed: Error 1146 (42S02): Table 'cdn_control.release_tasks' doesn't exist

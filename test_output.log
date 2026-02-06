@@ -1,0 +1,92 @@
+# go_cmdb
+found packages websites (create.go) and origin_sets (handler.go) in /opt/go_cmdb
+FAIL	go_cmdb [setup failed]
+# go_cmdb/internal/handler
+internal/handler/agent_task_handler.go:1:134: expected 'package', found 'EOF'
+FAIL	go_cmdb/internal/handler [setup failed]
+# go_cmdb/internal/routes
+internal/handler/agent_task_handler.go:1:134: expected 'package', found 'EOF'
+FAIL	go_cmdb/internal/routes [setup failed]
+?   	go_cmdb/agent/api/v1	[no test files]
+?   	go_cmdb/agent/config	[no test files]
+?   	go_cmdb/agent/executor	[no test files]
+?   	go_cmdb/agent/render	[no test files]
+?   	go_cmdb/api/bootstrap	[no test files]
+?   	go_cmdb/api/v1	[no test files]
+?   	go_cmdb/api/v1/acme	[no test files]
+?   	go_cmdb/api/v1/agent_exec	[no test files]
+?   	go_cmdb/api/v1/agent_identities	[no test files]
+?   	go_cmdb/api/v1/agent_tasks	[no test files]
+?   	go_cmdb/api/v1/agents	[no test files]
+?   	go_cmdb/api/v1/api_keys	[no test files]
+?   	go_cmdb/api/v1/auth	[no test files]
+?   	go_cmdb/api/v1/cache_rules	[no test files]
+?   	go_cmdb/api/v1/cert	[no test files]
+?   	go_cmdb/api/v1/certificate_renew	[no test files]
+?   	go_cmdb/api/v1/config	[no test files]
+?   	go_cmdb/api/v1/dns	[no test files]
+?   	go_cmdb/api/v1/domains	[no test files]
+?   	go_cmdb/api/v1/line_groups	[no test files]
+?   	go_cmdb/api/v1/middleware	[no test files]
+?   	go_cmdb/api/v1/node_groups	[no test files]
+?   	go_cmdb/api/v1/node_ips	[no test files]
+?   	go_cmdb/api/v1/nodes	[no test files]
+?   	go_cmdb/api/v1/origin_groups	[no test files]
+?   	go_cmdb/api/v1/origin_sets	[no test files]
+?   	go_cmdb/api/v1/origins	[no test files]
+?   	go_cmdb/api/v1/release_tasks	[no test files]
+?   	go_cmdb/api/v1/releases	[no test files]
+?   	go_cmdb/api/v1/risks	[no test files]
+?   	go_cmdb/api/v1/website_release_tasks	[no test files]
+?   	go_cmdb/api/v1/websites	[no test files]
+?   	go_cmdb/cmd/agent	[no test files]
+?   	go_cmdb/cmd/cmdb	[no test files]
+?   	go_cmdb/internal/acme	[no test files]
+?   	go_cmdb/internal/agent	[no test files]
+?   	go_cmdb/internal/agentclient	[no test files]
+?   	go_cmdb/internal/api	[no test files]
+?   	go_cmdb/internal/api_keys	[no test files]
+ok  	go_cmdb/internal/auth	(cached)
+?   	go_cmdb/internal/bootstrap	[no test files]
+?   	go_cmdb/internal/cache	[no test files]
+ok  	go_cmdb/internal/cert	(cached)
+--- FAIL: TestLoad (0.00s)
+    config_test.go:15: Load() failed: JWT_SECRET is required
+--- FAIL: TestLoad_CustomValues (0.00s)
+    config_test.go:54: Load() failed: JWT_SECRET is required
+FAIL
+FAIL	go_cmdb/internal/config	0.002s
+?   	go_cmdb/internal/configgen	[no test files]
+?   	go_cmdb/internal/configver	[no test files]
+?   	go_cmdb/internal/db	[no test files]
+ok  	go_cmdb/internal/dns	(cached)
+?   	go_cmdb/internal/dns/providers/cloudflare	[no test files]
+?   	go_cmdb/internal/dnstypes	[no test files]
+?   	go_cmdb/internal/domain	[no test files]
+?   	go_cmdb/internal/dto	[no test files]
+ok  	go_cmdb/internal/httpx	(cached)
+ok  	go_cmdb/internal/linegroup	(cached)
+?   	go_cmdb/internal/model	[no test files]
+?   	go_cmdb/internal/nodehealth	[no test files]
+?   	go_cmdb/internal/nodeip	[no test files]
+?   	go_cmdb/internal/nodes	[no test files]
+?   	go_cmdb/internal/pki	[no test files]
+?   	go_cmdb/internal/release	[no test files]
+?   	go_cmdb/internal/renderer	[no test files]
+?   	go_cmdb/internal/risk	[no test files]
+?   	go_cmdb/internal/service	[no test files]
+?   	go_cmdb/internal/upstream	[no test files]
+?   	go_cmdb/internal/util	[no test files]
+?   	go_cmdb/internal/utils	[no test files]
+?   	go_cmdb/internal/ws	[no test files]
+?   	go_cmdb/models	[no test files]
+# go_cmdb/renderer
+renderer/website_config.go:83:24: undefined: model.OriginSetAddress
+renderer/website_config.go:133:26: website.RedirectURL.Valid undefined (type string has no field or method Valid)
+renderer/website_config.go:135:34: website.RedirectStatusCode.Valid undefined (type int has no field or method Valid)
+renderer/website_config.go:136:49: website.RedirectStatusCode.Int32 undefined (type int has no field or method Int32)
+renderer/website_config.go:138:90: website.RedirectURL.String undefined (type string has no field or method String)
+FAIL	go_cmdb/renderer [build failed]
+?   	go_cmdb/service	[no test files]
+?   	go_cmdb/website_release_tasks	[no test files]
+FAIL

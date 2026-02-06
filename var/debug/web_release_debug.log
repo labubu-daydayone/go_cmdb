@@ -1,0 +1,119 @@
+2026/02/06 04:14:51 WEB_RELEASE_DEBUG boot pid=568899 binary=/opt/go_cmdb/go_cmdb logTarget=file
+2026/02/06 04:15:27 WEB_RELEASE_DEBUG boot pid=569086 binary=/opt/go_cmdb/go_cmdb logTarget=file
+2026/02/06 04:16:04 WEB_RELEASE_DEBUG traceId=1770322564647982861-3015 step=bind_website_enter websiteId=41 originSetId=12
+2026/02/06 04:16:04 WEB_RELEASE_DEBUG traceId=1770322564647982861-3015 step=create_task_call websiteId=41 originSetId=12
+2026/02/06 04:16:04 WEB_RELEASE_DEBUG traceId=1770322564647982861-3015 step=hash_input_ready bytesLen=277 sha256=9ebb7393dfd3067278995f234e6d348816002eaa9d1260b29504c9161f96552e
+2026/02/06 04:16:04 WEB_RELEASE_DEBUG traceId=1770322564647982861-3015 step=hash_file_written path=/opt/go_cmdb/var/debug/hashpayload_41_12.json ok=1
+2026/02/06 04:16:04 WEB_RELEASE_DEBUG traceId=1770322564647982861-3015 step=create_task_return taskCreated=true taskId=11 skipReason=
+2026/02/06 04:16:04 WEB_RELEASE_DEBUG traceId=1770322564647982861-3015 step=response taskCreated=true taskId=11 skipReason=
+2026/02/06 04:16:34 WEB_RELEASE_DEBUG traceId=1770322594236674026-1963 step=bind_website_enter websiteId=41 originSetId=13
+2026/02/06 04:16:34 WEB_RELEASE_DEBUG traceId=1770322594236674026-1963 step=create_task_call websiteId=41 originSetId=13
+2026/02/06 04:16:34 WEB_RELEASE_DEBUG traceId=1770322594236674026-1963 step=hash_input_ready bytesLen=277 sha256=9ebb7393dfd3067278995f234e6d348816002eaa9d1260b29504c9161f96552e
+2026/02/06 04:16:34 WEB_RELEASE_DEBUG traceId=1770322594236674026-1963 step=hash_file_written path=/opt/go_cmdb/var/debug/hashpayload_41_13.json ok=1
+2026/02/06 04:16:34 WEB_RELEASE_DEBUG traceId=1770322594236674026-1963 step=create_task_return taskCreated=true taskId=11 skipReason=
+2026/02/06 04:16:34 WEB_RELEASE_DEBUG traceId=1770322594236674026-1963 step=response taskCreated=true taskId=11 skipReason=
+2026/02/06 04:32:57 WEB_RELEASE_DEBUG boot pid=570315 binary=/opt/go_cmdb/go_cmdb logTarget=file
+2026/02/06 04:33:21 WEB_RELEASE_DEBUG boot pid=570383 binary=/opt/go_cmdb/go_cmdb logTarget=file
+2026/02/06 04:34:26 WEB_RELEASE_DEBUG traceId=1770323666001320449-8 step=bind_website_enter websiteId=41 originSetId=15
+2026/02/06 04:34:26 WEB_RELEASE_DEBUG traceId=1770323666001320449-8 step=create_task_call websiteId=41 originSetId=15
+2026/02/06 04:34:26 WEB_RELEASE_DEBUG traceId=1770323666001320449-8 step=hash_input_ready bytesLen=277 sha256=9ebb7393dfd3067278995f234e6d348816002eaa9d1260b29504c9161f96552e
+2026/02/06 04:34:26 WEB_RELEASE_DEBUG traceId=1770323666001320449-8 step=hash_file_written path=/opt/go_cmdb/var/debug/hashpayload_41_15.json ok=1
+2026/02/06 04:34:26 WEB_RELEASE_DEBUG traceId=1770323666001320449-8 step=create_task_return taskCreated=true taskId=11 skipReason=
+2026/02/06 04:34:26 WEB_RELEASE_DEBUG traceId=1770323666001320449-8 step=response taskCreated=true taskId=11 skipReason=
+2026/02/06 04:37:48 WEB_RELEASE_DEBUG traceId=1770323868466395646-4775 step=bind_website_enter websiteId=41 originSetId=16
+2026/02/06 04:37:48 WEB_RELEASE_DEBUG traceId=1770323868466395646-4775 step=create_task_call websiteId=41 originSetId=16
+2026/02/06 04:37:48 WEB_RELEASE_DEBUG traceId=1770323868466395646-4775 step=hash_input_ready bytesLen=106 sha256=4654ac1d8d3d620ce2cba763018238d1e8d9d18d62773559ed0b40386409d563
+2026/02/06 04:37:48 WEB_RELEASE_DEBUG traceId=1770323868466395646-4775 step=hash_file_written path=/opt/go_cmdb/var/debug/hashpayload_41_16.json ok=1
+2026/02/06 04:37:48 WEB_RELEASE_DEBUG traceId=1770323868466395646-4775 step=dispatch_failed releaseTaskId=12 error=dispatch failed: failed to check existing task: Error 1054 (42S22): Unknown column 'request_id' in 'where clause'
+2026/02/06 04:37:48 WEB_RELEASE_DEBUG traceId=1770323868466395646-4775 step=create_task_return taskCreated=true taskId=12 skipReason=
+2026/02/06 04:37:48 WEB_RELEASE_DEBUG traceId=1770323868466395646-4775 step=response taskCreated=true taskId=12 skipReason=
+2026/02/06 04:44:57 WEB_RELEASE_DEBUG boot pid=571403 binary=/opt/go_cmdb/go_cmdb logTarget=file
+2026/02/06 04:52:00 WEB_RELEASE_DEBUG boot pid=572630 binary=/opt/go_cmdb/go_cmdb logTarget=file
+2026/02/06 04:52:23 WEB_RELEASE_DEBUG boot pid=572696 binary=/opt/go_cmdb/go_cmdb logTarget=file
+2026/02/06 04:53:43 WEB_RELEASE_DEBUG traceId=1770324823799319311-7399 step=bind_website_enter websiteId=41 originSetId=12
+2026/02/06 04:53:43 WEB_RELEASE_DEBUG traceId=1770324823799319311-7399 step=create_task_call websiteId=41 originSetId=12
+2026/02/06 04:53:43 WEB_RELEASE_DEBUG traceId=1770324823799319311-7399 step=hash_input_ready bytesLen=277 sha256=9ebb7393dfd3067278995f234e6d348816002eaa9d1260b29504c9161f96552e
+2026/02/06 04:53:43 WEB_RELEASE_DEBUG traceId=1770324823799319311-7399 step=reuse_existing_task releaseTaskId=11
+2026/02/06 04:53:43 WEB_RELEASE_DEBUG traceId=1770324823799319311-7399 step=dispatch_failed releaseTaskId=11 error=dispatch failed: failed to create agent_task: Error 1054 (42S22): Unknown column 'attempts' in 'field list'
+2026/02/06 04:53:43 WEB_RELEASE_DEBUG traceId=1770324823799319311-7399 step=create_task_return taskCreated=true taskId=11 skipReason=
+2026/02/06 04:53:43 WEB_RELEASE_DEBUG traceId=1770324823799319311-7399 step=response taskCreated=true taskId=11 skipReason=
+2026/02/06 05:01:34 WEB_RELEASE_DEBUG boot pid=574083 binary=/opt/go_cmdb/go_cmdb logTarget=file
+2026/02/06 05:01:51 WEB_RELEASE_DEBUG boot pid=574149 binary=/opt/go_cmdb/go_cmdb logTarget=file
+2026/02/06 05:02:29 WEB_RELEASE_DEBUG traceId=1770325349684331743-9633 step=bind_website_enter websiteId=41 originSetId=12
+2026/02/06 05:02:29 WEB_RELEASE_DEBUG traceId=1770325349684331743-9633 step=create_task_call websiteId=41 originSetId=12
+2026/02/06 05:02:29 WEB_RELEASE_DEBUG traceId=1770325349684331743-9633 step=hash_input_ready bytesLen=277 sha256=9ebb7393dfd3067278995f234e6d348816002eaa9d1260b29504c9161f96552e
+2026/02/06 05:02:29 WEB_RELEASE_DEBUG traceId=1770325349684331743-9633 step=dispatch_success releaseTaskId=13
+2026/02/06 05:02:29 WEB_RELEASE_DEBUG traceId=1770325349684331743-9633 step=create_task_return taskCreated=true taskId=13 skipReason=
+2026/02/06 05:02:29 WEB_RELEASE_DEBUG traceId=1770325349684331743-9633 step=response taskCreated=true taskId=13 skipReason=
+2026/02/06 05:02:56 WEB_RELEASE_DEBUG traceId=1770325376353304235-502 step=bind_website_enter websiteId=41 originSetId=12
+2026/02/06 05:02:56 WEB_RELEASE_DEBUG traceId=1770325376353304235-502 step=create_task_call websiteId=41 originSetId=12
+2026/02/06 05:02:56 WEB_RELEASE_DEBUG traceId=1770325376353304235-502 step=hash_input_ready bytesLen=277 sha256=9ebb7393dfd3067278995f234e6d348816002eaa9d1260b29504c9161f96552e
+2026/02/06 05:02:56 WEB_RELEASE_DEBUG traceId=1770325376353304235-502 step=reuse_existing_task releaseTaskId=13
+2026/02/06 05:02:56 WEB_RELEASE_DEBUG traceId=1770325376353304235-502 step=dispatch_success releaseTaskId=13
+2026/02/06 05:02:56 WEB_RELEASE_DEBUG traceId=1770325376353304235-502 step=create_task_return taskCreated=true taskId=13 skipReason=
+2026/02/06 05:02:56 WEB_RELEASE_DEBUG traceId=1770325376353304235-502 step=response taskCreated=true taskId=13 skipReason=
+2026/02/06 05:05:44 WEB_RELEASE_DEBUG boot pid=574739 binary=/opt/go_cmdb/go_cmdb logTarget=file
+2026/02/06 05:06:21 WEB_RELEASE_DEBUG traceId=1770325581680903977-5051 step=bind_website_enter websiteId=41 originSetId=12
+2026/02/06 05:06:21 WEB_RELEASE_DEBUG traceId=1770325581680903977-5051 step=create_task_call websiteId=41 originSetId=12
+2026/02/06 05:06:21 WEB_RELEASE_DEBUG traceId=1770325581680903977-5051 step=hash_input_ready bytesLen=277 sha256=9ebb7393dfd3067278995f234e6d348816002eaa9d1260b29504c9161f96552e
+2026/02/06 05:06:21 WEB_RELEASE_DEBUG traceId=1770325581680903977-5051 step=reuse_existing_task releaseTaskId=13
+2026/02/06 05:06:21 WEB_RELEASE_DEBUG traceId=1770325581680903977-5051 step=dispatch_success releaseTaskId=13
+2026/02/06 05:06:21 WEB_RELEASE_DEBUG traceId=1770325581680903977-5051 step=create_task_return taskCreated=true taskId=13 skipReason=
+2026/02/06 05:06:21 WEB_RELEASE_DEBUG traceId=1770325581680903977-5051 step=response taskCreated=true taskId=13 skipReason=
+2026/02/06 05:07:57 WEB_RELEASE_DEBUG boot pid=575045 binary=/opt/go_cmdb/go_cmdb logTarget=file
+2026/02/06 05:08:45 WEB_RELEASE_DEBUG traceId=1770325725207372131-685 step=bind_website_enter websiteId=41 originSetId=12
+2026/02/06 05:08:45 WEB_RELEASE_DEBUG traceId=1770325725207372131-685 step=create_task_call websiteId=41 originSetId=12
+2026/02/06 05:08:45 WEB_RELEASE_DEBUG traceId=1770325725207372131-685 step=hash_input_ready bytesLen=277 sha256=9ebb7393dfd3067278995f234e6d348816002eaa9d1260b29504c9161f96552e
+2026/02/06 05:08:45 WEB_RELEASE_DEBUG traceId=1770325725207372131-685 step=reuse_existing_task releaseTaskId=13
+2026/02/06 05:08:45 WEB_RELEASE_DEBUG traceId=1770325725207372131-685 step=dispatch_success releaseTaskId=13
+2026/02/06 05:08:45 WEB_RELEASE_DEBUG traceId=1770325725207372131-685 step=create_task_return taskCreated=true taskId=13 skipReason=
+2026/02/06 05:08:45 WEB_RELEASE_DEBUG traceId=1770325725207372131-685 step=response taskCreated=true taskId=13 skipReason=
+2026/02/06 05:14:11 WEB_RELEASE_DEBUG traceId=1770326051434617742-6924 step=bind_website_enter websiteId=41 originSetId=14
+2026/02/06 05:14:11 WEB_RELEASE_DEBUG traceId=1770326051434617742-6924 step=create_task_call websiteId=41 originSetId=14
+2026/02/06 05:14:11 WEB_RELEASE_DEBUG traceId=1770326051434617742-6924 step=hash_input_ready bytesLen=277 sha256=9ebb7393dfd3067278995f234e6d348816002eaa9d1260b29504c9161f96552e
+2026/02/06 05:14:11 WEB_RELEASE_DEBUG traceId=1770326051434617742-6924 step=reuse_existing_task releaseTaskId=13
+2026/02/06 05:14:11 WEB_RELEASE_DEBUG traceId=1770326051434617742-6924 step=dispatch_success releaseTaskId=13
+2026/02/06 05:14:11 WEB_RELEASE_DEBUG traceId=1770326051434617742-6924 step=create_task_return taskCreated=true taskId=13 skipReason=
+2026/02/06 05:14:11 WEB_RELEASE_DEBUG traceId=1770326051434617742-6924 step=response taskCreated=true taskId=13 skipReason=
+2026/02/06 05:14:24 WEB_RELEASE_DEBUG traceId=1770326064106454695-3748 step=bind_website_enter websiteId=41 originSetId=14
+2026/02/06 05:14:24 WEB_RELEASE_DEBUG traceId=1770326064106454695-3748 step=create_task_call websiteId=41 originSetId=14
+2026/02/06 05:14:24 WEB_RELEASE_DEBUG traceId=1770326064106454695-3748 step=hash_input_ready bytesLen=277 sha256=9ebb7393dfd3067278995f234e6d348816002eaa9d1260b29504c9161f96552e
+2026/02/06 05:14:24 WEB_RELEASE_DEBUG traceId=1770326064106454695-3748 step=reuse_existing_task releaseTaskId=13
+2026/02/06 05:14:24 WEB_RELEASE_DEBUG traceId=1770326064106454695-3748 step=dispatch_success releaseTaskId=13
+2026/02/06 05:14:24 WEB_RELEASE_DEBUG traceId=1770326064106454695-3748 step=create_task_return taskCreated=true taskId=13 skipReason=
+2026/02/06 05:14:24 WEB_RELEASE_DEBUG traceId=1770326064106454695-3748 step=response taskCreated=true taskId=13 skipReason=
+2026/02/06 14:52:40 WEB_RELEASE_DEBUG boot pid=602799 binary=/opt/go_cmdb/go_cmdb logTarget=file
+2026/02/06 14:56:06 WEB_RELEASE_DEBUG traceId=1770360966981264248-5535 step=bind_website_enter websiteId=41 originSetId=18
+2026/02/06 16:14:40 WEB_RELEASE_DEBUG boot pid=609326 binary=/opt/go_cmdb/cmdb logTarget=file
+2026/02/06 17:02:22 WEB_RELEASE_DEBUG boot pid=612957 binary=/opt/go_cmdb/cmdb logTarget=file
+2026/02/06 17:04:39 WEB_RELEASE_DEBUG boot pid=613324 binary=/opt/go_cmdb/cmdb logTarget=file
+2026/02/06 17:08:17 WEB_RELEASE_DEBUG boot pid=613805 binary=/opt/go_cmdb/cmdb logTarget=file
+2026/02/06 17:11:44 WEB_RELEASE_DEBUG boot pid=614230 binary=/opt/go_cmdb/cmdb logTarget=file
+2026/02/06 17:50:57 WEB_RELEASE_DEBUG boot pid=615929 binary=/opt/go_cmdb/cmdb logTarget=file
+2026/02/06 17:55:02 WEB_RELEASE_DEBUG boot pid=616407 binary=/opt/go_cmdb/cmdb logTarget=file
+2026/02/06 18:30:19 WEB_RELEASE_DEBUG boot pid=620021 binary=/opt/go_cmdb/cmdb logTarget=file
+2026/02/06 18:34:56 WEB_RELEASE_DEBUG traceId=1770374096051055022-6195 step=bind_website_enter websiteId=41 originSetId=1
+2026/02/06 18:34:56 WEB_RELEASE_DEBUG traceId=1770374096051055022-6195 step=create_task_call websiteId=41 originSetId=1
+2026/02/06 18:34:56 WEB_RELEASE_DEBUG traceId=1770374096051055022-6195 step=hash_input_ready bytesLen=189 sha256=3e84fedd48cbf40a0886ee922bc97d2e8e4505853585285a9005de3a604f3978
+2026/02/06 18:34:56 WEB_RELEASE_DEBUG traceId=1770374096051055022-6195 step=dispatch_failed releaseTaskId=1000 error=no target nodes found
+2026/02/06 18:34:56 WEB_RELEASE_DEBUG traceId=1770374096051055022-6195 step=create_task_return taskCreated=true taskId=1000 skipReason=
+2026/02/06 18:34:56 WEB_RELEASE_DEBUG traceId=1770374096051055022-6195 step=response taskCreated=true taskId=1000 skipReason=
+2026/02/06 18:37:38 WEB_RELEASE_DEBUG traceId=1770374258881849268-3811 step=bind_website_enter websiteId=41 originSetId=2
+2026/02/06 18:37:38 WEB_RELEASE_DEBUG traceId=1770374258881849268-3811 step=create_task_call websiteId=41 originSetId=2
+2026/02/06 18:37:38 WEB_RELEASE_DEBUG traceId=1770374258881849268-3811 step=hash_input_ready bytesLen=189 sha256=3e84fedd48cbf40a0886ee922bc97d2e8e4505853585285a9005de3a604f3978
+2026/02/06 18:37:38 WEB_RELEASE_DEBUG traceId=1770374258881849268-3811 step=dispatch_failed releaseTaskId=1001 error=no target nodes found
+2026/02/06 18:37:38 WEB_RELEASE_DEBUG traceId=1770374258881849268-3811 step=create_task_return taskCreated=true taskId=1001 skipReason=
+2026/02/06 18:37:38 WEB_RELEASE_DEBUG traceId=1770374258881849268-3811 step=response taskCreated=true taskId=1001 skipReason=
+2026/02/06 18:38:36 WEB_RELEASE_DEBUG traceId=1770374316113263225-6412 step=bind_website_enter websiteId=41 originSetId=3
+2026/02/06 18:38:53 WEB_RELEASE_DEBUG traceId=1770374333357000666-7242 step=bind_website_enter websiteId=41 originSetId=1
+2026/02/06 18:38:53 WEB_RELEASE_DEBUG traceId=1770374333357000666-7242 step=create_task_call websiteId=41 originSetId=1
+2026/02/06 18:38:53 WEB_RELEASE_DEBUG traceId=1770374333357000666-7242 step=hash_input_ready bytesLen=189 sha256=3e84fedd48cbf40a0886ee922bc97d2e8e4505853585285a9005de3a604f3978
+2026/02/06 18:38:53 WEB_RELEASE_DEBUG traceId=1770374333357000666-7242 step=dispatch_failed releaseTaskId=1002 error=no target nodes found
+2026/02/06 18:38:53 WEB_RELEASE_DEBUG traceId=1770374333357000666-7242 step=create_task_return taskCreated=true taskId=1002 skipReason=
+2026/02/06 18:38:53 WEB_RELEASE_DEBUG traceId=1770374333357000666-7242 step=response taskCreated=true taskId=1002 skipReason=
+2026/02/06 18:40:28 WEB_RELEASE_DEBUG traceId=1770374428640279950-2045 step=bind_website_enter websiteId=41 originSetId=1
+2026/02/06 18:40:28 WEB_RELEASE_DEBUG traceId=1770374428640279950-2045 step=create_task_call websiteId=41 originSetId=1
+2026/02/06 18:40:28 WEB_RELEASE_DEBUG traceId=1770374428640279950-2045 step=hash_input_ready bytesLen=189 sha256=3e84fedd48cbf40a0886ee922bc97d2e8e4505853585285a9005de3a604f3978
+2026/02/06 18:40:28 WEB_RELEASE_DEBUG traceId=1770374428640279950-2045 step=dispatch_success releaseTaskId=1003
+2026/02/06 18:40:28 WEB_RELEASE_DEBUG traceId=1770374428640279950-2045 step=create_task_return taskCreated=true taskId=1003 skipReason=
+2026/02/06 18:40:28 WEB_RELEASE_DEBUG traceId=1770374428640279950-2045 step=response taskCreated=true taskId=1003 skipReason=

@@ -658,3 +658,66 @@ func (h *Handler) RepairCNAME(c *gin.Context) {
 		"item": response,
 	})
 }
+
+// OptionsResponse represents options response
+type OptionsResponse struct {
+	Items []LineGroupOptionDTO `json:"items"`
+}
+
+// LineGroupOptionDTO represents a line group option for dropdown
+type LineGroupOptionDTO struct {
+	ID            int    `json:"id"`
+	Name          string `json:"name"`
+	DomainID      int    `json:"domainId"`
+	DomainName    string `json:"domainName"`
+	NodeGroupID   int    `json:"nodeGroupId"`
+	NodeGroupName string `json:"nodeGroupName"`
+	CNAMEPrefix   string `json:"cnamePrefix"`
+	CNAME         string `json:"cname"`
+	Status        string `json:"status"`
+}
+
+// Options handles GET /api/v1/line-groups/options
+func (h *Handler) Options(c *gin.Context) {
+	// Query only active line groups
+	var lineGroups []model.LineGroup
+	if err := h.db.
+		Where("status = ?", model.LineGroupStatusActive).
+		Preload("Domain").
+		Preload("NodeGroup").
+		Order("id DESC").
+		Find(&lineGroups).Error; err != nil {
+		httpx.FailErr(c, httpx.ErrDatabaseError("failed to fetch line groups", err))
+		return
+	}
+
+	// Convert to DTOs
+	items := make([]LineGroupOptionDTO, len(lineGroups))
+	for i, lg := range lineGroups {
+		domainName := ""
+		if lg.Domain != nil {
+			domainName = lg.Domain.Domain
+		}
+		
+		nodeGroupName := ""
+		if lg.NodeGroup != nil {
+			nodeGroupName = lg.NodeGroup.Name
+		}
+		
+		items[i] = LineGroupOptionDTO{
+			ID:            int(lg.ID),
+			Name:          lg.Name,
+			DomainID:      int(lg.DomainID),
+			DomainName:    domainName,
+			NodeGroupID:   int(lg.NodeGroupID),
+			NodeGroupName: nodeGroupName,
+			CNAMEPrefix:   lg.CNAMEPrefix,
+			CNAME:         lg.CNAMEPrefix + "." + domainName,
+			Status:        lg.Status,
+		}
+	}
+
+	httpx.OK(c, OptionsResponse{
+		Items: items,
+	})
+}

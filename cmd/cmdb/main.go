@@ -1,14 +1,15 @@
 package main
 
 import (
+	"context"
 	"flag"
+	"fmt"
 	"log"
 	"os"
-
-	"context"
 	"time"
 
 	"go_cmdb/api/v1"
+	
 	"go_cmdb/internal/acme"
 	"go_cmdb/internal/agentclient"
 	"go_cmdb/internal/auth"
@@ -233,6 +234,20 @@ func main() {
 	v1.SetupRouter(r, db.GetDB(), cfg, acmeWorker, tokenStore, caManager, healthWorker)
 
 	log.Printf("✓ Server starting on %s", cfg.HTTPAddr)
+
+	// 打印 boot 信息
+	binaryPath, _ := os.Executable()
+	pid := os.Getpid()
+	bootMsg := fmt.Sprintf("WEB_RELEASE_DEBUG boot pid=%d binary=%s logTarget=file\n", pid, binaryPath)
+	log.Print(bootMsg)
+	// 同时写入 debug.log
+	debugDir := "/opt/go_cmdb/var/debug"
+	os.MkdirAll(debugDir, 0755)
+	debugFile, err := os.OpenFile(debugDir+"/web_release_debug.log", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+	if err == nil {
+		debugFile.WriteString(time.Now().Format("2006/01/02 15:04:05") + " " + bootMsg)
+		debugFile.Close()
+	}
 
 	// Start server
 	if err := r.Run(cfg.HTTPAddr); err != nil {

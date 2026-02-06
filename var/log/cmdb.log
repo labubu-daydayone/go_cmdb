@@ -1,0 +1,2178 @@
+2026/02/06 18:30:19 Loading configuration from INI file: /opt/go_cmdb/config.ini
+2026/02/06 18:30:19 ✓ Configuration loaded from INI file
+2026/02/06 18:30:19 ✓ MySQL connected successfully
+2026/02/06 18:30:19 ✓ MySQL connected successfully
+2026/02/06 18:30:19 MIGRATE=0 or not set, migration disabled
+2026/02/06 18:30:19 ✓ JWT initialized
+2026/02/06 18:30:19 ✓ Redis connected successfully
+2026/02/06 18:30:19 ✓ Redis connected successfully
+2026/02/06 18:30:19 ✓ Bootstrap Token Store initialized
+2026/02/06 18:30:19 ✓ CA Manager initialized
+2026/02/06 18:30:19 [RiskScanner] Starting with interval 300 seconds
+2026/02/06 18:30:19 ✓ Risk Scanner initialized
+2026/02/06 18:30:19 [RiskScanner] Running initial scan...
+2026/02/06 18:30:19 [RiskScanner] Starting scan...
+2026/02/06 18:30:19 ✓ Release Executor initialized
+2026/02/06 18:30:19 [DNS Worker] Starting with interval=30s, batch_size=10
+2026/02/06 18:30:19 [Executor] Starting executor loop (interval=5s)
+2026/02/06 18:30:19 [Executor] Running once...
+2026/02/06 18:30:19 ✓ DNS Worker initialized
+2026/02/06 18:30:19 [ACME Worker] Starting with interval=40s, batch=50
+2026/02/06 18:30:19 ✓ ACME Worker initialized
+2026/02/06 18:30:19 ✓ Certificate Cleaner disabled (CERT_FAILED_CLEANER_ENABLED=0)
+2026/02/06 18:30:19 [WebSocket] Event handlers registered
+2026/02/06 18:30:19 [WebSocket] Socket.IO server initialized
+2026/02/06 18:30:19 ✓ Socket.IO server initialized
+2026/02/06 18:30:19 [DNS Worker] Tick: processing DNS records...
+time="2026-02-06T18:30:19+08:00" level=info msg="Starting node health worker..." component=node-health-worker
+2026/02/06 18:30:19 ✓ Node Health Worker initialized
+2026/02/06 18:30:19 ✓ Server starting on :8080
+2026/02/06 18:30:19 WEB_RELEASE_DEBUG boot pid=620021 binary=/opt/go_cmdb/cmdb logTarget=file
+2026/02/06 18:30:19 [Executor] No tasks to execute
+2026/02/06 18:30:19 [RiskScanner] Scan completed: 0 risks detected, 0 new, 0 updated
+2026/02/06 18:30:19 [DNS Service] GetDeletionRecords: found 0 records (limit=10, error=<nil>)
+2026/02/06 18:30:19 [DNS Worker] Tick done: present_candidates=0, absent_candidates=0, claimed_running=0, claim_skipped=0, success=0, error=0, deleted=0
+[GIN] 2026/02/06 - 18:30:21 | 404 |         501ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+[GIN] 2026/02/06 - 18:30:21 | 400 |      27.481µs |    20.2.140.226 | GET      "/api/v1/agent/tasks/pull?nodeId=12"
+[GIN] 2026/02/06 - 18:30:24 | 404 |         591ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+2026/02/06 18:30:24 [Executor] Running once...
+2026/02/06 18:30:24 [Executor] No tasks to execute
+[GIN] 2026/02/06 - 18:30:26 | 400 |      13.646µs |    20.2.140.226 | GET      "/api/v1/agent/tasks/pull?nodeId=12"
+[GIN] 2026/02/06 - 18:30:27 | 404 |         551ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+2026/02/06 18:30:29 [Executor] Running once...
+2026/02/06 18:30:29 [Executor] No tasks to execute
+[GIN] 2026/02/06 - 18:30:30 | 404 |         561ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+[GIN] 2026/02/06 - 18:30:31 | 400 |      16.682µs |    20.2.140.226 | GET      "/api/v1/agent/tasks/pull?nodeId=12"
+[GIN] 2026/02/06 - 18:30:33 | 404 |         531ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+2026/02/06 18:30:34 [Executor] Running once...
+2026/02/06 18:30:34 [Executor] No tasks to execute
+[GIN] 2026/02/06 - 18:30:36 | 400 |      13.837µs |    20.2.140.226 | GET      "/api/v1/agent/tasks/pull?nodeId=12"
+[GIN] 2026/02/06 - 18:30:36 | 404 |         221ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+[GIN] 2026/02/06 - 18:30:39 | 404 |         902ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+2026/02/06 18:30:39 [Executor] Running once...
+2026/02/06 18:30:39 [Executor] No tasks to execute
+[GIN] 2026/02/06 - 18:30:41 | 400 |      13.806µs |    20.2.140.226 | GET      "/api/v1/agent/tasks/pull?nodeId=12"
+[GIN] 2026/02/06 - 18:30:42 | 404 |         591ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+2026/02/06 18:30:44 [Executor] Running once...
+2026/02/06 18:30:44 [Executor] No tasks to execute
+[GIN] 2026/02/06 - 18:30:45 | 404 |         571ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+[GIN] 2026/02/06 - 18:30:46 | 400 |      16.722µs |    20.2.140.226 | GET      "/api/v1/agent/tasks/pull?nodeId=12"
+[GIN] 2026/02/06 - 18:30:48 | 404 |         531ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+2026/02/06 18:30:49 [DNS Worker] Tick: processing DNS records...
+2026/02/06 18:30:49 [Executor] Running once...
+2026/02/06 18:30:49 [DNS Service] GetDeletionRecords: found 0 records (limit=10, error=<nil>)
+2026/02/06 18:30:49 [DNS Worker] Tick done: present_candidates=0, absent_candidates=0, claimed_running=0, claim_skipped=0, success=0, error=0, deleted=0
+2026/02/06 18:30:49 [Executor] No tasks to execute
+[GIN] 2026/02/06 - 18:30:51 | 400 |      28.113µs |    20.2.140.226 | GET      "/api/v1/agent/tasks/pull?nodeId=12"
+[GIN] 2026/02/06 - 18:30:51 | 404 |         291ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+[GIN] 2026/02/06 - 18:30:54 | 404 |         591ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+2026/02/06 18:30:54 [Executor] Running once...
+2026/02/06 18:30:54 [Executor] No tasks to execute
+[GIN] 2026/02/06 - 18:30:56 | 400 |      18.936µs |    20.2.140.226 | GET      "/api/v1/agent/tasks/pull?nodeId=12"
+[GIN] 2026/02/06 - 18:30:57 | 404 |         532ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+2026/02/06 18:30:59 [Executor] Running once...
+2026/02/06 18:30:59 [Executor] No tasks to execute
+[GIN] 2026/02/06 - 18:31:00 | 404 |         551ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+[GIN] 2026/02/06 - 18:31:01 | 400 |      13.706µs |    20.2.140.226 | GET      "/api/v1/agent/tasks/pull?nodeId=12"
+[GIN] 2026/02/06 - 18:31:03 | 404 |         591ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+2026/02/06 18:31:04 [Executor] Running once...
+2026/02/06 18:31:04 [Executor] No tasks to execute
+[GIN] 2026/02/06 - 18:31:06 | 404 |         561ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+[GIN] 2026/02/06 - 18:31:06 | 400 |       10.96µs |    20.2.140.226 | GET      "/api/v1/agent/tasks/pull?nodeId=12"
+[GIN] 2026/02/06 - 18:31:09 | 404 |         511ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+2026/02/06 18:31:09 [Executor] Running once...
+2026/02/06 18:31:09 [Executor] No tasks to execute
+[GIN] 2026/02/06 - 18:31:11 | 400 |      13.295µs |    20.2.140.226 | GET      "/api/v1/agent/tasks/pull?nodeId=12"
+[GIN] 2026/02/06 - 18:31:12 | 404 |         631ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+[GIN] 2026/02/06 - 18:31:13 | 401 |      45.787µs |    20.2.140.226 | POST     "/api/v1/origin-sets/bind-website"
+2026/02/06 18:31:14 [Executor] Running once...
+2026/02/06 18:31:14 [Executor] No tasks to execute
+[GIN] 2026/02/06 - 18:31:15 | 404 |         601ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+[GIN] 2026/02/06 - 18:31:16 | 400 |      15.279µs |    20.2.140.226 | GET      "/api/v1/agent/tasks/pull?nodeId=12"
+[GIN] 2026/02/06 - 18:31:18 | 404 |         591ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+2026/02/06 18:31:19 [Executor] Running once...
+2026/02/06 18:31:19 [DNS Worker] Tick: processing DNS records...
+2026/02/06 18:31:19 [Executor] No tasks to execute
+2026/02/06 18:31:19 [DNS Service] GetDeletionRecords: found 0 records (limit=10, error=<nil>)
+2026/02/06 18:31:19 [DNS Worker] Tick done: present_candidates=0, absent_candidates=0, claimed_running=0, claim_skipped=0, success=0, error=0, deleted=0
+[GIN] 2026/02/06 - 18:31:21 | 404 |         561ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+[GIN] 2026/02/06 - 18:31:21 | 400 |      10.399µs |    20.2.140.226 | GET      "/api/v1/agent/tasks/pull?nodeId=12"
+[GIN] 2026/02/06 - 18:31:24 | 404 |         581ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+2026/02/06 18:31:24 [Executor] Running once...
+2026/02/06 18:31:24 [Executor] No tasks to execute
+[GIN] 2026/02/06 - 18:31:26 | 400 |       16.02µs |    20.2.140.226 | GET      "/api/v1/agent/tasks/pull?nodeId=12"
+[GIN] 2026/02/06 - 18:31:27 | 404 |         561ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+[GIN] 2026/02/06 - 18:31:28 | 401 |  268.110183ms |    20.2.140.226 | POST     "/api/v1/auth/login"
+2026/02/06 18:31:29 [Executor] Running once...
+2026/02/06 18:31:29 [Executor] No tasks to execute
+[GIN] 2026/02/06 - 18:31:30 | 404 |         572ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+[GIN] 2026/02/06 - 18:31:31 | 400 |      21.751µs |    20.2.140.226 | GET      "/api/v1/agent/tasks/pull?nodeId=12"
+[GIN] 2026/02/06 - 18:31:33 | 404 |         601ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+2026/02/06 18:31:34 [Executor] Running once...
+2026/02/06 18:31:34 [Executor] No tasks to execute
+[GIN] 2026/02/06 - 18:31:36 | 404 |         561ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+[GIN] 2026/02/06 - 18:31:36 | 400 |      11.792µs |    20.2.140.226 | GET      "/api/v1/agent/tasks/pull?nodeId=12"
+[GIN] 2026/02/06 - 18:31:39 | 404 |         561ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+2026/02/06 18:31:39 [Executor] Running once...
+2026/02/06 18:31:39 [Executor] No tasks to execute
+[GIN] 2026/02/06 - 18:31:41 | 400 |      14.096µs |    20.2.140.226 | GET      "/api/v1/agent/tasks/pull?nodeId=12"
+[GIN] 2026/02/06 - 18:31:42 | 404 |         561ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+[GIN] 2026/02/06 - 18:31:43 | 401 |  267.866712ms |    20.2.140.226 | POST     "/api/v1/auth/login"
+2026/02/06 18:31:44 [Executor] Running once...
+2026/02/06 18:31:44 [Executor] No tasks to execute
+[GIN] 2026/02/06 - 18:31:45 | 404 |         601ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+[GIN] 2026/02/06 - 18:31:46 | 400 |      17.423µs |    20.2.140.226 | GET      "/api/v1/agent/tasks/pull?nodeId=12"
+[GIN] 2026/02/06 - 18:31:48 | 404 |         561ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+2026/02/06 18:31:49 [DNS Worker] Tick: processing DNS records...
+2026/02/06 18:31:49 [Executor] Running once...
+2026/02/06 18:31:49 [Executor] No tasks to execute
+2026/02/06 18:31:49 [DNS Service] GetDeletionRecords: found 0 records (limit=10, error=<nil>)
+2026/02/06 18:31:49 [DNS Worker] Tick done: present_candidates=0, absent_candidates=0, claimed_running=0, claim_skipped=0, success=0, error=0, deleted=0
+[GIN] 2026/02/06 - 18:31:51 | 400 |      12.744µs |    20.2.140.226 | GET      "/api/v1/agent/tasks/pull?nodeId=12"
+[GIN] 2026/02/06 - 18:31:51 | 404 |         531ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+[GIN] 2026/02/06 - 18:31:54 | 404 |         521ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+2026/02/06 18:31:54 [Executor] Running once...
+2026/02/06 18:31:54 [Executor] No tasks to execute
+[GIN] 2026/02/06 - 18:31:56 | 400 |       16.06µs |    20.2.140.226 | GET      "/api/v1/agent/tasks/pull?nodeId=12"
+[GIN] 2026/02/06 - 18:31:57 | 404 |         561ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+2026/02/06 18:31:59 [Executor] Running once...
+2026/02/06 18:31:59 [Executor] No tasks to execute
+[GIN] 2026/02/06 - 18:32:00 | 404 |         531ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+[GIN] 2026/02/06 - 18:32:01 | 400 |      15.699µs |    20.2.140.226 | GET      "/api/v1/agent/tasks/pull?nodeId=12"
+[GIN] 2026/02/06 - 18:32:03 | 404 |         561ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+2026/02/06 18:32:04 [Executor] Running once...
+2026/02/06 18:32:04 [Executor] No tasks to execute
+[GIN] 2026/02/06 - 18:32:06 | 404 |         692ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+[GIN] 2026/02/06 - 18:32:06 | 400 |       15.69µs |    20.2.140.226 | GET      "/api/v1/agent/tasks/pull?nodeId=12"
+[GIN] 2026/02/06 - 18:32:09 | 404 |         521ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+2026/02/06 18:32:09 [Executor] Running once...
+2026/02/06 18:32:09 [Executor] No tasks to execute
+[GIN] 2026/02/06 - 18:32:11 | 400 |      18.124µs |    20.2.140.226 | GET      "/api/v1/agent/tasks/pull?nodeId=12"
+[GIN] 2026/02/06 - 18:32:12 | 404 |         821ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+2026/02/06 18:32:14 [Executor] Running once...
+2026/02/06 18:32:14 [Executor] No tasks to execute
+[GIN] 2026/02/06 - 18:32:15 | 404 |         581ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+[GIN] 2026/02/06 - 18:32:16 | 400 |      13.956µs |    20.2.140.226 | GET      "/api/v1/agent/tasks/pull?nodeId=12"
+[GIN] 2026/02/06 - 18:32:18 | 404 |         612ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+2026/02/06 18:32:19 [DNS Worker] Tick: processing DNS records...
+2026/02/06 18:32:19 [Executor] Running once...
+2026/02/06 18:32:19 [Executor] No tasks to execute
+2026/02/06 18:32:19 [DNS Service] GetDeletionRecords: found 0 records (limit=10, error=<nil>)
+2026/02/06 18:32:19 [DNS Worker] Tick done: present_candidates=0, absent_candidates=0, claimed_running=0, claim_skipped=0, success=0, error=0, deleted=0
+[GIN] 2026/02/06 - 18:32:21 | 404 |         581ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+[GIN] 2026/02/06 - 18:32:21 | 400 |      14.929µs |    20.2.140.226 | GET      "/api/v1/agent/tasks/pull?nodeId=12"
+[GIN] 2026/02/06 - 18:32:24 | 404 |         932ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+2026/02/06 18:32:24 [Executor] Running once...
+2026/02/06 18:32:24 [Executor] No tasks to execute
+[GIN] 2026/02/06 - 18:32:26 | 400 |      18.815µs |    20.2.140.226 | GET      "/api/v1/agent/tasks/pull?nodeId=12"
+[GIN] 2026/02/06 - 18:32:27 | 404 |         601ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+2026/02/06 18:32:29 [Executor] Running once...
+2026/02/06 18:32:29 [Executor] No tasks to execute
+[GIN] 2026/02/06 - 18:32:30 | 404 |         601ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+[GIN] 2026/02/06 - 18:32:31 | 400 |      13.576µs |    20.2.140.226 | GET      "/api/v1/agent/tasks/pull?nodeId=12"
+[GIN] 2026/02/06 - 18:32:33 | 404 |         552ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+2026/02/06 18:32:34 [Executor] Running once...
+2026/02/06 18:32:34 [Executor] No tasks to execute
+[GIN] 2026/02/06 - 18:32:36 | 404 |         510ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+[GIN] 2026/02/06 - 18:32:36 | 400 |      12.664µs |    20.2.140.226 | GET      "/api/v1/agent/tasks/pull?nodeId=12"
+[GIN] 2026/02/06 - 18:32:39 | 404 |         551ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+2026/02/06 18:32:39 [Executor] Running once...
+2026/02/06 18:32:39 [Executor] No tasks to execute
+[GIN] 2026/02/06 - 18:32:41 | 400 |      15.338µs |    20.2.140.226 | GET      "/api/v1/agent/tasks/pull?nodeId=12"
+[GIN] 2026/02/06 - 18:32:42 | 404 |         601ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+2026/02/06 18:32:44 [Executor] Running once...
+2026/02/06 18:32:44 [Executor] No tasks to execute
+[GIN] 2026/02/06 - 18:32:45 | 404 |         632ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+[GIN] 2026/02/06 - 18:32:46 | 400 |      18.484µs |    20.2.140.226 | GET      "/api/v1/agent/tasks/pull?nodeId=12"
+[GIN] 2026/02/06 - 18:32:48 | 404 |         532ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+2026/02/06 18:32:49 [DNS Worker] Tick: processing DNS records...
+2026/02/06 18:32:49 [Executor] Running once...
+2026/02/06 18:32:49 [Executor] No tasks to execute
+2026/02/06 18:32:49 [DNS Service] GetDeletionRecords: found 0 records (limit=10, error=<nil>)
+2026/02/06 18:32:49 [DNS Worker] Tick done: present_candidates=0, absent_candidates=0, claimed_running=0, claim_skipped=0, success=0, error=0, deleted=0
+[GIN] 2026/02/06 - 18:32:51 | 404 |         531ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+[GIN] 2026/02/06 - 18:32:51 | 400 |      14.848µs |    20.2.140.226 | GET      "/api/v1/agent/tasks/pull?nodeId=12"
+[GIN] 2026/02/06 - 18:32:54 | 404 |         571ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+2026/02/06 18:32:54 [Executor] Running once...
+2026/02/06 18:32:54 [Executor] No tasks to execute
+[GIN] 2026/02/06 - 18:32:56 | 400 |      14.157µs |    20.2.140.226 | GET      "/api/v1/agent/tasks/pull?nodeId=12"
+[GIN] 2026/02/06 - 18:32:57 | 404 |         601ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+2026/02/06 18:32:59 [Executor] Running once...
+2026/02/06 18:32:59 [Executor] No tasks to execute
+[GIN] 2026/02/06 - 18:33:00 | 404 |         561ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+[GIN] 2026/02/06 - 18:33:01 | 400 |      13.255µs |    20.2.140.226 | GET      "/api/v1/agent/tasks/pull?nodeId=12"
+[GIN] 2026/02/06 - 18:33:03 | 404 |         521ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+2026/02/06 18:33:04 [Executor] Running once...
+2026/02/06 18:33:04 [Executor] No tasks to execute
+[GIN] 2026/02/06 - 18:33:06 | 404 |         551ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+[GIN] 2026/02/06 - 18:33:06 | 400 |      18.945µs |    20.2.140.226 | GET      "/api/v1/agent/tasks/pull?nodeId=12"
+[GIN] 2026/02/06 - 18:33:09 | 404 |         581ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+2026/02/06 18:33:09 [Executor] Running once...
+2026/02/06 18:33:09 [Executor] No tasks to execute
+[GIN] 2026/02/06 - 18:33:11 | 400 |      13.996µs |    20.2.140.226 | GET      "/api/v1/agent/tasks/pull?nodeId=12"
+[GIN] 2026/02/06 - 18:33:12 | 404 |         531ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+2026/02/06 18:33:14 [Executor] Running once...
+2026/02/06 18:33:14 [Executor] No tasks to execute
+[GIN] 2026/02/06 - 18:33:15 | 404 |         601ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+[GIN] 2026/02/06 - 18:33:16 | 400 |      23.544µs |    20.2.140.226 | GET      "/api/v1/agent/tasks/pull?nodeId=12"
+[GIN] 2026/02/06 - 18:33:18 | 404 |         520ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+2026/02/06 18:33:19 [Executor] Running once...
+2026/02/06 18:33:19 [DNS Worker] Tick: processing DNS records...
+2026/02/06 18:33:19 [Executor] No tasks to execute
+2026/02/06 18:33:19 [DNS Service] GetDeletionRecords: found 0 records (limit=10, error=<nil>)
+2026/02/06 18:33:19 [DNS Worker] Tick done: present_candidates=0, absent_candidates=0, claimed_running=0, claim_skipped=0, success=0, error=0, deleted=0
+[GIN] 2026/02/06 - 18:33:21 | 404 |         481ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+[GIN] 2026/02/06 - 18:33:21 | 400 |      16.871µs |    20.2.140.226 | GET      "/api/v1/agent/tasks/pull?nodeId=12"
+[GIN] 2026/02/06 - 18:33:24 | 404 |         570ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+2026/02/06 18:33:24 [Executor] Running once...
+2026/02/06 18:33:24 [Executor] No tasks to execute
+[GIN] 2026/02/06 - 18:33:26 | 400 |      12.644µs |    20.2.140.226 | GET      "/api/v1/agent/tasks/pull?nodeId=12"
+[GIN] 2026/02/06 - 18:33:27 | 404 |         571ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+2026/02/06 18:33:29 [Executor] Running once...
+2026/02/06 18:33:29 [Executor] No tasks to execute
+[GIN] 2026/02/06 - 18:33:30 | 404 |         521ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+[GIN] 2026/02/06 - 18:33:31 | 400 |      15.569µs |    20.2.140.226 | GET      "/api/v1/agent/tasks/pull?nodeId=12"
+[GIN] 2026/02/06 - 18:33:33 | 404 |         501ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+2026/02/06 18:33:34 [Executor] Running once...
+2026/02/06 18:33:34 [Executor] No tasks to execute
+[GIN] 2026/02/06 - 18:33:36 | 404 |         601ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+[GIN] 2026/02/06 - 18:33:36 | 400 |       10.53µs |    20.2.140.226 | GET      "/api/v1/agent/tasks/pull?nodeId=12"
+[GIN] 2026/02/06 - 18:33:39 | 404 |         501ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+2026/02/06 18:33:39 [Executor] Running once...
+2026/02/06 18:33:39 [Executor] No tasks to execute
+[GIN] 2026/02/06 - 18:33:41 | 400 |      19.176µs |    20.2.140.226 | GET      "/api/v1/agent/tasks/pull?nodeId=12"
+[GIN] 2026/02/06 - 18:33:42 | 404 |         571ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+2026/02/06 18:33:44 [Executor] Running once...
+2026/02/06 18:33:44 [Executor] No tasks to execute
+[GIN] 2026/02/06 - 18:33:45 | 404 |         551ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+[GIN] 2026/02/06 - 18:33:46 | 400 |      18.185µs |    20.2.140.226 | GET      "/api/v1/agent/tasks/pull?nodeId=12"
+[GIN] 2026/02/06 - 18:33:48 | 404 |         792ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+2026/02/06 18:33:49 [DNS Worker] Tick: processing DNS records...
+2026/02/06 18:33:49 [Executor] Running once...
+2026/02/06 18:33:49 [Executor] No tasks to execute
+2026/02/06 18:33:49 [DNS Service] GetDeletionRecords: found 0 records (limit=10, error=<nil>)
+2026/02/06 18:33:49 [DNS Worker] Tick done: present_candidates=0, absent_candidates=0, claimed_running=0, claim_skipped=0, success=0, error=0, deleted=0
+[GIN] 2026/02/06 - 18:33:51 | 404 |         571ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+[GIN] 2026/02/06 - 18:33:51 | 400 |      10.029µs |    20.2.140.226 | GET      "/api/v1/agent/tasks/pull?nodeId=12"
+[GIN] 2026/02/06 - 18:33:54 | 404 |         551ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+2026/02/06 18:33:54 [Executor] Running once...
+2026/02/06 18:33:54 [Executor] No tasks to execute
+[GIN] 2026/02/06 - 18:33:56 | 400 |      14.938µs |    20.2.140.226 | GET      "/api/v1/agent/tasks/pull?nodeId=12"
+[GIN] 2026/02/06 - 18:33:57 | 404 |         561ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+2026/02/06 18:33:59 [Executor] Running once...
+2026/02/06 18:33:59 [Executor] No tasks to execute
+[GIN] 2026/02/06 - 18:34:00 | 404 |         621ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+[GIN] 2026/02/06 - 18:34:01 | 400 |      13.736µs |    20.2.140.226 | GET      "/api/v1/agent/tasks/pull?nodeId=12"
+[GIN] 2026/02/06 - 18:34:03 | 404 |         561ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+2026/02/06 18:34:04 [Executor] Running once...
+2026/02/06 18:34:04 [Executor] No tasks to execute
+[GIN] 2026/02/06 - 18:34:06 | 404 |         531ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+[GIN] 2026/02/06 - 18:34:06 | 400 |      13.185µs |    20.2.140.226 | GET      "/api/v1/agent/tasks/pull?nodeId=12"
+[GIN] 2026/02/06 - 18:34:09 | 404 |         812ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+2026/02/06 18:34:09 [Executor] Running once...
+2026/02/06 18:34:09 [Executor] No tasks to execute
+[GIN] 2026/02/06 - 18:34:11 | 400 |      13.125µs |    20.2.140.226 | GET      "/api/v1/agent/tasks/pull?nodeId=12"
+[GIN] 2026/02/06 - 18:34:12 | 404 |         571ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+2026/02/06 18:34:14 [Executor] Running once...
+2026/02/06 18:34:14 [Executor] No tasks to execute
+[GIN] 2026/02/06 - 18:34:15 | 404 |         561ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+[GIN] 2026/02/06 - 18:34:16 | 400 |      20.559µs |    20.2.140.226 | GET      "/api/v1/agent/tasks/pull?nodeId=12"
+[GIN] 2026/02/06 - 18:34:18 | 404 |         561ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+2026/02/06 18:34:19 [Executor] Running once...
+2026/02/06 18:34:19 [DNS Worker] Tick: processing DNS records...
+2026/02/06 18:34:19 [Executor] No tasks to execute
+2026/02/06 18:34:19 [DNS Service] GetDeletionRecords: found 0 records (limit=10, error=<nil>)
+2026/02/06 18:34:19 [DNS Worker] Tick done: present_candidates=0, absent_candidates=0, claimed_running=0, claim_skipped=0, success=0, error=0, deleted=0
+[GIN] 2026/02/06 - 18:34:21 | 404 |         561ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+[GIN] 2026/02/06 - 18:34:21 | 400 |      13.686µs |    20.2.140.226 | GET      "/api/v1/agent/tasks/pull?nodeId=12"
+[GIN] 2026/02/06 - 18:34:24 | 200 |  268.365262ms |    20.2.140.226 | POST     "/api/v1/auth/login"
+[GIN] 2026/02/06 - 18:34:24 | 404 |         571ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+2026/02/06 18:34:24 [Executor] Running once...
+2026/02/06 18:34:24 [Executor] No tasks to execute
+[GIN] 2026/02/06 - 18:34:26 | 400 |      13.055µs |    20.2.140.226 | GET      "/api/v1/agent/tasks/pull?nodeId=12"
+[GIN] 2026/02/06 - 18:34:27 | 404 |         531ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+2026/02/06 18:34:29 [Executor] Running once...
+2026/02/06 18:34:29 [Executor] No tasks to execute
+[GIN] 2026/02/06 - 18:34:30 | 404 |         551ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+[GIN] 2026/02/06 - 18:34:31 | 400 |      16.802µs |    20.2.140.226 | GET      "/api/v1/agent/tasks/pull?nodeId=12"
+[GIN] 2026/02/06 - 18:34:33 | 404 |         561ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+2026/02/06 18:34:34 [Executor] Running once...
+2026/02/06 18:34:34 [Executor] No tasks to execute
+[GIN] 2026/02/06 - 18:34:36 | 404 |         782ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+[GIN] 2026/02/06 - 18:34:36 | 400 |      16.351µs |    20.2.140.226 | GET      "/api/v1/agent/tasks/pull?nodeId=12"
+[GIN] 2026/02/06 - 18:34:39 | 200 |  269.092824ms |    20.2.140.226 | POST     "/api/v1/auth/login"
+[GIN] 2026/02/06 - 18:34:39 | 404 |         531ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+2026/02/06 18:34:39 [Executor] Running once...
+2026/02/06 18:34:39 [Executor] No tasks to execute
+[GIN] 2026/02/06 - 18:34:41 | 400 |      12.865µs |    20.2.140.226 | GET      "/api/v1/agent/tasks/pull?nodeId=12"
+[GIN] 2026/02/06 - 18:34:42 | 404 |         562ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+2026/02/06 18:34:44 [Executor] Running once...
+2026/02/06 18:34:44 [Executor] No tasks to execute
+[GIN] 2026/02/06 - 18:34:45 | 404 |         601ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+[GIN] 2026/02/06 - 18:34:46 | 400 |      45.225µs |    20.2.140.226 | GET      "/api/v1/agent/tasks/pull?nodeId=12"
+[GIN] 2026/02/06 - 18:34:48 | 404 |         611ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+2026/02/06 18:34:49 [DNS Worker] Tick: processing DNS records...
+2026/02/06 18:34:49 [Executor] Running once...
+2026/02/06 18:34:49 [Executor] No tasks to execute
+2026/02/06 18:34:49 [DNS Service] GetDeletionRecords: found 0 records (limit=10, error=<nil>)
+2026/02/06 18:34:49 [DNS Worker] Tick done: present_candidates=0, absent_candidates=0, claimed_running=0, claim_skipped=0, success=0, error=0, deleted=0
+[GIN] 2026/02/06 - 18:34:51 | 404 |         721ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+[GIN] 2026/02/06 - 18:34:51 | 400 |      11.572µs |    20.2.140.226 | GET      "/api/v1/agent/tasks/pull?nodeId=12"
+[GIN] 2026/02/06 - 18:34:54 | 404 |         612ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+2026/02/06 18:34:54 [Executor] Running once...
+2026/02/06 18:34:54 [Executor] No tasks to execute
+2026/02/06 18:34:56 WEB_RELEASE_DEBUG traceId=1770374096051055022-6195 step=bind_website_enter websiteId=41 originSetId=1
+2026/02/06 18:34:56 WEB_RELEASE_DEBUG traceId=1770374096051055022-6195 step=create_task_call websiteId=41 originSetId=1
+2026/02/06 18:34:56 WEB_RELEASE_DEBUG traceId=1770374096051055022-6195 step=hash_input_ready bytesLen=189 sha256=3e84fedd48cbf40a0886ee922bc97d2e8e4505853585285a9005de3a604f3978
+
+2026/02/06 18:34:56 [31;1m/opt/go_cmdb/internal/service/release_task_service.go:333 [35;1mrecord not found
+[0m[33m[0.600ms] [34;1m[rows:0][0m SELECT * FROM `release_tasks` WHERE target_type = 'website' AND target_id = 41 AND content_hash = '3e84fedd48cbf40a0886ee922bc97d2e8e4505853585285a9005de3a604f3978' AND status IN ('pending', 'running') ORDER BY `release_tasks`.`id` LIMIT 1
+2026/02/06 18:34:56 [Dispatcher] getTargetNodes SQL: SELECT DISTINCT nodes.id FROM `line_groups` JOIN node_group_ips ON line_groups.node_group_id = node_group_ips.node_group_id JOIN node_ips ON node_group_ips.ip_id = node_ips.id JOIN nodes ON node_ips.node_id = nodes.id WHERE line_groups.id = 3 AND nodes.enabled = true AND nodes.status = 'online' AND node_ips.enabled = true AND node_ips.status = 'active'
+2026/02/06 18:34:56 [Dispatcher] getTargetNodes result: lineGroupId=3, nodeIds=[], count=0
+2026/02/06 18:34:56 WEB_RELEASE_DEBUG traceId=1770374096051055022-6195 step=dispatch_failed releaseTaskId=1000 error=no target nodes found
+2026/02/06 18:34:56 WEB_RELEASE_DEBUG traceId=1770374096051055022-6195 step=create_task_return taskCreated=true taskId=1000 skipReason=
+2026/02/06 18:34:56 WEB_RELEASE_DEBUG traceId=1770374096051055022-6195 step=response taskCreated=true taskId=1000 skipReason=
+[GIN] 2026/02/06 - 18:34:56 | 200 |   31.865016ms |    20.2.140.226 | POST     "/api/v1/origin-sets/bind-website"
+[GIN] 2026/02/06 - 18:34:56 | 400 |      12.674µs |    20.2.140.226 | GET      "/api/v1/agent/tasks/pull?nodeId=12"
+[GIN] 2026/02/06 - 18:34:57 | 404 |         681ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+2026/02/06 18:34:59 [Executor] Running once...
+2026/02/06 18:34:59 [Executor] No tasks to execute
+[GIN] 2026/02/06 - 18:35:00 | 404 |         531ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+[GIN] 2026/02/06 - 18:35:01 | 400 |      15.178µs |    20.2.140.226 | GET      "/api/v1/agent/tasks/pull?nodeId=12"
+[GIN] 2026/02/06 - 18:35:03 | 404 |         551ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+2026/02/06 18:35:04 [Executor] Running once...
+2026/02/06 18:35:04 [Executor] No tasks to execute
+[GIN] 2026/02/06 - 18:35:06 | 404 |         561ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+[GIN] 2026/02/06 - 18:35:06 | 400 |       10.54µs |    20.2.140.226 | GET      "/api/v1/agent/tasks/pull?nodeId=12"
+[GIN] 2026/02/06 - 18:35:09 | 404 |         571ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+2026/02/06 18:35:09 [Executor] Running once...
+2026/02/06 18:35:09 [Executor] No tasks to execute
+[GIN] 2026/02/06 - 18:35:11 | 400 |      12.704µs |    20.2.140.226 | GET      "/api/v1/agent/tasks/pull?nodeId=12"
+[GIN] 2026/02/06 - 18:35:12 | 404 |         572ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+2026/02/06 18:35:14 [Executor] Running once...
+2026/02/06 18:35:14 [Executor] No tasks to execute
+[GIN] 2026/02/06 - 18:35:15 | 404 |         521ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+[GIN] 2026/02/06 - 18:35:16 | 400 |      17.584µs |    20.2.140.226 | GET      "/api/v1/agent/tasks/pull?nodeId=12"
+[GIN] 2026/02/06 - 18:35:18 | 404 |         531ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+2026/02/06 18:35:19 [RiskScanner] Running scheduled scan...
+2026/02/06 18:35:19 [RiskScanner] Starting scan...
+2026/02/06 18:35:19 [Executor] Running once...
+2026/02/06 18:35:19 [DNS Worker] Tick: processing DNS records...
+2026/02/06 18:35:19 [Executor] No tasks to execute
+2026/02/06 18:35:19 [RiskScanner] Scan completed: 0 risks detected, 0 new, 0 updated
+2026/02/06 18:35:19 [DNS Service] GetDeletionRecords: found 0 records (limit=10, error=<nil>)
+2026/02/06 18:35:19 [DNS Worker] Tick done: present_candidates=0, absent_candidates=0, claimed_running=0, claim_skipped=0, success=0, error=0, deleted=0
+[GIN] 2026/02/06 - 18:35:21 | 404 |         531ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+[GIN] 2026/02/06 - 18:35:21 | 400 |      13.305µs |    20.2.140.226 | GET      "/api/v1/agent/tasks/pull?nodeId=12"
+[GIN] 2026/02/06 - 18:35:24 | 404 |         771ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+2026/02/06 18:35:24 [Executor] Running once...
+2026/02/06 18:35:24 [Executor] No tasks to execute
+[GIN] 2026/02/06 - 18:35:26 | 400 |      13.736µs |    20.2.140.226 | GET      "/api/v1/agent/tasks/pull?nodeId=12"
+[GIN] 2026/02/06 - 18:35:27 | 404 |         572ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+2026/02/06 18:35:29 [Executor] Running once...
+2026/02/06 18:35:29 [Executor] No tasks to execute
+[GIN] 2026/02/06 - 18:35:30 | 404 |         591ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+[GIN] 2026/02/06 - 18:35:31 | 400 |      15.289µs |    20.2.140.226 | GET      "/api/v1/agent/tasks/pull?nodeId=12"
+[GIN] 2026/02/06 - 18:35:33 | 404 |         662ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+2026/02/06 18:35:34 [Executor] Running once...
+2026/02/06 18:35:34 [Executor] No tasks to execute
+[GIN] 2026/02/06 - 18:35:36 | 404 |         771ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+[GIN] 2026/02/06 - 18:35:36 | 400 |       10.23µs |    20.2.140.226 | GET      "/api/v1/agent/tasks/pull?nodeId=12"
+[GIN] 2026/02/06 - 18:35:39 | 404 |         561ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+2026/02/06 18:35:39 [Executor] Running once...
+2026/02/06 18:35:39 [Executor] No tasks to execute
+[GIN] 2026/02/06 - 18:35:41 | 400 |      13.456µs |    20.2.140.226 | GET      "/api/v1/agent/tasks/pull?nodeId=12"
+[GIN] 2026/02/06 - 18:35:42 | 404 |         501ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+2026/02/06 18:35:44 [Executor] Running once...
+2026/02/06 18:35:44 [Executor] No tasks to execute
+[GIN] 2026/02/06 - 18:35:45 | 404 |         530ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+[GIN] 2026/02/06 - 18:35:46 | 404 |         942ns |    134.209.6.32 | GET      "/login"
+[GIN] 2026/02/06 - 18:35:46 | 400 |      15.529µs |    20.2.140.226 | GET      "/api/v1/agent/tasks/pull?nodeId=12"
+[GIN] 2026/02/06 - 18:35:48 | 404 |         581ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+2026/02/06 18:35:49 [Executor] Running once...
+2026/02/06 18:35:49 [DNS Worker] Tick: processing DNS records...
+2026/02/06 18:35:49 [Executor] No tasks to execute
+2026/02/06 18:35:49 [DNS Service] GetDeletionRecords: found 0 records (limit=10, error=<nil>)
+2026/02/06 18:35:49 [DNS Worker] Tick done: present_candidates=0, absent_candidates=0, claimed_running=0, claim_skipped=0, success=0, error=0, deleted=0
+[GIN] 2026/02/06 - 18:35:51 | 404 |         601ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+[GIN] 2026/02/06 - 18:35:51 | 400 |       10.67µs |    20.2.140.226 | GET      "/api/v1/agent/tasks/pull?nodeId=12"
+[GIN] 2026/02/06 - 18:35:54 | 404 |         612ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+2026/02/06 18:35:54 [Executor] Running once...
+2026/02/06 18:35:54 [Executor] No tasks to execute
+[GIN] 2026/02/06 - 18:35:56 | 400 |      12.925µs |    20.2.140.226 | GET      "/api/v1/agent/tasks/pull?nodeId=12"
+[GIN] 2026/02/06 - 18:35:57 | 404 |         571ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+2026/02/06 18:35:59 [Executor] Running once...
+2026/02/06 18:35:59 [Executor] No tasks to execute
+[GIN] 2026/02/06 - 18:36:00 | 404 |         471ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+[GIN] 2026/02/06 - 18:36:01 | 400 |      18.646µs |    20.2.140.226 | GET      "/api/v1/agent/tasks/pull?nodeId=12"
+[GIN] 2026/02/06 - 18:36:03 | 404 |         611ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+2026/02/06 18:36:04 [Executor] Running once...
+2026/02/06 18:36:04 [Executor] No tasks to execute
+[GIN] 2026/02/06 - 18:36:06 | 404 |         531ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+[GIN] 2026/02/06 - 18:36:06 | 400 |      18.986µs |    20.2.140.226 | GET      "/api/v1/agent/tasks/pull?nodeId=12"
+[GIN] 2026/02/06 - 18:36:09 | 404 |         511ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+2026/02/06 18:36:09 [Executor] Running once...
+2026/02/06 18:36:09 [Executor] No tasks to execute
+[GIN] 2026/02/06 - 18:36:11 | 400 |      13.936µs |    20.2.140.226 | GET      "/api/v1/agent/tasks/pull?nodeId=12"
+[GIN] 2026/02/06 - 18:36:12 | 404 |         611ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+2026/02/06 18:36:14 [Executor] Running once...
+2026/02/06 18:36:14 [Executor] No tasks to execute
+[GIN] 2026/02/06 - 18:36:15 | 404 |         591ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+[GIN] 2026/02/06 - 18:36:16 | 400 |      17.613µs |    20.2.140.226 | GET      "/api/v1/agent/tasks/pull?nodeId=12"
+[GIN] 2026/02/06 - 18:36:18 | 404 |         561ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+2026/02/06 18:36:19 [DNS Worker] Tick: processing DNS records...
+2026/02/06 18:36:19 [Executor] Running once...
+2026/02/06 18:36:19 [Executor] No tasks to execute
+2026/02/06 18:36:19 [DNS Service] GetDeletionRecords: found 0 records (limit=10, error=<nil>)
+2026/02/06 18:36:19 [DNS Worker] Tick done: present_candidates=0, absent_candidates=0, claimed_running=0, claim_skipped=0, success=0, error=0, deleted=0
+[GIN] 2026/02/06 - 18:36:21 | 404 |         802ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+[GIN] 2026/02/06 - 18:36:21 | 400 |       10.36µs |    20.2.140.226 | GET      "/api/v1/agent/tasks/pull?nodeId=12"
+[GIN] 2026/02/06 - 18:36:24 | 404 |         601ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+2026/02/06 18:36:24 [Executor] Running once...
+2026/02/06 18:36:24 [Executor] No tasks to execute
+[GIN] 2026/02/06 - 18:36:26 | 400 |       16.04µs |    20.2.140.226 | GET      "/api/v1/agent/tasks/pull?nodeId=12"
+[GIN] 2026/02/06 - 18:36:27 | 404 |         601ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+2026/02/06 18:36:29 [Executor] Running once...
+2026/02/06 18:36:29 [Executor] No tasks to execute
+[GIN] 2026/02/06 - 18:36:30 | 404 |         581ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+[GIN] 2026/02/06 - 18:36:31 | 400 |      17.543µs |    20.2.140.226 | GET      "/api/v1/agent/tasks/pull?nodeId=12"
+[GIN] 2026/02/06 - 18:36:33 | 404 |         531ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+2026/02/06 18:36:34 [Executor] Running once...
+2026/02/06 18:36:34 [Executor] No tasks to execute
+[GIN] 2026/02/06 - 18:36:36 | 400 |      12.453µs |    20.2.140.226 | GET      "/api/v1/agent/tasks/pull?nodeId=12"
+[GIN] 2026/02/06 - 18:36:36 | 404 |         261ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+[GIN] 2026/02/06 - 18:36:39 | 404 |         551ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+2026/02/06 18:36:39 [Executor] Running once...
+2026/02/06 18:36:39 [Executor] No tasks to execute
+[GIN] 2026/02/06 - 18:36:41 | 400 |      16.351µs |    20.2.140.226 | GET      "/api/v1/agent/tasks/pull?nodeId=12"
+[GIN] 2026/02/06 - 18:36:42 | 404 |         531ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+2026/02/06 18:36:44 [Executor] Running once...
+2026/02/06 18:36:44 [Executor] No tasks to execute
+[GIN] 2026/02/06 - 18:36:45 | 404 |         601ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+[GIN] 2026/02/06 - 18:36:46 | 400 |      14.026µs |    20.2.140.226 | GET      "/api/v1/agent/tasks/pull?nodeId=12"
+[GIN] 2026/02/06 - 18:36:48 | 404 |         711ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+2026/02/06 18:36:49 [Executor] Running once...
+2026/02/06 18:36:49 [DNS Worker] Tick: processing DNS records...
+2026/02/06 18:36:49 [Executor] No tasks to execute
+2026/02/06 18:36:49 [DNS Service] GetDeletionRecords: found 0 records (limit=10, error=<nil>)
+2026/02/06 18:36:49 [DNS Worker] Tick done: present_candidates=0, absent_candidates=0, claimed_running=0, claim_skipped=0, success=0, error=0, deleted=0
+[GIN] 2026/02/06 - 18:36:51 | 404 |         561ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+[GIN] 2026/02/06 - 18:36:51 | 400 |       10.86µs |    20.2.140.226 | GET      "/api/v1/agent/tasks/pull?nodeId=12"
+[GIN] 2026/02/06 - 18:36:54 | 404 |         561ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+2026/02/06 18:36:54 [Executor] Running once...
+2026/02/06 18:36:54 [Executor] No tasks to execute
+[GIN] 2026/02/06 - 18:36:56 | 400 |      14.447µs |    20.2.140.226 | GET      "/api/v1/agent/tasks/pull?nodeId=12"
+[GIN] 2026/02/06 - 18:36:57 | 404 |         591ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+2026/02/06 18:36:59 [Executor] Running once...
+2026/02/06 18:36:59 [Executor] No tasks to execute
+[GIN] 2026/02/06 - 18:37:00 | 404 |         491ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+[GIN] 2026/02/06 - 18:37:01 | 400 |      12.173µs |    20.2.140.226 | GET      "/api/v1/agent/tasks/pull?nodeId=12"
+[GIN] 2026/02/06 - 18:37:03 | 404 |         551ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+2026/02/06 18:37:04 [Executor] Running once...
+2026/02/06 18:37:04 [Executor] No tasks to execute
+[GIN] 2026/02/06 - 18:37:06 | 404 |       1.203µs |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+[GIN] 2026/02/06 - 18:37:06 | 400 |       9.929µs |    20.2.140.226 | GET      "/api/v1/agent/tasks/pull?nodeId=12"
+[GIN] 2026/02/06 - 18:37:09 | 404 |         531ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+2026/02/06 18:37:09 [Executor] Running once...
+2026/02/06 18:37:09 [Executor] No tasks to execute
+[GIN] 2026/02/06 - 18:37:11 | 400 |      18.655µs |    20.2.140.226 | GET      "/api/v1/agent/tasks/pull?nodeId=12"
+[GIN] 2026/02/06 - 18:37:12 | 404 |         591ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+2026/02/06 18:37:14 [Executor] Running once...
+2026/02/06 18:37:14 [Executor] No tasks to execute
+[GIN] 2026/02/06 - 18:37:15 | 404 |         541ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+[GIN] 2026/02/06 - 18:37:16 | 400 |      48.461µs |    20.2.140.226 | GET      "/api/v1/agent/tasks/pull?nodeId=12"
+[GIN] 2026/02/06 - 18:37:18 | 404 |         531ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+2026/02/06 18:37:19 [Executor] Running once...
+2026/02/06 18:37:19 [DNS Worker] Tick: processing DNS records...
+2026/02/06 18:37:19 [Executor] No tasks to execute
+2026/02/06 18:37:19 [DNS Service] GetDeletionRecords: found 0 records (limit=10, error=<nil>)
+2026/02/06 18:37:19 [DNS Worker] Tick done: present_candidates=0, absent_candidates=0, claimed_running=0, claim_skipped=0, success=0, error=0, deleted=0
+[GIN] 2026/02/06 - 18:37:21 | 404 |         531ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+[GIN] 2026/02/06 - 18:37:21 | 400 |      13.546µs |    20.2.140.226 | GET      "/api/v1/agent/tasks/pull?nodeId=12"
+[GIN] 2026/02/06 - 18:37:24 | 404 |         401ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+2026/02/06 18:37:24 [Executor] Running once...
+2026/02/06 18:37:24 [Executor] No tasks to execute
+[GIN] 2026/02/06 - 18:37:26 | 400 |      13.065µs |    20.2.140.226 | GET      "/api/v1/agent/tasks/pull?nodeId=12"
+[GIN] 2026/02/06 - 18:37:27 | 404 |         562ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+2026/02/06 18:37:29 [Executor] Running once...
+2026/02/06 18:37:29 [Executor] No tasks to execute
+[GIN] 2026/02/06 - 18:37:30 | 404 |         631ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+[GIN] 2026/02/06 - 18:37:31 | 400 |      22.553µs |    20.2.140.226 | GET      "/api/v1/agent/tasks/pull?nodeId=12"
+[GIN] 2026/02/06 - 18:37:33 | 404 |         601ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+2026/02/06 18:37:34 [Executor] Running once...
+2026/02/06 18:37:34 [Executor] No tasks to execute
+[GIN] 2026/02/06 - 18:37:36 | 404 |         561ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+[GIN] 2026/02/06 - 18:37:36 | 400 |      13.285µs |    20.2.140.226 | GET      "/api/v1/agent/tasks/pull?nodeId=12"
+2026/02/06 18:37:38 WEB_RELEASE_DEBUG traceId=1770374258881849268-3811 step=bind_website_enter websiteId=41 originSetId=2
+2026/02/06 18:37:38 WEB_RELEASE_DEBUG traceId=1770374258881849268-3811 step=create_task_call websiteId=41 originSetId=2
+2026/02/06 18:37:38 WEB_RELEASE_DEBUG traceId=1770374258881849268-3811 step=hash_input_ready bytesLen=189 sha256=3e84fedd48cbf40a0886ee922bc97d2e8e4505853585285a9005de3a604f3978
+
+2026/02/06 18:37:38 [31;1m/opt/go_cmdb/internal/service/release_task_service.go:333 [35;1mrecord not found
+[0m[33m[0.626ms] [34;1m[rows:0][0m SELECT * FROM `release_tasks` WHERE target_type = 'website' AND target_id = 41 AND content_hash = '3e84fedd48cbf40a0886ee922bc97d2e8e4505853585285a9005de3a604f3978' AND status IN ('pending', 'running') ORDER BY `release_tasks`.`id` LIMIT 1
+2026/02/06 18:37:38 [Dispatcher] getTargetNodes SQL: SELECT DISTINCT nodes.id FROM `line_groups` JOIN node_group_ips ON line_groups.node_group_id = node_group_ips.node_group_id JOIN node_ips ON node_group_ips.ip_id = node_ips.id JOIN nodes ON node_ips.node_id = nodes.id WHERE line_groups.id = 3 AND nodes.enabled = true AND nodes.status = 'online' AND node_ips.enabled = true AND node_ips.status = 'active'
+2026/02/06 18:37:38 [Dispatcher] getTargetNodes result: lineGroupId=3, nodeIds=[], count=0
+2026/02/06 18:37:38 WEB_RELEASE_DEBUG traceId=1770374258881849268-3811 step=dispatch_failed releaseTaskId=1001 error=no target nodes found
+2026/02/06 18:37:38 WEB_RELEASE_DEBUG traceId=1770374258881849268-3811 step=create_task_return taskCreated=true taskId=1001 skipReason=
+2026/02/06 18:37:38 WEB_RELEASE_DEBUG traceId=1770374258881849268-3811 step=response taskCreated=true taskId=1001 skipReason=
+[GIN] 2026/02/06 - 18:37:38 | 200 |   33.391287ms |    20.2.140.226 | POST     "/api/v1/origin-sets/bind-website"
+[GIN] 2026/02/06 - 18:37:39 | 404 |         621ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+2026/02/06 18:37:39 [Executor] Running once...
+2026/02/06 18:37:39 [Executor] No tasks to execute
+[GIN] 2026/02/06 - 18:37:41 | 400 |      13.315µs |    20.2.140.226 | GET      "/api/v1/agent/tasks/pull?nodeId=12"
+[GIN] 2026/02/06 - 18:37:42 | 404 |         642ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+2026/02/06 18:37:44 [Executor] Running once...
+2026/02/06 18:37:44 [Executor] No tasks to execute
+[GIN] 2026/02/06 - 18:37:45 | 404 |         791ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+[GIN] 2026/02/06 - 18:37:46 | 400 |      14.557µs |    20.2.140.226 | GET      "/api/v1/agent/tasks/pull?nodeId=12"
+[GIN] 2026/02/06 - 18:37:48 | 404 |         601ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+2026/02/06 18:37:49 [Executor] Running once...
+2026/02/06 18:37:49 [DNS Worker] Tick: processing DNS records...
+2026/02/06 18:37:49 [Executor] No tasks to execute
+2026/02/06 18:37:49 [DNS Service] GetDeletionRecords: found 0 records (limit=10, error=<nil>)
+2026/02/06 18:37:49 [DNS Worker] Tick done: present_candidates=0, absent_candidates=0, claimed_running=0, claim_skipped=0, success=0, error=0, deleted=0
+[GIN] 2026/02/06 - 18:37:51 | 404 |         551ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+[GIN] 2026/02/06 - 18:37:51 | 400 |       10.32µs |    20.2.140.226 | GET      "/api/v1/agent/tasks/pull?nodeId=12"
+[GIN] 2026/02/06 - 18:37:54 | 404 |         521ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+2026/02/06 18:37:54 [Executor] Running once...
+2026/02/06 18:37:54 [Executor] No tasks to execute
+[GIN] 2026/02/06 - 18:37:56 | 400 |      17.333µs |    20.2.140.226 | GET      "/api/v1/agent/tasks/pull?nodeId=12"
+[GIN] 2026/02/06 - 18:37:57 | 404 |         541ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+2026/02/06 18:37:59 [Executor] Running once...
+2026/02/06 18:37:59 [Executor] No tasks to execute
+[GIN] 2026/02/06 - 18:38:00 | 404 |         811ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+[GIN] 2026/02/06 - 18:38:01 | 400 |      20.529µs |    20.2.140.226 | GET      "/api/v1/agent/tasks/pull?nodeId=12"
+[GIN] 2026/02/06 - 18:38:03 | 404 |         561ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+2026/02/06 18:38:04 [Executor] Running once...
+2026/02/06 18:38:04 [Executor] No tasks to execute
+[GIN] 2026/02/06 - 18:38:06 | 404 |         611ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+[GIN] 2026/02/06 - 18:38:06 | 400 |      13.294µs |    20.2.140.226 | GET      "/api/v1/agent/tasks/pull?nodeId=12"
+[GIN] 2026/02/06 - 18:38:09 | 404 |         651ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+2026/02/06 18:38:09 [Executor] Running once...
+2026/02/06 18:38:09 [Executor] No tasks to execute
+[GIN] 2026/02/06 - 18:38:11 | 400 |      18.444µs |    20.2.140.226 | GET      "/api/v1/agent/tasks/pull?nodeId=12"
+[GIN] 2026/02/06 - 18:38:12 | 404 |         611ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+2026/02/06 18:38:14 [Executor] Running once...
+2026/02/06 18:38:14 [Executor] No tasks to execute
+[GIN] 2026/02/06 - 18:38:15 | 404 |         822ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+[GIN] 2026/02/06 - 18:38:16 | 400 |      16.741µs |    20.2.140.226 | GET      "/api/v1/agent/tasks/pull?nodeId=12"
+[GIN] 2026/02/06 - 18:38:18 | 404 |         521ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+2026/02/06 18:38:19 [Executor] Running once...
+2026/02/06 18:38:19 [DNS Worker] Tick: processing DNS records...
+2026/02/06 18:38:19 [Executor] No tasks to execute
+2026/02/06 18:38:19 [DNS Service] GetDeletionRecords: found 0 records (limit=10, error=<nil>)
+2026/02/06 18:38:19 [DNS Worker] Tick done: present_candidates=0, absent_candidates=0, claimed_running=0, claim_skipped=0, success=0, error=0, deleted=0
+[GIN] 2026/02/06 - 18:38:21 | 400 |      13.545µs |    20.2.140.226 | GET      "/api/v1/agent/tasks/pull?nodeId=12"
+[GIN] 2026/02/06 - 18:38:21 | 404 |         271ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+[GIN] 2026/02/06 - 18:38:24 | 404 |         530ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+2026/02/06 18:38:24 [Executor] Running once...
+2026/02/06 18:38:24 [Executor] No tasks to execute
+[GIN] 2026/02/06 - 18:38:26 | 400 |      13.836µs |    20.2.140.226 | GET      "/api/v1/agent/tasks/pull?nodeId=12"
+[GIN] 2026/02/06 - 18:38:27 | 404 |         501ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+2026/02/06 18:38:29 [Executor] Running once...
+2026/02/06 18:38:29 [Executor] No tasks to execute
+[GIN] 2026/02/06 - 18:38:30 | 404 |         591ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+[GIN] 2026/02/06 - 18:38:31 | 400 |      12.553µs |    20.2.140.226 | GET      "/api/v1/agent/tasks/pull?nodeId=12"
+[GIN] 2026/02/06 - 18:38:33 | 404 |         601ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+2026/02/06 18:38:34 [Executor] Running once...
+2026/02/06 18:38:34 [Executor] No tasks to execute
+2026/02/06 18:38:36 WEB_RELEASE_DEBUG traceId=1770374316113263225-6412 step=bind_website_enter websiteId=41 originSetId=3
+[GIN] 2026/02/06 - 18:38:36 | 400 |    1.455324ms |    20.2.140.226 | POST     "/api/v1/origin-sets/bind-website"
+[GIN] 2026/02/06 - 18:38:36 | 404 |         722ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+[GIN] 2026/02/06 - 18:38:36 | 400 |      14.517µs |    20.2.140.226 | GET      "/api/v1/agent/tasks/pull?nodeId=12"
+[GIN] 2026/02/06 - 18:38:39 | 404 |         541ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+2026/02/06 18:38:39 [Executor] Running once...
+2026/02/06 18:38:39 [Executor] No tasks to execute
+[GIN] 2026/02/06 - 18:38:41 | 400 |      12.263µs |    20.2.140.226 | GET      "/api/v1/agent/tasks/pull?nodeId=12"
+[GIN] 2026/02/06 - 18:38:42 | 404 |         601ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+2026/02/06 18:38:44 [Executor] Running once...
+2026/02/06 18:38:44 [Executor] No tasks to execute
+[GIN] 2026/02/06 - 18:38:45 | 404 |         531ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+[GIN] 2026/02/06 - 18:38:46 | 400 |      13.846µs |    20.2.140.226 | GET      "/api/v1/agent/tasks/pull?nodeId=12"
+[GIN] 2026/02/06 - 18:38:48 | 404 |         571ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+2026/02/06 18:38:49 [Executor] Running once...
+2026/02/06 18:38:49 [DNS Worker] Tick: processing DNS records...
+2026/02/06 18:38:49 [Executor] No tasks to execute
+2026/02/06 18:38:49 [DNS Service] GetDeletionRecords: found 0 records (limit=10, error=<nil>)
+2026/02/06 18:38:49 [DNS Worker] Tick done: present_candidates=0, absent_candidates=0, claimed_running=0, claim_skipped=0, success=0, error=0, deleted=0
+[GIN] 2026/02/06 - 18:38:51 | 404 |         561ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+[GIN] 2026/02/06 - 18:38:51 | 400 |       26.43µs |    20.2.140.226 | GET      "/api/v1/agent/tasks/pull?nodeId=12"
+2026/02/06 18:38:53 WEB_RELEASE_DEBUG traceId=1770374333357000666-7242 step=bind_website_enter websiteId=41 originSetId=1
+2026/02/06 18:38:53 WEB_RELEASE_DEBUG traceId=1770374333357000666-7242 step=create_task_call websiteId=41 originSetId=1
+2026/02/06 18:38:53 WEB_RELEASE_DEBUG traceId=1770374333357000666-7242 step=hash_input_ready bytesLen=189 sha256=3e84fedd48cbf40a0886ee922bc97d2e8e4505853585285a9005de3a604f3978
+
+2026/02/06 18:38:53 [31;1m/opt/go_cmdb/internal/service/release_task_service.go:333 [35;1mrecord not found
+[0m[33m[0.650ms] [34;1m[rows:0][0m SELECT * FROM `release_tasks` WHERE target_type = 'website' AND target_id = 41 AND content_hash = '3e84fedd48cbf40a0886ee922bc97d2e8e4505853585285a9005de3a604f3978' AND status IN ('pending', 'running') ORDER BY `release_tasks`.`id` LIMIT 1
+2026/02/06 18:38:53 [Dispatcher] getTargetNodes SQL: SELECT DISTINCT nodes.id FROM `line_groups` JOIN node_group_ips ON line_groups.node_group_id = node_group_ips.node_group_id JOIN node_ips ON node_group_ips.ip_id = node_ips.id JOIN nodes ON node_ips.node_id = nodes.id WHERE line_groups.id = 3 AND nodes.enabled = true AND nodes.status = 'online' AND node_ips.enabled = true AND node_ips.status = 'active'
+2026/02/06 18:38:53 [Dispatcher] getTargetNodes result: lineGroupId=3, nodeIds=[], count=0
+2026/02/06 18:38:53 WEB_RELEASE_DEBUG traceId=1770374333357000666-7242 step=dispatch_failed releaseTaskId=1002 error=no target nodes found
+2026/02/06 18:38:53 WEB_RELEASE_DEBUG traceId=1770374333357000666-7242 step=create_task_return taskCreated=true taskId=1002 skipReason=
+2026/02/06 18:38:53 WEB_RELEASE_DEBUG traceId=1770374333357000666-7242 step=response taskCreated=true taskId=1002 skipReason=
+[GIN] 2026/02/06 - 18:38:53 | 200 |   28.710324ms |    20.2.140.226 | POST     "/api/v1/origin-sets/bind-website"
+[GIN] 2026/02/06 - 18:38:54 | 404 |         561ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+2026/02/06 18:38:54 [Executor] Running once...
+2026/02/06 18:38:54 [Executor] No tasks to execute
+[GIN] 2026/02/06 - 18:38:56 | 400 |      38.352µs |    20.2.140.226 | GET      "/api/v1/agent/tasks/pull?nodeId=12"
+[GIN] 2026/02/06 - 18:38:57 | 404 |         601ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+2026/02/06 18:38:59 [Executor] Running once...
+2026/02/06 18:38:59 [Executor] No tasks to execute
+[GIN] 2026/02/06 - 18:39:00 | 404 |         641ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+[GIN] 2026/02/06 - 18:39:01 | 400 |      13.966µs |    20.2.140.226 | GET      "/api/v1/agent/tasks/pull?nodeId=12"
+[GIN] 2026/02/06 - 18:39:03 | 404 |       1.233µs |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+2026/02/06 18:39:04 [Executor] Running once...
+2026/02/06 18:39:04 [Executor] No tasks to execute
+[GIN] 2026/02/06 - 18:39:06 | 400 |      12.644µs |    20.2.140.226 | GET      "/api/v1/agent/tasks/pull?nodeId=12"
+[GIN] 2026/02/06 - 18:39:06 | 404 |         441ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+2026/02/06 18:39:09 [Executor] Running once...
+2026/02/06 18:39:09 [Executor] No tasks to execute
+[GIN] 2026/02/06 - 18:39:09 | 404 |         350ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+[GIN] 2026/02/06 - 18:39:11 | 400 |      14.076µs |    20.2.140.226 | GET      "/api/v1/agent/tasks/pull?nodeId=12"
+[GIN] 2026/02/06 - 18:39:12 | 404 |         561ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+2026/02/06 18:39:14 [Executor] Running once...
+2026/02/06 18:39:14 [Executor] No tasks to execute
+[GIN] 2026/02/06 - 18:39:15 | 404 |         562ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+[GIN] 2026/02/06 - 18:39:16 | 400 |      20.869µs |    20.2.140.226 | GET      "/api/v1/agent/tasks/pull?nodeId=12"
+[GIN] 2026/02/06 - 18:39:18 | 404 |         460ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+2026/02/06 18:39:19 [Executor] Running once...
+2026/02/06 18:39:19 [DNS Worker] Tick: processing DNS records...
+2026/02/06 18:39:19 [Executor] No tasks to execute
+2026/02/06 18:39:19 [DNS Service] GetDeletionRecords: found 0 records (limit=10, error=<nil>)
+2026/02/06 18:39:19 [DNS Worker] Tick done: present_candidates=0, absent_candidates=0, claimed_running=0, claim_skipped=0, success=0, error=0, deleted=0
+[GIN] 2026/02/06 - 18:39:21 | 404 |         841ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+[GIN] 2026/02/06 - 18:39:21 | 400 |       10.54µs |    20.2.140.226 | GET      "/api/v1/agent/tasks/pull?nodeId=12"
+[GIN] 2026/02/06 - 18:39:24 | 404 |         561ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+2026/02/06 18:39:24 [Executor] Running once...
+2026/02/06 18:39:24 [Executor] No tasks to execute
+[GIN] 2026/02/06 - 18:39:26 | 400 |      15.759µs |    20.2.140.226 | GET      "/api/v1/agent/tasks/pull?nodeId=12"
+[GIN] 2026/02/06 - 18:39:27 | 404 |         561ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+2026/02/06 18:39:29 [Executor] Running once...
+2026/02/06 18:39:29 [Executor] No tasks to execute
+[GIN] 2026/02/06 - 18:39:30 | 404 |         562ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+[GIN] 2026/02/06 - 18:39:31 | 400 |      12.704µs |    20.2.140.226 | GET      "/api/v1/agent/tasks/pull?nodeId=12"
+[GIN] 2026/02/06 - 18:39:33 | 404 |         561ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+2026/02/06 18:39:34 [Executor] Running once...
+2026/02/06 18:39:34 [Executor] No tasks to execute
+[GIN] 2026/02/06 - 18:39:36 | 400 |      17.854µs |    20.2.140.226 | GET      "/api/v1/agent/tasks/pull?nodeId=12"
+[GIN] 2026/02/06 - 18:39:36 | 404 |         351ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+[GIN] 2026/02/06 - 18:39:39 | 404 |         722ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+2026/02/06 18:39:39 [Executor] Running once...
+2026/02/06 18:39:39 [Executor] No tasks to execute
+[GIN] 2026/02/06 - 18:39:41 | 400 |      13.005µs |    20.2.140.226 | GET      "/api/v1/agent/tasks/pull?nodeId=12"
+[GIN] 2026/02/06 - 18:39:42 | 404 |         561ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+2026/02/06 18:39:44 [Executor] Running once...
+2026/02/06 18:39:44 [Executor] No tasks to execute
+[GIN] 2026/02/06 - 18:39:45 | 404 |         611ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+[GIN] 2026/02/06 - 18:39:46 | 400 |      12.724µs |    20.2.140.226 | GET      "/api/v1/agent/tasks/pull?nodeId=12"
+[GIN] 2026/02/06 - 18:39:48 | 404 |         561ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+2026/02/06 18:39:49 [Executor] Running once...
+2026/02/06 18:39:49 [DNS Worker] Tick: processing DNS records...
+2026/02/06 18:39:49 [Executor] No tasks to execute
+2026/02/06 18:39:49 [DNS Service] GetDeletionRecords: found 0 records (limit=10, error=<nil>)
+2026/02/06 18:39:49 [DNS Worker] Tick done: present_candidates=0, absent_candidates=0, claimed_running=0, claim_skipped=0, success=0, error=0, deleted=0
+[GIN] 2026/02/06 - 18:39:51 | 404 |         581ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+[GIN] 2026/02/06 - 18:39:51 | 400 |      15.219µs |    20.2.140.226 | GET      "/api/v1/agent/tasks/pull?nodeId=12"
+[GIN] 2026/02/06 - 18:39:54 | 404 |         622ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+2026/02/06 18:39:54 [Executor] Running once...
+2026/02/06 18:39:54 [Executor] No tasks to execute
+[GIN] 2026/02/06 - 18:39:56 | 400 |      15.469µs |    20.2.140.226 | GET      "/api/v1/agent/tasks/pull?nodeId=12"
+[GIN] 2026/02/06 - 18:39:57 | 404 |         491ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+2026/02/06 18:39:59 [Executor] Running once...
+2026/02/06 18:39:59 [Executor] No tasks to execute
+[GIN] 2026/02/06 - 18:40:00 | 404 |         561ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+[GIN] 2026/02/06 - 18:40:01 | 400 |      13.245µs |    20.2.140.226 | GET      "/api/v1/agent/tasks/pull?nodeId=12"
+[GIN] 2026/02/06 - 18:40:03 | 404 |         721ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+2026/02/06 18:40:04 [Executor] Running once...
+2026/02/06 18:40:04 [Executor] No tasks to execute
+[GIN] 2026/02/06 - 18:40:06 | 404 |         521ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+[GIN] 2026/02/06 - 18:40:06 | 400 |      13.175µs |    20.2.140.226 | GET      "/api/v1/agent/tasks/pull?nodeId=12"
+[GIN] 2026/02/06 - 18:40:09 | 404 |         722ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+2026/02/06 18:40:09 [Executor] Running once...
+2026/02/06 18:40:09 [Executor] No tasks to execute
+[GIN] 2026/02/06 - 18:40:11 | 400 |      19.055µs |    20.2.140.226 | GET      "/api/v1/agent/tasks/pull?nodeId=12"
+[GIN] 2026/02/06 - 18:40:12 | 404 |         591ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+2026/02/06 18:40:14 [Executor] Running once...
+2026/02/06 18:40:14 [Executor] No tasks to execute
+[GIN] 2026/02/06 - 18:40:15 | 404 |         582ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+[GIN] 2026/02/06 - 18:40:16 | 400 |      12.634µs |    20.2.140.226 | GET      "/api/v1/agent/tasks/pull?nodeId=12"
+[GIN] 2026/02/06 - 18:40:18 | 404 |         601ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+2026/02/06 18:40:19 [Executor] Running once...
+2026/02/06 18:40:19 [DNS Worker] Tick: processing DNS records...
+2026/02/06 18:40:19 [RiskScanner] Running scheduled scan...
+2026/02/06 18:40:19 [RiskScanner] Starting scan...
+2026/02/06 18:40:19 [Executor] No tasks to execute
+2026/02/06 18:40:19 [DNS Service] GetDeletionRecords: found 0 records (limit=10, error=<nil>)
+2026/02/06 18:40:19 [DNS Worker] Tick done: present_candidates=0, absent_candidates=0, claimed_running=0, claim_skipped=0, success=0, error=0, deleted=0
+2026/02/06 18:40:19 [RiskScanner] Scan completed: 0 risks detected, 0 new, 0 updated
+[GIN] 2026/02/06 - 18:40:21 | 404 |         561ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+[GIN] 2026/02/06 - 18:40:21 | 400 |      29.325µs |    20.2.140.226 | GET      "/api/v1/agent/tasks/pull?nodeId=12"
+[GIN] 2026/02/06 - 18:40:24 | 404 |         551ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+2026/02/06 18:40:24 [Executor] Running once...
+2026/02/06 18:40:24 [Executor] No tasks to execute
+[GIN] 2026/02/06 - 18:40:26 | 400 |      13.886µs |    20.2.140.226 | GET      "/api/v1/agent/tasks/pull?nodeId=12"
+[GIN] 2026/02/06 - 18:40:27 | 404 |         641ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+2026/02/06 18:40:28 WEB_RELEASE_DEBUG traceId=1770374428640279950-2045 step=bind_website_enter websiteId=41 originSetId=1
+2026/02/06 18:40:28 WEB_RELEASE_DEBUG traceId=1770374428640279950-2045 step=create_task_call websiteId=41 originSetId=1
+2026/02/06 18:40:28 WEB_RELEASE_DEBUG traceId=1770374428640279950-2045 step=hash_input_ready bytesLen=189 sha256=3e84fedd48cbf40a0886ee922bc97d2e8e4505853585285a9005de3a604f3978
+
+2026/02/06 18:40:28 [31;1m/opt/go_cmdb/internal/service/release_task_service.go:333 [35;1mrecord not found
+[0m[33m[0.641ms] [34;1m[rows:0][0m SELECT * FROM `release_tasks` WHERE target_type = 'website' AND target_id = 41 AND content_hash = '3e84fedd48cbf40a0886ee922bc97d2e8e4505853585285a9005de3a604f3978' AND status IN ('pending', 'running') ORDER BY `release_tasks`.`id` LIMIT 1
+2026/02/06 18:40:28 [Dispatcher] getTargetNodes SQL: SELECT DISTINCT nodes.id FROM `line_groups` JOIN node_group_ips ON line_groups.node_group_id = node_group_ips.node_group_id JOIN node_ips ON node_group_ips.ip_id = node_ips.id JOIN nodes ON node_ips.node_id = nodes.id WHERE line_groups.id = 3 AND nodes.enabled = true AND nodes.status = 'online' AND node_ips.enabled = true AND node_ips.status = 'active'
+2026/02/06 18:40:28 [Dispatcher] getTargetNodes result: lineGroupId=3, nodeIds=[131 132], count=2
+2026/02/06 18:40:28 [Dispatcher] Created agent_task: idKey=release-1003-node-131, nodeId=131
+2026/02/06 18:40:28 [Dispatcher] Created agent_task: idKey=release-1003-node-132, nodeId=132
+2026/02/06 18:40:28 [Dispatcher] EnsureDispatched completed: releaseTaskId=1003, targetNodes=2, created=2, skipped=0, agentTaskCountAfter=0
+2026/02/06 18:40:28 WEB_RELEASE_DEBUG traceId=1770374428640279950-2045 step=dispatch_success releaseTaskId=1003
+2026/02/06 18:40:28 WEB_RELEASE_DEBUG traceId=1770374428640279950-2045 step=create_task_return taskCreated=true taskId=1003 skipReason=
+2026/02/06 18:40:28 WEB_RELEASE_DEBUG traceId=1770374428640279950-2045 step=response taskCreated=true taskId=1003 skipReason=
+[GIN] 2026/02/06 - 18:40:28 | 200 |   46.696983ms |    20.2.140.226 | POST     "/api/v1/origin-sets/bind-website"
+2026/02/06 18:40:29 [Executor] Running once...
+2026/02/06 18:40:29 [Executor] Found 1 tasks to execute
+2026/02/06 18:40:29 [Executor] Processing task 1003 (status=pending)
+2026/02/06 18:40:29 [Executor] Task 1003 status updated to running
+2026/02/06 18:40:29 [Runner] Start running release task 1003 (version=1)
+2026/02/06 18:40:29 [Runner] Warning: Table 'release_task_nodes' does not exist. Degrading to skip release_task_nodes-dependent logic. This warning will only be printed once.
+2026/02/06 18:40:29 [Runner] Found 0 batches for release task 1003
+2026/02/06 18:40:29 [Runner] No batches found for release task 1003. Skipping execution (likely due to missing release_task_nodes table).
+2026/02/06 18:40:29 [Executor] Task 1003 execution completed
+[GIN] 2026/02/06 - 18:40:30 | 404 |         651ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+[GIN] 2026/02/06 - 18:40:31 | 400 |       15.92µs |    20.2.140.226 | GET      "/api/v1/agent/tasks/pull?nodeId=12"
+[GIN] 2026/02/06 - 18:40:33 | 404 |         561ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+2026/02/06 18:40:34 [Executor] Running once...
+2026/02/06 18:40:34 [Executor] Found 1 tasks to execute
+2026/02/06 18:40:34 [Executor] Processing task 1003 (status=running)
+2026/02/06 18:40:34 [Runner] Start running release task 1003 (version=1)
+2026/02/06 18:40:34 [Runner] Found 0 batches for release task 1003
+2026/02/06 18:40:34 [Runner] No batches found for release task 1003. Skipping execution (likely due to missing release_task_nodes table).
+2026/02/06 18:40:34 [Executor] Task 1003 execution completed
+[GIN] 2026/02/06 - 18:40:36 | 404 |         541ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+[GIN] 2026/02/06 - 18:40:36 | 400 |       10.73µs |    20.2.140.226 | GET      "/api/v1/agent/tasks/pull?nodeId=12"
+[GIN] 2026/02/06 - 18:40:39 | 404 |         561ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+2026/02/06 18:40:39 [Executor] Running once...
+2026/02/06 18:40:39 [Executor] Found 1 tasks to execute
+2026/02/06 18:40:39 [Executor] Processing task 1003 (status=running)
+2026/02/06 18:40:39 [Runner] Start running release task 1003 (version=1)
+2026/02/06 18:40:39 [Runner] Found 0 batches for release task 1003
+2026/02/06 18:40:39 [Runner] No batches found for release task 1003. Skipping execution (likely due to missing release_task_nodes table).
+2026/02/06 18:40:39 [Executor] Task 1003 execution completed
+[GIN] 2026/02/06 - 18:40:41 | 400 |      15.409µs |    20.2.140.226 | GET      "/api/v1/agent/tasks/pull?nodeId=12"
+[GIN] 2026/02/06 - 18:40:42 | 404 |         561ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+2026/02/06 18:40:44 [Executor] Running once...
+2026/02/06 18:40:44 [Executor] Found 1 tasks to execute
+2026/02/06 18:40:44 [Executor] Processing task 1003 (status=running)
+2026/02/06 18:40:44 [Runner] Start running release task 1003 (version=1)
+2026/02/06 18:40:44 [Runner] Found 0 batches for release task 1003
+2026/02/06 18:40:44 [Runner] No batches found for release task 1003. Skipping execution (likely due to missing release_task_nodes table).
+2026/02/06 18:40:44 [Executor] Task 1003 execution completed
+[GIN] 2026/02/06 - 18:40:45 | 404 |         711ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+[GIN] 2026/02/06 - 18:40:46 | 400 |      13.867µs |    20.2.140.226 | GET      "/api/v1/agent/tasks/pull?nodeId=12"
+[GIN] 2026/02/06 - 18:40:48 | 404 |         601ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+2026/02/06 18:40:49 [Executor] Running once...
+2026/02/06 18:40:49 [DNS Worker] Tick: processing DNS records...
+2026/02/06 18:40:49 [Executor] Found 1 tasks to execute
+2026/02/06 18:40:49 [Executor] Processing task 1003 (status=running)
+2026/02/06 18:40:49 [Runner] Start running release task 1003 (version=1)
+2026/02/06 18:40:49 [Runner] Found 0 batches for release task 1003
+2026/02/06 18:40:49 [Runner] No batches found for release task 1003. Skipping execution (likely due to missing release_task_nodes table).
+2026/02/06 18:40:49 [Executor] Task 1003 execution completed
+2026/02/06 18:40:49 [DNS Service] GetDeletionRecords: found 0 records (limit=10, error=<nil>)
+2026/02/06 18:40:49 [DNS Worker] Tick done: present_candidates=0, absent_candidates=0, claimed_running=0, claim_skipped=0, success=0, error=0, deleted=0
+[GIN] 2026/02/06 - 18:40:51 | 404 |         561ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+[GIN] 2026/02/06 - 18:40:51 | 400 |       9.868µs |    20.2.140.226 | GET      "/api/v1/agent/tasks/pull?nodeId=12"
+[GIN] 2026/02/06 - 18:40:54 | 404 |       1.674µs |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+2026/02/06 18:40:54 [Executor] Running once...
+2026/02/06 18:40:54 [Executor] Found 1 tasks to execute
+2026/02/06 18:40:54 [Executor] Processing task 1003 (status=running)
+2026/02/06 18:40:54 [Runner] Start running release task 1003 (version=1)
+2026/02/06 18:40:54 [Runner] Found 0 batches for release task 1003
+2026/02/06 18:40:54 [Runner] No batches found for release task 1003. Skipping execution (likely due to missing release_task_nodes table).
+2026/02/06 18:40:54 [Executor] Task 1003 execution completed
+[GIN] 2026/02/06 - 18:40:56 | 400 |      13.816µs |    20.2.140.226 | GET      "/api/v1/agent/tasks/pull?nodeId=12"
+[GIN] 2026/02/06 - 18:40:57 | 404 |         601ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+2026/02/06 18:40:59 [Executor] Running once...
+2026/02/06 18:40:59 [Executor] Found 1 tasks to execute
+2026/02/06 18:40:59 [Executor] Processing task 1003 (status=running)
+2026/02/06 18:40:59 [Runner] Start running release task 1003 (version=1)
+2026/02/06 18:40:59 [Runner] Found 0 batches for release task 1003
+2026/02/06 18:40:59 [Runner] No batches found for release task 1003. Skipping execution (likely due to missing release_task_nodes table).
+2026/02/06 18:40:59 [Executor] Task 1003 execution completed
+[GIN] 2026/02/06 - 18:41:00 | 404 |         561ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+[GIN] 2026/02/06 - 18:41:01 | 400 |      13.546µs |    20.2.140.226 | GET      "/api/v1/agent/tasks/pull?nodeId=12"
+[GIN] 2026/02/06 - 18:41:03 | 404 |         531ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+2026/02/06 18:41:04 [Executor] Running once...
+2026/02/06 18:41:04 [Executor] Found 1 tasks to execute
+2026/02/06 18:41:04 [Executor] Processing task 1003 (status=running)
+2026/02/06 18:41:04 [Runner] Start running release task 1003 (version=1)
+2026/02/06 18:41:04 [Runner] Found 0 batches for release task 1003
+2026/02/06 18:41:04 [Runner] No batches found for release task 1003. Skipping execution (likely due to missing release_task_nodes table).
+2026/02/06 18:41:04 [Executor] Task 1003 execution completed
+[GIN] 2026/02/06 - 18:41:06 | 404 |         592ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+[GIN] 2026/02/06 - 18:41:06 | 400 |      13.134µs |    20.2.140.226 | GET      "/api/v1/agent/tasks/pull?nodeId=12"
+[GIN] 2026/02/06 - 18:41:09 | 404 |         551ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+2026/02/06 18:41:09 [Executor] Running once...
+2026/02/06 18:41:09 [Executor] Found 1 tasks to execute
+2026/02/06 18:41:09 [Executor] Processing task 1003 (status=running)
+2026/02/06 18:41:09 [Runner] Start running release task 1003 (version=1)
+2026/02/06 18:41:09 [Runner] Found 0 batches for release task 1003
+2026/02/06 18:41:09 [Runner] No batches found for release task 1003. Skipping execution (likely due to missing release_task_nodes table).
+2026/02/06 18:41:09 [Executor] Task 1003 execution completed
+[GIN] 2026/02/06 - 18:41:11 | 200 |    7.908782ms |    20.2.140.226 | GET      "/api/v1/agent/tasks/pull?limit=1"
+[GIN] 2026/02/06 - 18:41:11 | 200 |   11.924119ms |    20.2.140.226 | POST     "/api/v1/agent/tasks/update-status"
+[GIN] 2026/02/06 - 18:41:11 | 200 |    7.214843ms |    20.2.140.226 | GET      "/api/v1/agent/tasks/pull?limit=1"
+[GIN] 2026/02/06 - 18:41:11 | 200 |    9.131269ms |    20.2.140.226 | POST     "/api/v1/agent/tasks/update-status"
+[GIN] 2026/02/06 - 18:41:11 | 400 |      13.836µs |    20.2.140.226 | GET      "/api/v1/agent/tasks/pull?nodeId=12"
+[GIN] 2026/02/06 - 18:41:12 | 404 |         571ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+2026/02/06 18:41:14 [Executor] Running once...
+2026/02/06 18:41:14 [Executor] No tasks to execute
+[GIN] 2026/02/06 - 18:41:15 | 404 |         602ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+[GIN] 2026/02/06 - 18:41:16 | 400 |      17.753µs |    20.2.140.226 | GET      "/api/v1/agent/tasks/pull?nodeId=12"
+[GIN] 2026/02/06 - 18:41:18 | 404 |         611ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+2026/02/06 18:41:19 [Executor] Running once...
+2026/02/06 18:41:19 [DNS Worker] Tick: processing DNS records...
+2026/02/06 18:41:19 [Executor] No tasks to execute
+2026/02/06 18:41:19 [DNS Service] GetDeletionRecords: found 0 records (limit=10, error=<nil>)
+2026/02/06 18:41:19 [DNS Worker] Tick done: present_candidates=0, absent_candidates=0, claimed_running=0, claim_skipped=0, success=0, error=0, deleted=0
+[GIN] 2026/02/06 - 18:41:21 | 400 |      14.557µs |    20.2.140.226 | GET      "/api/v1/agent/tasks/pull?nodeId=12"
+[GIN] 2026/02/06 - 18:41:21 | 404 |         351ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+[GIN] 2026/02/06 - 18:41:24 | 404 |         551ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+2026/02/06 18:41:24 [Executor] Running once...
+2026/02/06 18:41:24 [Executor] No tasks to execute
+[GIN] 2026/02/06 - 18:41:26 | 400 |      15.449µs |    20.2.140.226 | GET      "/api/v1/agent/tasks/pull?nodeId=12"
+[GIN] 2026/02/06 - 18:41:27 | 404 |         601ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+2026/02/06 18:41:29 [Executor] Running once...
+2026/02/06 18:41:29 [Executor] No tasks to execute
+[GIN] 2026/02/06 - 18:41:30 | 404 |         561ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+[GIN] 2026/02/06 - 18:41:31 | 400 |      17.002µs |    20.2.140.226 | GET      "/api/v1/agent/tasks/pull?nodeId=12"
+[GIN] 2026/02/06 - 18:41:33 | 404 |         531ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+2026/02/06 18:41:34 [Executor] Running once...
+2026/02/06 18:41:34 [Executor] No tasks to execute
+[GIN] 2026/02/06 - 18:41:36 | 404 |         531ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+[GIN] 2026/02/06 - 18:41:36 | 400 |      10.991µs |    20.2.140.226 | GET      "/api/v1/agent/tasks/pull?nodeId=12"
+[GIN] 2026/02/06 - 18:41:38 | 404 |         561ns | 206.189.169.104 | GET      "/login"
+[GIN] 2026/02/06 - 18:41:39 | 404 |         401ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+2026/02/06 18:41:39 [Executor] Running once...
+2026/02/06 18:41:39 [Executor] No tasks to execute
+[GIN] 2026/02/06 - 18:41:41 | 400 |      15.018µs |    20.2.140.226 | GET      "/api/v1/agent/tasks/pull?nodeId=12"
+[GIN] 2026/02/06 - 18:41:42 | 404 |         631ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+2026/02/06 18:41:44 [Executor] Running once...
+2026/02/06 18:41:44 [Executor] No tasks to execute
+[GIN] 2026/02/06 - 18:41:45 | 404 |         551ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+[GIN] 2026/02/06 - 18:41:46 | 400 |      36.439µs |    20.2.140.226 | GET      "/api/v1/agent/tasks/pull?nodeId=12"
+[GIN] 2026/02/06 - 18:41:48 | 404 |         581ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+2026/02/06 18:41:49 [DNS Worker] Tick: processing DNS records...
+2026/02/06 18:41:49 [Executor] Running once...
+2026/02/06 18:41:49 [Executor] No tasks to execute
+2026/02/06 18:41:49 [DNS Service] GetDeletionRecords: found 0 records (limit=10, error=<nil>)
+2026/02/06 18:41:49 [DNS Worker] Tick done: present_candidates=0, absent_candidates=0, claimed_running=0, claim_skipped=0, success=0, error=0, deleted=0
+[GIN] 2026/02/06 - 18:41:51 | 404 |         551ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+[GIN] 2026/02/06 - 18:41:51 | 400 |      16.581µs |    20.2.140.226 | GET      "/api/v1/agent/tasks/pull?nodeId=12"
+[GIN] 2026/02/06 - 18:41:54 | 404 |         551ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+2026/02/06 18:41:54 [Executor] Running once...
+2026/02/06 18:41:54 [Executor] No tasks to execute
+[GIN] 2026/02/06 - 18:41:56 | 400 |      13.195µs |    20.2.140.226 | GET      "/api/v1/agent/tasks/pull?nodeId=12"
+[GIN] 2026/02/06 - 18:41:57 | 404 |         601ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+2026/02/06 18:41:59 [Executor] Running once...
+2026/02/06 18:41:59 [Executor] No tasks to execute
+[GIN] 2026/02/06 - 18:42:00 | 404 |       1.413µs |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+[GIN] 2026/02/06 - 18:42:01 | 400 |      12.794µs |    20.2.140.226 | GET      "/api/v1/agent/tasks/pull?nodeId=12"
+[GIN] 2026/02/06 - 18:42:03 | 404 |         541ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+2026/02/06 18:42:04 [Executor] Running once...
+2026/02/06 18:42:04 [Executor] No tasks to execute
+[GIN] 2026/02/06 - 18:42:06 | 404 |         621ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+[GIN] 2026/02/06 - 18:42:06 | 400 |      14.077µs |    20.2.140.226 | GET      "/api/v1/agent/tasks/pull?nodeId=12"
+[GIN] 2026/02/06 - 18:42:09 | 404 |         561ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+2026/02/06 18:42:09 [Executor] Running once...
+2026/02/06 18:42:09 [Executor] No tasks to execute
+[GIN] 2026/02/06 - 18:42:11 | 400 |      13.345µs |    20.2.140.226 | GET      "/api/v1/agent/tasks/pull?nodeId=12"
+[GIN] 2026/02/06 - 18:42:12 | 404 |         541ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+2026/02/06 18:42:14 [Executor] Running once...
+2026/02/06 18:42:14 [Executor] No tasks to execute
+[GIN] 2026/02/06 - 18:42:15 | 404 |         561ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+[GIN] 2026/02/06 - 18:42:16 | 400 |      12.834µs |    20.2.140.226 | GET      "/api/v1/agent/tasks/pull?nodeId=12"
+[GIN] 2026/02/06 - 18:42:18 | 404 |         611ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+2026/02/06 18:42:19 [DNS Worker] Tick: processing DNS records...
+2026/02/06 18:42:19 [Executor] Running once...
+2026/02/06 18:42:19 [Executor] No tasks to execute
+2026/02/06 18:42:19 [DNS Service] GetDeletionRecords: found 0 records (limit=10, error=<nil>)
+2026/02/06 18:42:19 [DNS Worker] Tick done: present_candidates=0, absent_candidates=0, claimed_running=0, claim_skipped=0, success=0, error=0, deleted=0
+[GIN] 2026/02/06 - 18:42:21 | 400 |      20.058µs |    20.2.140.226 | GET      "/api/v1/agent/tasks/pull?nodeId=12"
+[GIN] 2026/02/06 - 18:42:21 | 404 |         271ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+[GIN] 2026/02/06 - 18:42:24 | 404 |         491ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+2026/02/06 18:42:24 [Executor] Running once...
+2026/02/06 18:42:24 [Executor] No tasks to execute
+[GIN] 2026/02/06 - 18:42:26 | 400 |      19.165µs |    20.2.140.226 | GET      "/api/v1/agent/tasks/pull?nodeId=12"
+[GIN] 2026/02/06 - 18:42:27 | 404 |         591ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+2026/02/06 18:42:29 [Executor] Running once...
+2026/02/06 18:42:29 [Executor] No tasks to execute
+[GIN] 2026/02/06 - 18:42:30 | 404 |       1.192µs |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+[GIN] 2026/02/06 - 18:42:31 | 400 |      14.077µs |    20.2.140.226 | GET      "/api/v1/agent/tasks/pull?nodeId=12"
+[GIN] 2026/02/06 - 18:42:33 | 404 |         531ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+2026/02/06 18:42:34 [Executor] Running once...
+2026/02/06 18:42:34 [Executor] No tasks to execute
+[GIN] 2026/02/06 - 18:42:36 | 404 |       1.002µs |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+[GIN] 2026/02/06 - 18:42:36 | 400 |      14.217µs |    20.2.140.226 | GET      "/api/v1/agent/tasks/pull?nodeId=12"
+[GIN] 2026/02/06 - 18:42:39 | 404 |         591ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+2026/02/06 18:42:39 [Executor] Running once...
+2026/02/06 18:42:39 [Executor] No tasks to execute
+[GIN] 2026/02/06 - 18:42:41 | 400 |       15.92µs |    20.2.140.226 | GET      "/api/v1/agent/tasks/pull?nodeId=12"
+[GIN] 2026/02/06 - 18:42:42 | 404 |         590ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+2026/02/06 18:42:44 [Executor] Running once...
+2026/02/06 18:42:44 [Executor] No tasks to execute
+[GIN] 2026/02/06 - 18:42:45 | 404 |         572ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+[GIN] 2026/02/06 - 18:42:46 | 400 |      13.676µs |    20.2.140.226 | GET      "/api/v1/agent/tasks/pull?nodeId=12"
+[GIN] 2026/02/06 - 18:42:48 | 404 |         561ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+2026/02/06 18:42:49 [Executor] Running once...
+2026/02/06 18:42:49 [DNS Worker] Tick: processing DNS records...
+2026/02/06 18:42:49 [Executor] No tasks to execute
+2026/02/06 18:42:49 [DNS Service] GetDeletionRecords: found 0 records (limit=10, error=<nil>)
+2026/02/06 18:42:49 [DNS Worker] Tick done: present_candidates=0, absent_candidates=0, claimed_running=0, claim_skipped=0, success=0, error=0, deleted=0
+[GIN] 2026/02/06 - 18:42:51 | 404 |         912ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+[GIN] 2026/02/06 - 18:42:51 | 400 |      35.266µs |    20.2.140.226 | GET      "/api/v1/agent/tasks/pull?nodeId=12"
+[GIN] 2026/02/06 - 18:42:54 | 404 |         601ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+2026/02/06 18:42:54 [Executor] Running once...
+2026/02/06 18:42:54 [Executor] No tasks to execute
+[GIN] 2026/02/06 - 18:42:56 | 400 |      14.297µs |    20.2.140.226 | GET      "/api/v1/agent/tasks/pull?nodeId=12"
+[GIN] 2026/02/06 - 18:42:57 | 404 |         601ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+2026/02/06 18:42:59 [Executor] Running once...
+2026/02/06 18:42:59 [Executor] No tasks to execute
+[GIN] 2026/02/06 - 18:43:00 | 404 |         501ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+[GIN] 2026/02/06 - 18:43:01 | 400 |       21.36µs |    20.2.140.226 | GET      "/api/v1/agent/tasks/pull?nodeId=12"
+[GIN] 2026/02/06 - 18:43:03 | 404 |         521ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+2026/02/06 18:43:04 [Executor] Running once...
+2026/02/06 18:43:04 [Executor] No tasks to execute
+[GIN] 2026/02/06 - 18:43:06 | 404 |         551ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+[GIN] 2026/02/06 - 18:43:06 | 400 |      17.914µs |    20.2.140.226 | GET      "/api/v1/agent/tasks/pull?nodeId=12"
+[GIN] 2026/02/06 - 18:43:09 | 404 |         611ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+2026/02/06 18:43:09 [Executor] Running once...
+2026/02/06 18:43:09 [Executor] No tasks to execute
+[GIN] 2026/02/06 - 18:43:11 | 400 |      12.384µs |    20.2.140.226 | GET      "/api/v1/agent/tasks/pull?nodeId=12"
+[GIN] 2026/02/06 - 18:43:12 | 404 |         552ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+2026/02/06 18:43:14 [Executor] Running once...
+2026/02/06 18:43:14 [Executor] No tasks to execute
+[GIN] 2026/02/06 - 18:43:15 | 404 |         552ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+[GIN] 2026/02/06 - 18:43:16 | 400 |      25.959µs |    20.2.140.226 | GET      "/api/v1/agent/tasks/pull?nodeId=12"
+[GIN] 2026/02/06 - 18:43:18 | 404 |         621ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+2026/02/06 18:43:19 [Executor] Running once...
+2026/02/06 18:43:19 [DNS Worker] Tick: processing DNS records...
+2026/02/06 18:43:19 [Executor] No tasks to execute
+2026/02/06 18:43:19 [DNS Service] GetDeletionRecords: found 0 records (limit=10, error=<nil>)
+2026/02/06 18:43:19 [DNS Worker] Tick done: present_candidates=0, absent_candidates=0, claimed_running=0, claim_skipped=0, success=0, error=0, deleted=0
+[GIN] 2026/02/06 - 18:43:21 | 400 |      13.004µs |    20.2.140.226 | GET      "/api/v1/agent/tasks/pull?nodeId=12"
+[GIN] 2026/02/06 - 18:43:21 | 404 |       4.138µs |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+[GIN] 2026/02/06 - 18:43:24 | 404 |         541ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+2026/02/06 18:43:24 [Executor] Running once...
+2026/02/06 18:43:24 [Executor] No tasks to execute
+[GIN] 2026/02/06 - 18:43:26 | 400 |      12.895µs |    20.2.140.226 | GET      "/api/v1/agent/tasks/pull?nodeId=12"
+[GIN] 2026/02/06 - 18:43:27 | 404 |         612ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+2026/02/06 18:43:29 [Executor] Running once...
+2026/02/06 18:43:29 [Executor] No tasks to execute
+[GIN] 2026/02/06 - 18:43:30 | 404 |       1.012µs |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+[GIN] 2026/02/06 - 18:43:31 | 400 |      21.391µs |    20.2.140.226 | GET      "/api/v1/agent/tasks/pull?nodeId=12"
+[GIN] 2026/02/06 - 18:43:33 | 404 |         591ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+2026/02/06 18:43:34 [Executor] Running once...
+2026/02/06 18:43:34 [Executor] No tasks to execute
+[GIN] 2026/02/06 - 18:43:36 | 400 |      17.192µs |    20.2.140.226 | GET      "/api/v1/agent/tasks/pull?nodeId=12"
+[GIN] 2026/02/06 - 18:43:36 | 404 |         411ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+[GIN] 2026/02/06 - 18:43:39 | 404 |         561ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+2026/02/06 18:43:39 [Executor] Running once...
+2026/02/06 18:43:39 [Executor] No tasks to execute
+[GIN] 2026/02/06 - 18:43:41 | 400 |      12.914µs |    20.2.140.226 | GET      "/api/v1/agent/tasks/pull?nodeId=12"
+[GIN] 2026/02/06 - 18:43:42 | 404 |         561ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+2026/02/06 18:43:44 [Executor] Running once...
+2026/02/06 18:43:44 [Executor] No tasks to execute
+[GIN] 2026/02/06 - 18:43:45 | 404 |         602ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+[GIN] 2026/02/06 - 18:43:46 | 400 |      12.764µs |    20.2.140.226 | GET      "/api/v1/agent/tasks/pull?nodeId=12"
+[GIN] 2026/02/06 - 18:43:48 | 404 |         591ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+2026/02/06 18:43:49 [DNS Worker] Tick: processing DNS records...
+2026/02/06 18:43:49 [Executor] Running once...
+2026/02/06 18:43:49 [Executor] No tasks to execute
+2026/02/06 18:43:49 [DNS Service] GetDeletionRecords: found 0 records (limit=10, error=<nil>)
+2026/02/06 18:43:49 [DNS Worker] Tick done: present_candidates=0, absent_candidates=0, claimed_running=0, claim_skipped=0, success=0, error=0, deleted=0
+[GIN] 2026/02/06 - 18:43:51 | 404 |         592ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+[GIN] 2026/02/06 - 18:43:51 | 400 |      13.576µs |    20.2.140.226 | GET      "/api/v1/agent/tasks/pull?nodeId=12"
+[GIN] 2026/02/06 - 18:43:54 | 404 |         531ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+2026/02/06 18:43:54 [Executor] Running once...
+2026/02/06 18:43:54 [Executor] No tasks to execute
+[GIN] 2026/02/06 - 18:43:56 | 400 |        15.7µs |    20.2.140.226 | GET      "/api/v1/agent/tasks/pull?nodeId=12"
+[GIN] 2026/02/06 - 18:43:57 | 404 |         641ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+2026/02/06 18:43:59 [Executor] Running once...
+2026/02/06 18:43:59 [Executor] No tasks to execute
+[GIN] 2026/02/06 - 18:44:00 | 404 |         570ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+[GIN] 2026/02/06 - 18:44:01 | 400 |       15.48µs |    20.2.140.226 | GET      "/api/v1/agent/tasks/pull?nodeId=12"
+[GIN] 2026/02/06 - 18:44:03 | 404 |         500ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+2026/02/06 18:44:04 [Executor] Running once...
+2026/02/06 18:44:04 [Executor] No tasks to execute
+[GIN] 2026/02/06 - 18:44:06 | 400 |      13.355µs |    20.2.140.226 | GET      "/api/v1/agent/tasks/pull?nodeId=12"
+[GIN] 2026/02/06 - 18:44:06 | 404 |         391ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+[GIN] 2026/02/06 - 18:44:09 | 404 |         531ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+2026/02/06 18:44:09 [Executor] Running once...
+2026/02/06 18:44:09 [Executor] No tasks to execute
+[GIN] 2026/02/06 - 18:44:11 | 400 |      15.058µs |    20.2.140.226 | GET      "/api/v1/agent/tasks/pull?nodeId=12"
+[GIN] 2026/02/06 - 18:44:12 | 404 |         541ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+2026/02/06 18:44:14 [Executor] Running once...
+2026/02/06 18:44:14 [Executor] No tasks to execute
+[GIN] 2026/02/06 - 18:44:15 | 404 |       1.232µs |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+[GIN] 2026/02/06 - 18:44:16 | 400 |      14.107µs |    20.2.140.226 | GET      "/api/v1/agent/tasks/pull?nodeId=12"
+[GIN] 2026/02/06 - 18:44:18 | 404 |         601ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+2026/02/06 18:44:19 [Executor] Running once...
+2026/02/06 18:44:19 [DNS Worker] Tick: processing DNS records...
+2026/02/06 18:44:19 [Executor] No tasks to execute
+2026/02/06 18:44:19 [DNS Service] GetDeletionRecords: found 0 records (limit=10, error=<nil>)
+2026/02/06 18:44:19 [DNS Worker] Tick done: present_candidates=0, absent_candidates=0, claimed_running=0, claim_skipped=0, success=0, error=0, deleted=0
+[GIN] 2026/02/06 - 18:44:21 | 404 |         611ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+[GIN] 2026/02/06 - 18:44:21 | 400 |      17.593µs |    20.2.140.226 | GET      "/api/v1/agent/tasks/pull?nodeId=12"
+[GIN] 2026/02/06 - 18:44:24 | 404 |         591ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+2026/02/06 18:44:24 [Executor] Running once...
+2026/02/06 18:44:24 [Executor] No tasks to execute
+[GIN] 2026/02/06 - 18:44:26 | 400 |      17.333µs |    20.2.140.226 | GET      "/api/v1/agent/tasks/pull?nodeId=12"
+[GIN] 2026/02/06 - 18:44:27 | 404 |         591ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+2026/02/06 18:44:29 [Executor] Running once...
+2026/02/06 18:44:29 [Executor] No tasks to execute
+[GIN] 2026/02/06 - 18:44:30 | 404 |         781ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+[GIN] 2026/02/06 - 18:44:31 | 400 |      12.573µs |    20.2.140.226 | GET      "/api/v1/agent/tasks/pull?nodeId=12"
+[GIN] 2026/02/06 - 18:44:33 | 404 |         561ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+2026/02/06 18:44:34 [Executor] Running once...
+2026/02/06 18:44:34 [Executor] No tasks to execute
+[GIN] 2026/02/06 - 18:44:36 | 400 |      13.926µs |    20.2.140.226 | GET      "/api/v1/agent/tasks/pull?nodeId=12"
+[GIN] 2026/02/06 - 18:44:36 | 404 |         361ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+[GIN] 2026/02/06 - 18:44:39 | 404 |         531ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+2026/02/06 18:44:39 [Executor] Running once...
+2026/02/06 18:44:39 [Executor] No tasks to execute
+[GIN] 2026/02/06 - 18:44:41 | 400 |      14.167µs |    20.2.140.226 | GET      "/api/v1/agent/tasks/pull?nodeId=12"
+[GIN] 2026/02/06 - 18:44:42 | 404 |         551ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+2026/02/06 18:44:44 [Executor] Running once...
+2026/02/06 18:44:44 [Executor] No tasks to execute
+[GIN] 2026/02/06 - 18:44:45 | 404 |         501ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+[GIN] 2026/02/06 - 18:44:46 | 400 |      12.614µs |    20.2.140.226 | GET      "/api/v1/agent/tasks/pull?nodeId=12"
+[GIN] 2026/02/06 - 18:44:48 | 404 |         591ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+2026/02/06 18:44:49 [Executor] Running once...
+2026/02/06 18:44:49 [DNS Worker] Tick: processing DNS records...
+2026/02/06 18:44:49 [Executor] No tasks to execute
+2026/02/06 18:44:49 [DNS Service] GetDeletionRecords: found 0 records (limit=10, error=<nil>)
+2026/02/06 18:44:49 [DNS Worker] Tick done: present_candidates=0, absent_candidates=0, claimed_running=0, claim_skipped=0, success=0, error=0, deleted=0
+[GIN] 2026/02/06 - 18:44:51 | 404 |         571ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+[GIN] 2026/02/06 - 18:44:51 | 400 |      13.716µs |    20.2.140.226 | GET      "/api/v1/agent/tasks/pull?nodeId=12"
+[GIN] 2026/02/06 - 18:44:54 | 404 |         621ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+2026/02/06 18:44:54 [Executor] Running once...
+2026/02/06 18:44:54 [Executor] No tasks to execute
+[GIN] 2026/02/06 - 18:44:56 | 400 |      13.786µs |    20.2.140.226 | GET      "/api/v1/agent/tasks/pull?nodeId=12"
+[GIN] 2026/02/06 - 18:44:57 | 404 |         592ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+2026/02/06 18:44:59 [Executor] Running once...
+2026/02/06 18:44:59 [Executor] No tasks to execute
+[GIN] 2026/02/06 - 18:45:00 | 404 |         551ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+[GIN] 2026/02/06 - 18:45:01 | 400 |      18.144µs |    20.2.140.226 | GET      "/api/v1/agent/tasks/pull?nodeId=12"
+[GIN] 2026/02/06 - 18:45:03 | 404 |         571ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+2026/02/06 18:45:04 [Executor] Running once...
+2026/02/06 18:45:04 [Executor] No tasks to execute
+[GIN] 2026/02/06 - 18:45:06 | 404 |         561ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+[GIN] 2026/02/06 - 18:45:06 | 400 |      12.113µs |    20.2.140.226 | GET      "/api/v1/agent/tasks/pull?nodeId=12"
+[GIN] 2026/02/06 - 18:45:09 | 404 |         601ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+2026/02/06 18:45:09 [Executor] Running once...
+2026/02/06 18:45:09 [Executor] No tasks to execute
+[GIN] 2026/02/06 - 18:45:11 | 400 |      16.782µs |    20.2.140.226 | GET      "/api/v1/agent/tasks/pull?nodeId=12"
+[GIN] 2026/02/06 - 18:45:12 | 404 |         651ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+2026/02/06 18:45:14 [Executor] Running once...
+2026/02/06 18:45:14 [Executor] No tasks to execute
+[GIN] 2026/02/06 - 18:45:15 | 404 |         531ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+[GIN] 2026/02/06 - 18:45:16 | 400 |      19.697µs |    20.2.140.226 | GET      "/api/v1/agent/tasks/pull?nodeId=12"
+[GIN] 2026/02/06 - 18:45:18 | 404 |         561ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+2026/02/06 18:45:19 [DNS Worker] Tick: processing DNS records...
+2026/02/06 18:45:19 [Executor] Running once...
+2026/02/06 18:45:19 [RiskScanner] Running scheduled scan...
+2026/02/06 18:45:19 [RiskScanner] Starting scan...
+2026/02/06 18:45:19 [Executor] No tasks to execute
+2026/02/06 18:45:19 [DNS Service] GetDeletionRecords: found 0 records (limit=10, error=<nil>)
+2026/02/06 18:45:19 [DNS Worker] Tick done: present_candidates=0, absent_candidates=0, claimed_running=0, claim_skipped=0, success=0, error=0, deleted=0
+2026/02/06 18:45:19 [RiskScanner] Scan completed: 0 risks detected, 0 new, 0 updated
+[GIN] 2026/02/06 - 18:45:21 | 404 |         711ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+[GIN] 2026/02/06 - 18:45:21 | 400 |      15.779µs |    20.2.140.226 | GET      "/api/v1/agent/tasks/pull?nodeId=12"
+[GIN] 2026/02/06 - 18:45:24 | 404 |         571ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+2026/02/06 18:45:24 [Executor] Running once...
+2026/02/06 18:45:24 [Executor] No tasks to execute
+[GIN] 2026/02/06 - 18:45:26 | 400 |      13.746µs |    20.2.140.226 | GET      "/api/v1/agent/tasks/pull?nodeId=12"
+[GIN] 2026/02/06 - 18:45:27 | 404 |         591ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+2026/02/06 18:45:29 [Executor] Running once...
+2026/02/06 18:45:29 [Executor] No tasks to execute
+[GIN] 2026/02/06 - 18:45:30 | 404 |         551ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+[GIN] 2026/02/06 - 18:45:31 | 400 |      17.803µs |    20.2.140.226 | GET      "/api/v1/agent/tasks/pull?nodeId=12"
+[GIN] 2026/02/06 - 18:45:33 | 404 |       1.804µs |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+2026/02/06 18:45:34 [Executor] Running once...
+2026/02/06 18:45:34 [Executor] No tasks to execute
+[GIN] 2026/02/06 - 18:45:36 | 404 |         901ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+[GIN] 2026/02/06 - 18:45:36 | 400 |      13.856µs |    20.2.140.226 | GET      "/api/v1/agent/tasks/pull?nodeId=12"
+[GIN] 2026/02/06 - 18:45:39 | 404 |         641ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+2026/02/06 18:45:39 [Executor] Running once...
+2026/02/06 18:45:39 [Executor] No tasks to execute
+[GIN] 2026/02/06 - 18:45:41 | 400 |      17.573µs |    20.2.140.226 | GET      "/api/v1/agent/tasks/pull?nodeId=12"
+[GIN] 2026/02/06 - 18:45:42 | 404 |         751ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+2026/02/06 18:45:44 [Executor] Running once...
+2026/02/06 18:45:44 [Executor] No tasks to execute
+[GIN] 2026/02/06 - 18:45:45 | 404 |         562ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+[GIN] 2026/02/06 - 18:45:46 | 400 |      12.784µs |    20.2.140.226 | GET      "/api/v1/agent/tasks/pull?nodeId=12"
+[GIN] 2026/02/06 - 18:45:48 | 404 |         571ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+2026/02/06 18:45:49 [Executor] Running once...
+2026/02/06 18:45:49 [DNS Worker] Tick: processing DNS records...
+2026/02/06 18:45:49 [Executor] No tasks to execute
+2026/02/06 18:45:49 [DNS Service] GetDeletionRecords: found 0 records (limit=10, error=<nil>)
+2026/02/06 18:45:49 [DNS Worker] Tick done: present_candidates=0, absent_candidates=0, claimed_running=0, claim_skipped=0, success=0, error=0, deleted=0
+[GIN] 2026/02/06 - 18:45:51 | 404 |         532ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+[GIN] 2026/02/06 - 18:45:51 | 400 |      16.832µs |    20.2.140.226 | GET      "/api/v1/agent/tasks/pull?nodeId=12"
+[GIN] 2026/02/06 - 18:45:54 | 404 |         892ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+2026/02/06 18:45:54 [Executor] Running once...
+2026/02/06 18:45:54 [Executor] No tasks to execute
+[GIN] 2026/02/06 - 18:45:56 | 400 |      40.737µs |    20.2.140.226 | GET      "/api/v1/agent/tasks/pull?nodeId=12"
+[GIN] 2026/02/06 - 18:45:57 | 404 |         601ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+2026/02/06 18:45:59 [Executor] Running once...
+2026/02/06 18:45:59 [Executor] No tasks to execute
+[GIN] 2026/02/06 - 18:46:00 | 404 |         882ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+[GIN] 2026/02/06 - 18:46:01 | 400 |      13.876µs |    20.2.140.226 | GET      "/api/v1/agent/tasks/pull?nodeId=12"
+[GIN] 2026/02/06 - 18:46:03 | 404 |         622ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+2026/02/06 18:46:04 [Executor] Running once...
+2026/02/06 18:46:04 [Executor] No tasks to execute
+[GIN] 2026/02/06 - 18:46:06 | 404 |         561ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+[GIN] 2026/02/06 - 18:46:06 | 400 |      13.396µs |    20.2.140.226 | GET      "/api/v1/agent/tasks/pull?nodeId=12"
+[GIN] 2026/02/06 - 18:46:08 | 404 |       1.042µs |   204.76.203.30 | GET      "/json/"
+[GIN] 2026/02/06 - 18:46:09 | 404 |         612ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+2026/02/06 18:46:09 [Executor] Running once...
+2026/02/06 18:46:09 [Executor] No tasks to execute
+[GIN] 2026/02/06 - 18:46:11 | 400 |      13.435µs |    20.2.140.226 | GET      "/api/v1/agent/tasks/pull?nodeId=12"
+[GIN] 2026/02/06 - 18:46:12 | 404 |         531ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+2026/02/06 18:46:14 [Executor] Running once...
+2026/02/06 18:46:14 [Executor] No tasks to execute
+[GIN] 2026/02/06 - 18:46:15 | 404 |         601ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+[GIN] 2026/02/06 - 18:46:16 | 400 |      15.479µs |    20.2.140.226 | GET      "/api/v1/agent/tasks/pull?nodeId=12"
+[GIN] 2026/02/06 - 18:46:18 | 404 |         551ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+2026/02/06 18:46:19 [Executor] Running once...
+2026/02/06 18:46:19 [DNS Worker] Tick: processing DNS records...
+2026/02/06 18:46:19 [Executor] No tasks to execute
+2026/02/06 18:46:19 [DNS Service] GetDeletionRecords: found 0 records (limit=10, error=<nil>)
+2026/02/06 18:46:19 [DNS Worker] Tick done: present_candidates=0, absent_candidates=0, claimed_running=0, claim_skipped=0, success=0, error=0, deleted=0
+[GIN] 2026/02/06 - 18:46:21 | 404 |         551ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+[GIN] 2026/02/06 - 18:46:21 | 400 |      13.666µs |    20.2.140.226 | GET      "/api/v1/agent/tasks/pull?nodeId=12"
+[GIN] 2026/02/06 - 18:46:24 | 404 |         521ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+2026/02/06 18:46:24 [Executor] Running once...
+2026/02/06 18:46:24 [Executor] No tasks to execute
+[GIN] 2026/02/06 - 18:46:26 | 400 |      12.704µs |    20.2.140.226 | GET      "/api/v1/agent/tasks/pull?nodeId=12"
+[GIN] 2026/02/06 - 18:46:27 | 404 |         601ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+2026/02/06 18:46:29 [Executor] Running once...
+2026/02/06 18:46:29 [Executor] No tasks to execute
+[GIN] 2026/02/06 - 18:46:30 | 404 |         551ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+[GIN] 2026/02/06 - 18:46:31 | 400 |      19.537µs |    20.2.140.226 | GET      "/api/v1/agent/tasks/pull?nodeId=12"
+[GIN] 2026/02/06 - 18:46:33 | 404 |         561ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+2026/02/06 18:46:34 [Executor] Running once...
+2026/02/06 18:46:34 [Executor] No tasks to execute
+[GIN] 2026/02/06 - 18:46:36 | 400 |      17.233µs |    20.2.140.226 | GET      "/api/v1/agent/tasks/pull?nodeId=12"
+[GIN] 2026/02/06 - 18:46:36 | 404 |         190ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+[GIN] 2026/02/06 - 18:46:39 | 404 |         521ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+2026/02/06 18:46:39 [Executor] Running once...
+2026/02/06 18:46:39 [Executor] No tasks to execute
+[GIN] 2026/02/06 - 18:46:41 | 400 |      14.347µs |    20.2.140.226 | GET      "/api/v1/agent/tasks/pull?nodeId=12"
+[GIN] 2026/02/06 - 18:46:42 | 404 |         561ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+2026/02/06 18:46:44 [Executor] Running once...
+2026/02/06 18:46:44 [Executor] No tasks to execute
+[GIN] 2026/02/06 - 18:46:45 | 404 |         501ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+[GIN] 2026/02/06 - 18:46:46 | 400 |      16.982µs |    20.2.140.226 | GET      "/api/v1/agent/tasks/pull?nodeId=12"
+[GIN] 2026/02/06 - 18:46:48 | 404 |         591ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+2026/02/06 18:46:49 [Executor] Running once...
+2026/02/06 18:46:49 [DNS Worker] Tick: processing DNS records...
+2026/02/06 18:46:49 [Executor] No tasks to execute
+2026/02/06 18:46:49 [DNS Service] GetDeletionRecords: found 0 records (limit=10, error=<nil>)
+2026/02/06 18:46:49 [DNS Worker] Tick done: present_candidates=0, absent_candidates=0, claimed_running=0, claim_skipped=0, success=0, error=0, deleted=0
+[GIN] 2026/02/06 - 18:46:51 | 401 |      86.433µs |  13.228.178.233 | GET      "/api/v1/websites?page=1&pageSize=15"
+[GIN] 2026/02/06 - 18:46:51 | 401 |       31.62µs |  13.228.178.233 | GET      "/api/v1/line-groups/options"
+[GIN] 2026/02/06 - 18:46:51 | 401 |      36.008µs |  13.228.178.233 | GET      "/api/v1/origin-groups/options"
+[GIN] 2026/02/06 - 18:46:51 | 404 |         561ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+[GIN] 2026/02/06 - 18:46:51 | 400 |      10.009µs |    20.2.140.226 | GET      "/api/v1/agent/tasks/pull?nodeId=12"
+[GIN] 2026/02/06 - 18:46:53 | 200 |  267.575254ms |  13.228.178.233 | POST     "/api/v1/auth/login?token=123"
+[GIN] 2026/02/06 - 18:46:54 | 404 |         501ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+2026/02/06 18:46:54 [Executor] Running once...
+2026/02/06 18:46:54 [Executor] No tasks to execute
+[GIN] 2026/02/06 - 18:46:56 | 400 |      14.678µs |    20.2.140.226 | GET      "/api/v1/agent/tasks/pull?nodeId=12"
+[GIN] 2026/02/06 - 18:46:57 | 404 |         591ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+[GIN] 2026/02/06 - 18:46:58 | 200 |    2.159584ms |  13.228.178.233 | GET      "/api/v1/nodes?page=1&pageSize=15"
+2026/02/06 18:46:59 [Executor] Running once...
+2026/02/06 18:46:59 [Executor] No tasks to execute
+[GIN] 2026/02/06 - 18:47:00 | 404 |         591ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+[GIN] 2026/02/06 - 18:47:01 | 400 |      13.776µs |    20.2.140.226 | GET      "/api/v1/agent/tasks/pull?nodeId=12"
+[GIN] 2026/02/06 - 18:47:03 | 404 |         561ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+2026/02/06 18:47:04 [Executor] Running once...
+2026/02/06 18:47:04 [Executor] No tasks to execute
+[GIN] 2026/02/06 - 18:47:06 | 404 |         561ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+[GIN] 2026/02/06 - 18:47:06 | 400 |       10.63µs |    20.2.140.226 | GET      "/api/v1/agent/tasks/pull?nodeId=12"
+[GIN] 2026/02/06 - 18:47:09 | 404 |         501ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+2026/02/06 18:47:09 [Executor] Running once...
+2026/02/06 18:47:09 [Executor] No tasks to execute
+[GIN] 2026/02/06 - 18:47:11 | 400 |        15.6µs |    20.2.140.226 | GET      "/api/v1/agent/tasks/pull?nodeId=12"
+[GIN] 2026/02/06 - 18:47:12 | 404 |         561ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+2026/02/06 18:47:14 [Executor] Running once...
+2026/02/06 18:47:14 [Executor] No tasks to execute
+[GIN] 2026/02/06 - 18:47:15 | 404 |         541ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+
+2026/02/06 18:47:16 [31;1m/opt/go_cmdb/api/v1/nodes/handler.go:614 [35;1mError 1451 (23000): Cannot delete or update a parent row: a foreign key constraint fails (`cdn_control`.`agent_tasks`, CONSTRAINT `fk_agent_tasks_node` FOREIGN KEY (`node_id`) REFERENCES `nodes` (`id`))
+[0m[33m[4.421ms] [34;1m[rows:0][0m DELETE FROM `nodes` WHERE `nodes`.`id` = 132
+2026/02/06 18:47:16 [ERROR] failed to delete nodes (code=5002, internal_err=Error 1451 (23000): Cannot delete or update a parent row: a foreign key constraint fails (`cdn_control`.`agent_tasks`, CONSTRAINT `fk_agent_tasks_node` FOREIGN KEY (`node_id`) REFERENCES `nodes` (`id`)))
+[GIN] 2026/02/06 - 18:47:16 | 500 |    4.657085ms |  13.228.178.233 | POST     "/api/v1/nodes/delete"
+[GIN] 2026/02/06 - 18:47:16 | 400 |      13.615µs |    20.2.140.226 | GET      "/api/v1/agent/tasks/pull?nodeId=12"
+[GIN] 2026/02/06 - 18:47:18 | 404 |         551ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+2026/02/06 18:47:19 [Executor] Running once...
+2026/02/06 18:47:19 [DNS Worker] Tick: processing DNS records...
+2026/02/06 18:47:19 [Executor] No tasks to execute
+2026/02/06 18:47:19 [DNS Service] GetDeletionRecords: found 0 records (limit=10, error=<nil>)
+2026/02/06 18:47:19 [DNS Worker] Tick done: present_candidates=0, absent_candidates=0, claimed_running=0, claim_skipped=0, success=0, error=0, deleted=0
+[GIN] 2026/02/06 - 18:47:21 | 400 |      13.555µs |    20.2.140.226 | GET      "/api/v1/agent/tasks/pull?nodeId=12"
+[GIN] 2026/02/06 - 18:47:21 | 404 |         431ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+[GIN] 2026/02/06 - 18:47:24 | 404 |         521ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+2026/02/06 18:47:24 [Executor] Running once...
+2026/02/06 18:47:24 [Executor] No tasks to execute
+[GIN] 2026/02/06 - 18:47:26 | 400 |      18.174µs |    20.2.140.226 | GET      "/api/v1/agent/tasks/pull?nodeId=12"
+[GIN] 2026/02/06 - 18:47:27 | 404 |         551ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+2026/02/06 18:47:29 [Executor] Running once...
+2026/02/06 18:47:29 [Executor] No tasks to execute
+[GIN] 2026/02/06 - 18:47:30 | 404 |         641ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+[GIN] 2026/02/06 - 18:47:31 | 400 |      22.943µs |    20.2.140.226 | GET      "/api/v1/agent/tasks/pull?nodeId=12"
+[GIN] 2026/02/06 - 18:47:33 | 404 |         561ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+2026/02/06 18:47:34 [Executor] Running once...
+2026/02/06 18:47:34 [Executor] No tasks to execute
+[GIN] 2026/02/06 - 18:47:36 | 404 |         511ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+[GIN] 2026/02/06 - 18:47:36 | 400 |       16.17µs |    20.2.140.226 | GET      "/api/v1/agent/tasks/pull?nodeId=12"
+[GIN] 2026/02/06 - 18:47:39 | 404 |         561ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+2026/02/06 18:47:39 [Executor] Running once...
+2026/02/06 18:47:39 [Executor] No tasks to execute
+[GIN] 2026/02/06 - 18:47:41 | 400 |      16.762µs |    20.2.140.226 | GET      "/api/v1/agent/tasks/pull?nodeId=12"
+[GIN] 2026/02/06 - 18:47:42 | 404 |         601ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+2026/02/06 18:47:44 [Executor] Running once...
+2026/02/06 18:47:44 [Executor] No tasks to execute
+[GIN] 2026/02/06 - 18:47:45 | 404 |         982ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+[GIN] 2026/02/06 - 18:47:46 | 400 |      16.521µs |    20.2.140.226 | GET      "/api/v1/agent/tasks/pull?nodeId=12"
+[GIN] 2026/02/06 - 18:47:48 | 404 |         661ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+2026/02/06 18:47:49 [Executor] Running once...
+2026/02/06 18:47:49 [DNS Worker] Tick: processing DNS records...
+2026/02/06 18:47:49 [Executor] No tasks to execute
+2026/02/06 18:47:49 [DNS Service] GetDeletionRecords: found 0 records (limit=10, error=<nil>)
+2026/02/06 18:47:49 [DNS Worker] Tick done: present_candidates=0, absent_candidates=0, claimed_running=0, claim_skipped=0, success=0, error=0, deleted=0
+[GIN] 2026/02/06 - 18:47:51 | 400 |      12.974µs |    20.2.140.226 | GET      "/api/v1/agent/tasks/pull?nodeId=12"
+[GIN] 2026/02/06 - 18:47:51 | 404 |         450ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+[GIN] 2026/02/06 - 18:47:54 | 404 |         591ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+2026/02/06 18:47:54 [Executor] Running once...
+2026/02/06 18:47:54 [Executor] No tasks to execute
+[GIN] 2026/02/06 - 18:47:56 | 400 |      12.654µs |    20.2.140.226 | GET      "/api/v1/agent/tasks/pull?nodeId=12"
+[GIN] 2026/02/06 - 18:47:57 | 404 |         552ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+2026/02/06 18:47:59 [Executor] Running once...
+2026/02/06 18:47:59 [Executor] No tasks to execute
+[GIN] 2026/02/06 - 18:48:00 | 404 |         571ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+[GIN] 2026/02/06 - 18:48:01 | 400 |       21.46µs |    20.2.140.226 | GET      "/api/v1/agent/tasks/pull?nodeId=12"
+[GIN] 2026/02/06 - 18:48:03 | 404 |         621ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+2026/02/06 18:48:04 [Executor] Running once...
+2026/02/06 18:48:04 [Executor] No tasks to execute
+[GIN] 2026/02/06 - 18:48:06 | 400 |       21.54µs |    20.2.140.226 | GET      "/api/v1/agent/tasks/pull?nodeId=12"
+[GIN] 2026/02/06 - 18:48:06 | 404 |         341ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+[GIN] 2026/02/06 - 18:48:09 | 404 |         551ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+2026/02/06 18:48:09 [Executor] Running once...
+2026/02/06 18:48:09 [Executor] No tasks to execute
+[GIN] 2026/02/06 - 18:48:11 | 400 |      13.325µs |    20.2.140.226 | GET      "/api/v1/agent/tasks/pull?nodeId=12"
+[GIN] 2026/02/06 - 18:48:12 | 404 |         592ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+2026/02/06 18:48:14 [Executor] Running once...
+2026/02/06 18:48:14 [Executor] No tasks to execute
+[GIN] 2026/02/06 - 18:48:15 | 404 |         581ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+[GIN] 2026/02/06 - 18:48:16 | 400 |      18.244µs |    20.2.140.226 | GET      "/api/v1/agent/tasks/pull?nodeId=12"
+[GIN] 2026/02/06 - 18:48:18 | 404 |         581ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+2026/02/06 18:48:19 [DNS Worker] Tick: processing DNS records...
+2026/02/06 18:48:19 [Executor] Running once...
+2026/02/06 18:48:19 [Executor] No tasks to execute
+2026/02/06 18:48:19 [DNS Service] GetDeletionRecords: found 0 records (limit=10, error=<nil>)
+2026/02/06 18:48:19 [DNS Worker] Tick done: present_candidates=0, absent_candidates=0, claimed_running=0, claim_skipped=0, success=0, error=0, deleted=0
+[GIN] 2026/02/06 - 18:48:21 | 404 |         491ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+[GIN] 2026/02/06 - 18:48:21 | 400 |      17.323µs |    20.2.140.226 | GET      "/api/v1/agent/tasks/pull?nodeId=12"
+[GIN] 2026/02/06 - 18:48:24 | 404 |         612ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+2026/02/06 18:48:24 [Executor] Running once...
+2026/02/06 18:48:24 [Executor] No tasks to execute
+[GIN] 2026/02/06 - 18:48:26 | 400 |      14.647µs |    20.2.140.226 | GET      "/api/v1/agent/tasks/pull?nodeId=12"
+2026/02/06 18:48:27 [WebSocket] Handshake rejected: No token from 13.228.178.233:61024
+[GIN] 2026/02/06 - 18:48:27 | 401 |      50.806µs |  13.228.178.233 | GET      "/socket.io/?EIO=4&transport=websocket"
+[GIN] 2026/02/06 - 18:48:27 | 200 |    2.801973ms |  13.228.178.233 | GET      "/api/v1/line-groups?page=1&pageSize=15"
+[GIN] 2026/02/06 - 18:48:27 | 404 |         240ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+[GIN] 2026/02/06 - 18:48:29 | 200 |    2.227511ms |  13.228.178.233 | GET      "/api/v1/nodes?page=1&pageSize=15"
+2026/02/06 18:48:29 [Executor] Running once...
+2026/02/06 18:48:29 [Executor] No tasks to execute
+2026/02/06 18:48:30 [WebSocket] Handshake rejected: No token from 13.228.178.233:61041
+[GIN] 2026/02/06 - 18:48:30 | 401 |      66.175µs |  13.228.178.233 | GET      "/socket.io/?EIO=4&transport=websocket"
+[GIN] 2026/02/06 - 18:48:30 | 404 |         591ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+[GIN] 2026/02/06 - 18:48:31 | 400 |      12.985µs |    20.2.140.226 | GET      "/api/v1/agent/tasks/pull?nodeId=12"
+[GIN] 2026/02/06 - 18:48:33 | 404 |         601ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+2026/02/06 18:48:34 [Executor] Running once...
+2026/02/06 18:48:34 [Executor] No tasks to execute
+2026/02/06 18:48:35 [WebSocket] Handshake rejected: No token from 13.228.178.233:61069
+[GIN] 2026/02/06 - 18:48:35 | 401 |      42.821µs |  13.228.178.233 | GET      "/socket.io/?EIO=4&transport=websocket"
+[GIN] 2026/02/06 - 18:48:36 | 404 |         822ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+[GIN] 2026/02/06 - 18:48:36 | 400 |       16.18µs |    20.2.140.226 | GET      "/api/v1/agent/tasks/pull?nodeId=12"
+[GIN] 2026/02/06 - 18:48:39 | 404 |         571ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+2026/02/06 18:48:39 [Executor] Running once...
+2026/02/06 18:48:39 [Executor] No tasks to execute
+2026/02/06 18:48:40 [WebSocket] Handshake rejected: No token from 13.228.178.233:61101
+[GIN] 2026/02/06 - 18:48:40 | 401 |      60.434µs |  13.228.178.233 | GET      "/socket.io/?EIO=4&transport=websocket"
+[GIN] 2026/02/06 - 18:48:41 | 400 |      22.693µs |    20.2.140.226 | GET      "/api/v1/agent/tasks/pull?nodeId=12"
+[GIN] 2026/02/06 - 18:48:42 | 404 |         632ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+2026/02/06 18:48:44 [Executor] Running once...
+2026/02/06 18:48:44 [Executor] No tasks to execute
+2026/02/06 18:48:45 [WebSocket] Handshake rejected: No token from 13.228.178.233:61133
+[GIN] 2026/02/06 - 18:48:45 | 401 |      55.214µs |  13.228.178.233 | GET      "/socket.io/?EIO=4&transport=websocket"
+[GIN] 2026/02/06 - 18:48:45 | 404 |         360ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+[GIN] 2026/02/06 - 18:48:46 | 400 |      17.914µs |    20.2.140.226 | GET      "/api/v1/agent/tasks/pull?nodeId=12"
+[GIN] 2026/02/06 - 18:48:48 | 404 |         531ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+2026/02/06 18:48:49 [DNS Worker] Tick: processing DNS records...
+2026/02/06 18:48:49 [Executor] Running once...
+2026/02/06 18:48:49 [Executor] No tasks to execute
+2026/02/06 18:48:49 [DNS Service] GetDeletionRecords: found 0 records (limit=10, error=<nil>)
+2026/02/06 18:48:49 [DNS Worker] Tick done: present_candidates=0, absent_candidates=0, claimed_running=0, claim_skipped=0, success=0, error=0, deleted=0
+[GIN] 2026/02/06 - 18:48:51 | 404 |         832ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+[GIN] 2026/02/06 - 18:48:51 | 400 |      16.371µs |    20.2.140.226 | GET      "/api/v1/agent/tasks/pull?nodeId=12"
+[GIN] 2026/02/06 - 18:48:54 | 404 |         571ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+2026/02/06 18:48:54 [Executor] Running once...
+2026/02/06 18:48:54 [Executor] No tasks to execute
+[GIN] 2026/02/06 - 18:48:56 | 400 |      12.243µs |    20.2.140.226 | GET      "/api/v1/agent/tasks/pull?nodeId=12"
+[GIN] 2026/02/06 - 18:48:57 | 404 |         601ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+2026/02/06 18:48:59 [Executor] Running once...
+2026/02/06 18:48:59 [Executor] No tasks to execute
+[GIN] 2026/02/06 - 18:49:00 | 404 |         561ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+[GIN] 2026/02/06 - 18:49:01 | 400 |      13.665µs |    20.2.140.226 | GET      "/api/v1/agent/tasks/pull?nodeId=12"
+[GIN] 2026/02/06 - 18:49:03 | 404 |         571ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+2026/02/06 18:49:04 [Executor] Running once...
+2026/02/06 18:49:04 [Executor] No tasks to execute
+[GIN] 2026/02/06 - 18:49:06 | 404 |         612ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+[GIN] 2026/02/06 - 18:49:06 | 400 |      11.712µs |    20.2.140.226 | GET      "/api/v1/agent/tasks/pull?nodeId=12"
+[GIN] 2026/02/06 - 18:49:09 | 404 |         641ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+2026/02/06 18:49:09 [Executor] Running once...
+2026/02/06 18:49:09 [Executor] No tasks to execute
+[GIN] 2026/02/06 - 18:49:11 | 400 |      12.714µs |    20.2.140.226 | GET      "/api/v1/agent/tasks/pull?nodeId=12"
+[GIN] 2026/02/06 - 18:49:12 | 404 |         561ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+2026/02/06 18:49:14 [Executor] Running once...
+2026/02/06 18:49:14 [Executor] No tasks to execute
+[GIN] 2026/02/06 - 18:49:15 | 404 |         581ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+[GIN] 2026/02/06 - 18:49:16 | 400 |      35.747µs |    20.2.140.226 | GET      "/api/v1/agent/tasks/pull?nodeId=12"
+[GIN] 2026/02/06 - 18:49:18 | 404 |         521ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+2026/02/06 18:49:19 [DNS Worker] Tick: processing DNS records...
+2026/02/06 18:49:19 [Executor] Running once...
+2026/02/06 18:49:19 [DNS Service] GetDeletionRecords: found 0 records (limit=10, error=<nil>)
+2026/02/06 18:49:19 [DNS Worker] Tick done: present_candidates=0, absent_candidates=0, claimed_running=0, claim_skipped=0, success=0, error=0, deleted=0
+2026/02/06 18:49:19 [Executor] No tasks to execute
+[GIN] 2026/02/06 - 18:49:21 | 404 |         561ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+[GIN] 2026/02/06 - 18:49:21 | 400 |      16.691µs |    20.2.140.226 | GET      "/api/v1/agent/tasks/pull?nodeId=12"
+[GIN] 2026/02/06 - 18:49:24 | 404 |         501ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+2026/02/06 18:49:24 [Executor] Running once...
+2026/02/06 18:49:24 [Executor] No tasks to execute
+[GIN] 2026/02/06 - 18:49:26 | 400 |      12.583µs |    20.2.140.226 | GET      "/api/v1/agent/tasks/pull?nodeId=12"
+[GIN] 2026/02/06 - 18:49:27 | 404 |         611ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+2026/02/06 18:49:29 [Executor] Running once...
+2026/02/06 18:49:29 [Executor] No tasks to execute
+[GIN] 2026/02/06 - 18:49:30 | 404 |         631ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+[GIN] 2026/02/06 - 18:49:31 | 400 |      13.595µs |    20.2.140.226 | GET      "/api/v1/agent/tasks/pull?nodeId=12"
+[GIN] 2026/02/06 - 18:49:33 | 404 |         561ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+2026/02/06 18:49:34 [Executor] Running once...
+2026/02/06 18:49:34 [Executor] No tasks to execute
+[GIN] 2026/02/06 - 18:49:36 | 404 |         602ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+[GIN] 2026/02/06 - 18:49:36 | 400 |      11.191µs |    20.2.140.226 | GET      "/api/v1/agent/tasks/pull?nodeId=12"
+[GIN] 2026/02/06 - 18:49:39 | 404 |         551ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+2026/02/06 18:49:39 [Executor] Running once...
+2026/02/06 18:49:39 [Executor] No tasks to execute
+[GIN] 2026/02/06 - 18:49:41 | 400 |      14.037µs |    20.2.140.226 | GET      "/api/v1/agent/tasks/pull?nodeId=12"
+[GIN] 2026/02/06 - 18:49:42 | 404 |         531ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+2026/02/06 18:49:44 [Executor] Running once...
+2026/02/06 18:49:44 [Executor] No tasks to execute
+[GIN] 2026/02/06 - 18:49:45 | 404 |         672ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+[GIN] 2026/02/06 - 18:49:46 | 400 |      46.738µs |    20.2.140.226 | GET      "/api/v1/agent/tasks/pull?nodeId=12"
+[GIN] 2026/02/06 - 18:49:48 | 404 |         591ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+2026/02/06 18:49:49 [DNS Worker] Tick: processing DNS records...
+2026/02/06 18:49:49 [Executor] Running once...
+2026/02/06 18:49:49 [Executor] No tasks to execute
+2026/02/06 18:49:49 [DNS Service] GetDeletionRecords: found 0 records (limit=10, error=<nil>)
+2026/02/06 18:49:49 [DNS Worker] Tick done: present_candidates=0, absent_candidates=0, claimed_running=0, claim_skipped=0, success=0, error=0, deleted=0
+[GIN] 2026/02/06 - 18:49:51 | 404 |         701ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+[GIN] 2026/02/06 - 18:49:51 | 400 |      15.499µs |    20.2.140.226 | GET      "/api/v1/agent/tasks/pull?nodeId=12"
+[GIN] 2026/02/06 - 18:49:54 | 404 |         851ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+2026/02/06 18:49:54 [Executor] Running once...
+2026/02/06 18:49:54 [Executor] No tasks to execute
+[GIN] 2026/02/06 - 18:49:56 | 400 |      14.096µs |    20.2.140.226 | GET      "/api/v1/agent/tasks/pull?nodeId=12"
+[GIN] 2026/02/06 - 18:49:57 | 404 |         591ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+2026/02/06 18:49:59 [Executor] Running once...
+2026/02/06 18:49:59 [Executor] No tasks to execute
+[GIN] 2026/02/06 - 18:50:00 | 404 |         551ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+[GIN] 2026/02/06 - 18:50:01 | 400 |      16.781µs |    20.2.140.226 | GET      "/api/v1/agent/tasks/pull?nodeId=12"
+[GIN] 2026/02/06 - 18:50:03 | 404 |         611ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+2026/02/06 18:50:04 [Executor] Running once...
+2026/02/06 18:50:04 [Executor] No tasks to execute
+[GIN] 2026/02/06 - 18:50:06 | 404 |         611ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+[GIN] 2026/02/06 - 18:50:06 | 400 |       10.39µs |    20.2.140.226 | GET      "/api/v1/agent/tasks/pull?nodeId=12"
+[GIN] 2026/02/06 - 18:50:09 | 404 |         531ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+2026/02/06 18:50:09 [Executor] Running once...
+2026/02/06 18:50:09 [Executor] No tasks to execute
+[GIN] 2026/02/06 - 18:50:11 | 400 |      12.864µs |    20.2.140.226 | GET      "/api/v1/agent/tasks/pull?nodeId=12"
+[GIN] 2026/02/06 - 18:50:12 | 404 |         602ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+[GIN] 2026/02/06 - 18:50:14 | 404 |         872ns |   204.76.203.30 | GET      "/json/"
+2026/02/06 18:50:14 [Executor] Running once...
+2026/02/06 18:50:14 [Executor] No tasks to execute
+[GIN] 2026/02/06 - 18:50:15 | 404 |         611ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+[GIN] 2026/02/06 - 18:50:16 | 400 |      19.998µs |    20.2.140.226 | GET      "/api/v1/agent/tasks/pull?nodeId=12"
+[GIN] 2026/02/06 - 18:50:18 | 404 |         591ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+2026/02/06 18:50:19 [Executor] Running once...
+2026/02/06 18:50:19 [DNS Worker] Tick: processing DNS records...
+2026/02/06 18:50:19 [RiskScanner] Running scheduled scan...
+2026/02/06 18:50:19 [RiskScanner] Starting scan...
+2026/02/06 18:50:19 [Executor] No tasks to execute
+2026/02/06 18:50:19 [DNS Service] GetDeletionRecords: found 0 records (limit=10, error=<nil>)
+2026/02/06 18:50:19 [DNS Worker] Tick done: present_candidates=0, absent_candidates=0, claimed_running=0, claim_skipped=0, success=0, error=0, deleted=0
+2026/02/06 18:50:19 [RiskScanner] Scan completed: 0 risks detected, 0 new, 0 updated
+[GIN] 2026/02/06 - 18:50:21 | 404 |         591ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+[GIN] 2026/02/06 - 18:50:21 | 400 |       10.55µs |    20.2.140.226 | GET      "/api/v1/agent/tasks/pull?nodeId=12"
+[GIN] 2026/02/06 - 18:50:24 | 404 |         561ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+2026/02/06 18:50:24 [Executor] Running once...
+2026/02/06 18:50:24 [Executor] No tasks to execute
+[GIN] 2026/02/06 - 18:50:26 | 400 |      13.335µs |    20.2.140.226 | GET      "/api/v1/agent/tasks/pull?nodeId=12"
+[GIN] 2026/02/06 - 18:50:27 | 404 |       1.462µs |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+2026/02/06 18:50:29 [Executor] Running once...
+2026/02/06 18:50:29 [Executor] No tasks to execute
+[GIN] 2026/02/06 - 18:50:30 | 404 |         571ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+[GIN] 2026/02/06 - 18:50:31 | 400 |      17.783µs |    20.2.140.226 | GET      "/api/v1/agent/tasks/pull?nodeId=12"
+[GIN] 2026/02/06 - 18:50:33 | 404 |         561ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+2026/02/06 18:50:34 [Executor] Running once...
+2026/02/06 18:50:34 [Executor] No tasks to execute
+[GIN] 2026/02/06 - 18:50:36 | 400 |      16.551µs |    20.2.140.226 | GET      "/api/v1/agent/tasks/pull?nodeId=12"
+[GIN] 2026/02/06 - 18:50:36 | 404 |         211ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+[GIN] 2026/02/06 - 18:50:39 | 404 |         611ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+2026/02/06 18:50:39 [Executor] Running once...
+2026/02/06 18:50:39 [Executor] No tasks to execute
+[GIN] 2026/02/06 - 18:50:41 | 400 |      12.704µs |    20.2.140.226 | GET      "/api/v1/agent/tasks/pull?nodeId=12"
+[GIN] 2026/02/06 - 18:50:42 | 404 |         561ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+2026/02/06 18:50:44 [Executor] Running once...
+2026/02/06 18:50:44 [Executor] No tasks to execute
+[GIN] 2026/02/06 - 18:50:45 | 404 |         572ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+[GIN] 2026/02/06 - 18:50:46 | 400 |      13.616µs |    20.2.140.226 | GET      "/api/v1/agent/tasks/pull?nodeId=12"
+[GIN] 2026/02/06 - 18:50:48 | 404 |         601ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+2026/02/06 18:50:49 [DNS Worker] Tick: processing DNS records...
+2026/02/06 18:50:49 [Executor] Running once...
+2026/02/06 18:50:49 [Executor] No tasks to execute
+2026/02/06 18:50:49 [DNS Service] GetDeletionRecords: found 0 records (limit=10, error=<nil>)
+2026/02/06 18:50:49 [DNS Worker] Tick done: present_candidates=0, absent_candidates=0, claimed_running=0, claim_skipped=0, success=0, error=0, deleted=0
+2026/02/06 18:50:50 [WebSocket] Handshake rejected: No token from 13.228.178.233:61822
+[GIN] 2026/02/06 - 18:50:50 | 401 |      59.041µs |  13.228.178.233 | GET      "/socket.io/?EIO=4&transport=websocket"
+[GIN] 2026/02/06 - 18:50:50 | 200 |    3.160981ms |  13.228.178.233 | GET      "/api/v1/line-groups?page=1&pageSize=15"
+[GIN] 2026/02/06 - 18:50:51 | 404 |         581ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+[GIN] 2026/02/06 - 18:50:51 | 400 |      11.542µs |    20.2.140.226 | GET      "/api/v1/agent/tasks/pull?nodeId=12"
+[GIN] 2026/02/06 - 18:50:53 | 200 |    7.956913ms |  13.228.178.233 | POST     "/api/v1/line-groups/delete"
+[GIN] 2026/02/06 - 18:50:53 | 200 |    2.497205ms |  13.228.178.233 | GET      "/api/v1/line-groups?page=1&pageSize=15"
+[GIN] 2026/02/06 - 18:50:54 | 404 |         531ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+2026/02/06 18:50:54 [Executor] Running once...
+2026/02/06 18:50:54 [Executor] No tasks to execute
+[GIN] 2026/02/06 - 18:50:56 | 400 |      12.994µs |    20.2.140.226 | GET      "/api/v1/agent/tasks/pull?nodeId=12"
+[GIN] 2026/02/06 - 18:50:57 | 404 |         561ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+[GIN] 2026/02/06 - 18:50:58 | 200 |   11.596865ms |  13.228.178.233 | POST     "/api/v1/line-groups/delete"
+[GIN] 2026/02/06 - 18:50:58 | 200 |    2.388167ms |  13.228.178.233 | GET      "/api/v1/line-groups?page=1&pageSize=15"
+2026/02/06 18:50:59 [Executor] Running once...
+2026/02/06 18:50:59 [Executor] No tasks to execute
+
+2026/02/06 18:51:00 [31;1m/opt/go_cmdb/api/v1/line_groups/handler.go:533 [35;1mError 1451 (23000): Cannot delete or update a parent row: a foreign key constraint fails (`cdn_control`.`websites`, CONSTRAINT `fk_websites_line_group` FOREIGN KEY (`line_group_id`) REFERENCES `line_groups` (`id`))
+[0m[33m[0.685ms] [34;1m[rows:0][0m DELETE FROM `line_groups` WHERE `line_groups`.`id` = 3
+2026/02/06 18:51:00 [ERROR] failed to delete line groups (code=5002, internal_err=Error 1451 (23000): Cannot delete or update a parent row: a foreign key constraint fails (`cdn_control`.`websites`, CONSTRAINT `fk_websites_line_group` FOREIGN KEY (`line_group_id`) REFERENCES `line_groups` (`id`)))
+[GIN] 2026/02/06 - 18:51:00 | 500 |    6.214364ms |  13.228.178.233 | POST     "/api/v1/line-groups/delete"
+[GIN] 2026/02/06 - 18:51:00 | 404 |         572ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+[GIN] 2026/02/06 - 18:51:01 | 200 |    2.197887ms |  13.228.178.233 | GET      "/api/v1/nodes?page=1&pageSize=15"
+[GIN] 2026/02/06 - 18:51:01 | 400 |      36.088µs |    20.2.140.226 | GET      "/api/v1/agent/tasks/pull?nodeId=12"
+2026/02/06 18:51:02 [WebSocket] Handshake rejected: No token from 13.228.178.233:61902
+[GIN] 2026/02/06 - 18:51:02 | 401 |      64.201µs |  13.228.178.233 | GET      "/socket.io/?EIO=4&transport=websocket"
+[GIN] 2026/02/06 - 18:51:02 | 200 |    2.410404ms |  13.228.178.233 | GET      "/api/v1/line-groups?page=1&pageSize=15"
+[GIN] 2026/02/06 - 18:51:03 | 404 |         561ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+2026/02/06 18:51:04 [Executor] Running once...
+2026/02/06 18:51:04 [Executor] No tasks to execute
+
+2026/02/06 18:51:06 [31;1m/opt/go_cmdb/api/v1/line_groups/handler.go:533 [35;1mError 1451 (23000): Cannot delete or update a parent row: a foreign key constraint fails (`cdn_control`.`websites`, CONSTRAINT `fk_websites_line_group` FOREIGN KEY (`line_group_id`) REFERENCES `line_groups` (`id`))
+[0m[33m[0.871ms] [34;1m[rows:0][0m DELETE FROM `line_groups` WHERE `line_groups`.`id` = 3
+2026/02/06 18:51:06 [ERROR] failed to delete line groups (code=5002, internal_err=Error 1451 (23000): Cannot delete or update a parent row: a foreign key constraint fails (`cdn_control`.`websites`, CONSTRAINT `fk_websites_line_group` FOREIGN KEY (`line_group_id`) REFERENCES `line_groups` (`id`)))
+[GIN] 2026/02/06 - 18:51:06 | 500 |    5.292201ms |  13.228.178.233 | POST     "/api/v1/line-groups/delete"
+[GIN] 2026/02/06 - 18:51:06 | 404 |         822ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+[GIN] 2026/02/06 - 18:51:06 | 400 |       15.84µs |    20.2.140.226 | GET      "/api/v1/agent/tasks/pull?nodeId=12"
+[GIN] 2026/02/06 - 18:51:09 | 200 |    2.040806ms |  13.228.178.233 | GET      "/api/v1/nodes?page=1&pageSize=15"
+[GIN] 2026/02/06 - 18:51:09 | 404 |         842ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+2026/02/06 18:51:09 [Executor] Running once...
+2026/02/06 18:51:09 [Executor] No tasks to execute
+[GIN] 2026/02/06 - 18:51:11 | 400 |      15.088µs |    20.2.140.226 | GET      "/api/v1/agent/tasks/pull?nodeId=12"
+[GIN] 2026/02/06 - 18:51:12 | 404 |         691ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+2026/02/06 18:51:13 [WebSocket] Handshake rejected: No token from 13.228.178.233:61967
+[GIN] 2026/02/06 - 18:51:13 | 401 |      50.666µs |  13.228.178.233 | GET      "/socket.io/?EIO=4&transport=websocket"
+[GIN] 2026/02/06 - 18:51:13 | 200 |    2.360493ms |  13.228.178.233 | GET      "/api/v1/line-groups?page=1&pageSize=15"
+2026/02/06 18:51:14 [Executor] Running once...
+2026/02/06 18:51:14 [Executor] No tasks to execute
+[GIN] 2026/02/06 - 18:51:15 | 404 |         561ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+[GIN] 2026/02/06 - 18:51:16 | 400 |      13.265µs |    20.2.140.226 | GET      "/api/v1/agent/tasks/pull?nodeId=12"
+[GIN] 2026/02/06 - 18:51:18 | 404 |         551ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+2026/02/06 18:51:19 [Executor] Running once...
+2026/02/06 18:51:19 [DNS Worker] Tick: processing DNS records...
+2026/02/06 18:51:19 [Executor] No tasks to execute
+2026/02/06 18:51:19 [DNS Service] GetDeletionRecords: found 2 records (limit=10, error=<nil>)
+2026/02/06 18:51:19 [DNS Service] Deletion candidate: id=252, name=lg-3a179a8029cab5ec, status=pending, provider_record_id=dcedb67096cbf81a2d69b5b39d5b744f
+2026/02/06 18:51:19 [DNS Service] Deletion candidate: id=259, name=lg-7aeacb1eec70f7e6, status=pending, provider_record_id=0983b2f951888cc3a2f02ad173e70764
+2026/02/06 18:51:19 [DNS Worker] Deleting record 252 (type=CNAME, name=lg-3a179a8029cab5ec, provider_record_id=dcedb67096cbf81a2d69b5b39d5b744f)
+2026/02/06 18:51:20 [DNS Worker] Record 252: deleted from Cloudflare
+2026/02/06 18:51:20 [DNS Worker] Record 252: deleted from local database
+2026/02/06 18:51:20 [DNS Worker] Deleting record 259 (type=CNAME, name=lg-7aeacb1eec70f7e6, provider_record_id=0983b2f951888cc3a2f02ad173e70764)
+2026/02/06 18:51:20 [DNS Worker] Record 259: deleted from Cloudflare
+2026/02/06 18:51:21 [DNS Worker] Record 259: deleted from local database
+2026/02/06 18:51:21 [DNS Worker] Tick done: present_candidates=0, absent_candidates=2, claimed_running=0, claim_skipped=0, success=0, error=0, deleted=2
+[GIN] 2026/02/06 - 18:51:21 | 404 |         631ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+[GIN] 2026/02/06 - 18:51:21 | 400 |      12.403µs |    20.2.140.226 | GET      "/api/v1/agent/tasks/pull?nodeId=12"
+[GIN] 2026/02/06 - 18:51:24 | 404 |         561ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+2026/02/06 18:51:24 [Executor] Running once...
+2026/02/06 18:51:24 [Executor] No tasks to execute
+[GIN] 2026/02/06 - 18:51:26 | 400 |      13.876µs |    20.2.140.226 | GET      "/api/v1/agent/tasks/pull?nodeId=12"
+[GIN] 2026/02/06 - 18:51:27 | 404 |         530ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+2026/02/06 18:51:29 [Executor] Running once...
+2026/02/06 18:51:29 [Executor] No tasks to execute
+[GIN] 2026/02/06 - 18:51:30 | 404 |         611ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+[GIN] 2026/02/06 - 18:51:31 | 400 |      14.627µs |    20.2.140.226 | GET      "/api/v1/agent/tasks/pull?nodeId=12"
+[GIN] 2026/02/06 - 18:51:33 | 404 |         550ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+2026/02/06 18:51:34 [Executor] Running once...
+2026/02/06 18:51:34 [Executor] No tasks to execute
+[GIN] 2026/02/06 - 18:51:36 | 400 |      13.966µs |    20.2.140.226 | GET      "/api/v1/agent/tasks/pull?nodeId=12"
+[GIN] 2026/02/06 - 18:51:36 | 404 |         341ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+[GIN] 2026/02/06 - 18:51:39 | 404 |         591ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+2026/02/06 18:51:39 [Executor] Running once...
+2026/02/06 18:51:39 [Executor] No tasks to execute
+[GIN] 2026/02/06 - 18:51:41 | 400 |      14.527µs |    20.2.140.226 | GET      "/api/v1/agent/tasks/pull?nodeId=12"
+[GIN] 2026/02/06 - 18:51:42 | 404 |         692ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+2026/02/06 18:51:44 [Executor] Running once...
+2026/02/06 18:51:44 [Executor] No tasks to execute
+[GIN] 2026/02/06 - 18:51:45 | 404 |         490ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+[GIN] 2026/02/06 - 18:51:46 | 400 |      14.137µs |    20.2.140.226 | GET      "/api/v1/agent/tasks/pull?nodeId=12"
+[GIN] 2026/02/06 - 18:51:48 | 404 |         601ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+2026/02/06 18:51:49 [DNS Worker] Tick: processing DNS records...
+2026/02/06 18:51:49 [Executor] Running once...
+2026/02/06 18:51:49 [Executor] No tasks to execute
+2026/02/06 18:51:49 [DNS Service] GetDeletionRecords: found 0 records (limit=10, error=<nil>)
+2026/02/06 18:51:49 [DNS Worker] Tick done: present_candidates=0, absent_candidates=0, claimed_running=0, claim_skipped=0, success=0, error=0, deleted=0
+[GIN] 2026/02/06 - 18:51:51 | 404 |         531ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+[GIN] 2026/02/06 - 18:51:51 | 400 |      16.692µs |    20.2.140.226 | GET      "/api/v1/agent/tasks/pull?nodeId=12"
+[GIN] 2026/02/06 - 18:51:54 | 404 |         532ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+2026/02/06 18:51:54 [Executor] Running once...
+2026/02/06 18:51:54 [Executor] No tasks to execute
+[GIN] 2026/02/06 - 18:51:56 | 400 |      12.794µs |    20.2.140.226 | GET      "/api/v1/agent/tasks/pull?nodeId=12"
+[GIN] 2026/02/06 - 18:51:57 | 404 |         571ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+2026/02/06 18:51:59 [Executor] Running once...
+2026/02/06 18:51:59 [Executor] No tasks to execute
+[GIN] 2026/02/06 - 18:52:00 | 404 |         601ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+[GIN] 2026/02/06 - 18:52:01 | 400 |      13.045µs |    20.2.140.226 | GET      "/api/v1/agent/tasks/pull?nodeId=12"
+[GIN] 2026/02/06 - 18:52:03 | 404 |         610ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+2026/02/06 18:52:04 [Executor] Running once...
+2026/02/06 18:52:04 [Executor] No tasks to execute
+[GIN] 2026/02/06 - 18:52:06 | 404 |         561ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+[GIN] 2026/02/06 - 18:52:06 | 400 |      10.469µs |    20.2.140.226 | GET      "/api/v1/agent/tasks/pull?nodeId=12"
+[GIN] 2026/02/06 - 18:52:09 | 404 |         561ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+2026/02/06 18:52:09 [Executor] Running once...
+2026/02/06 18:52:09 [Executor] No tasks to execute
+[GIN] 2026/02/06 - 18:52:11 | 400 |      14.277µs |    20.2.140.226 | GET      "/api/v1/agent/tasks/pull?nodeId=12"
+[GIN] 2026/02/06 - 18:52:12 | 404 |         601ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+2026/02/06 18:52:14 [Executor] Running once...
+2026/02/06 18:52:14 [Executor] No tasks to execute
+[GIN] 2026/02/06 - 18:52:15 | 404 |         922ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+[GIN] 2026/02/06 - 18:52:16 | 400 |      12.985µs |    20.2.140.226 | GET      "/api/v1/agent/tasks/pull?nodeId=12"
+[GIN] 2026/02/06 - 18:52:18 | 404 |         561ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+2026/02/06 18:52:19 [Executor] Running once...
+2026/02/06 18:52:19 [DNS Worker] Tick: processing DNS records...
+2026/02/06 18:52:19 [Executor] No tasks to execute
+2026/02/06 18:52:19 [DNS Service] GetDeletionRecords: found 0 records (limit=10, error=<nil>)
+2026/02/06 18:52:19 [DNS Worker] Tick done: present_candidates=0, absent_candidates=0, claimed_running=0, claim_skipped=0, success=0, error=0, deleted=0
+[GIN] 2026/02/06 - 18:52:21 | 404 |         541ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+[GIN] 2026/02/06 - 18:52:21 | 400 |      14.437µs |    20.2.140.226 | GET      "/api/v1/agent/tasks/pull?nodeId=12"
+[GIN] 2026/02/06 - 18:52:24 | 404 |         591ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+2026/02/06 18:52:24 [Executor] Running once...
+2026/02/06 18:52:24 [Executor] No tasks to execute
+[GIN] 2026/02/06 - 18:52:26 | 400 |      18.685µs |    20.2.140.226 | GET      "/api/v1/agent/tasks/pull?nodeId=12"
+[GIN] 2026/02/06 - 18:52:27 | 404 |         551ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+2026/02/06 18:52:29 [Executor] Running once...
+2026/02/06 18:52:29 [Executor] No tasks to execute
+[GIN] 2026/02/06 - 18:52:30 | 404 |         531ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+[GIN] 2026/02/06 - 18:52:31 | 400 |      13.676µs |    20.2.140.226 | GET      "/api/v1/agent/tasks/pull?nodeId=12"
+[GIN] 2026/02/06 - 18:52:33 | 404 |         521ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+2026/02/06 18:52:34 [Executor] Running once...
+2026/02/06 18:52:34 [Executor] No tasks to execute
+[GIN] 2026/02/06 - 18:52:36 | 404 |         561ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+[GIN] 2026/02/06 - 18:52:36 | 400 |      10.399µs |    20.2.140.226 | GET      "/api/v1/agent/tasks/pull?nodeId=12"
+[GIN] 2026/02/06 - 18:52:39 | 404 |         521ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+2026/02/06 18:52:39 [Executor] Running once...
+2026/02/06 18:52:39 [Executor] No tasks to execute
+[GIN] 2026/02/06 - 18:52:41 | 400 |      13.145µs |    20.2.140.226 | GET      "/api/v1/agent/tasks/pull?nodeId=12"
+[GIN] 2026/02/06 - 18:52:42 | 404 |         601ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+2026/02/06 18:52:44 [Executor] Running once...
+2026/02/06 18:52:44 [Executor] No tasks to execute
+[GIN] 2026/02/06 - 18:52:45 | 404 |       2.104µs |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+[GIN] 2026/02/06 - 18:52:46 | 400 |       15.72µs |    20.2.140.226 | GET      "/api/v1/agent/tasks/pull?nodeId=12"
+[GIN] 2026/02/06 - 18:52:48 | 404 |         561ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+2026/02/06 18:52:49 [DNS Worker] Tick: processing DNS records...
+2026/02/06 18:52:49 [Executor] Running once...
+2026/02/06 18:52:49 [Executor] No tasks to execute
+2026/02/06 18:52:49 [DNS Service] GetDeletionRecords: found 0 records (limit=10, error=<nil>)
+2026/02/06 18:52:49 [DNS Worker] Tick done: present_candidates=0, absent_candidates=0, claimed_running=0, claim_skipped=0, success=0, error=0, deleted=0
+[GIN] 2026/02/06 - 18:52:51 | 404 |         551ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+[GIN] 2026/02/06 - 18:52:51 | 400 |      11.431µs |    20.2.140.226 | GET      "/api/v1/agent/tasks/pull?nodeId=12"
+[GIN] 2026/02/06 - 18:52:54 | 404 |         602ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+2026/02/06 18:52:54 [Executor] Running once...
+2026/02/06 18:52:54 [Executor] No tasks to execute
+[GIN] 2026/02/06 - 18:52:56 | 400 |      20.248µs |    20.2.140.226 | GET      "/api/v1/agent/tasks/pull?nodeId=12"
+[GIN] 2026/02/06 - 18:52:57 | 404 |         571ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+2026/02/06 18:52:59 [Executor] Running once...
+2026/02/06 18:52:59 [Executor] No tasks to execute
+[GIN] 2026/02/06 - 18:53:00 | 404 |         531ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+[GIN] 2026/02/06 - 18:53:01 | 400 |      13.866µs |    20.2.140.226 | GET      "/api/v1/agent/tasks/pull?nodeId=12"
+[GIN] 2026/02/06 - 18:53:03 | 404 |         561ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+2026/02/06 18:53:04 [Executor] Running once...
+2026/02/06 18:53:04 [Executor] No tasks to execute
+[GIN] 2026/02/06 - 18:53:05 | 404 |       1.413µs |    142.93.21.60 | GET      "/login"
+[GIN] 2026/02/06 - 18:53:06 | 404 |         561ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+[GIN] 2026/02/06 - 18:53:06 | 400 |      14.757µs |    20.2.140.226 | GET      "/api/v1/agent/tasks/pull?nodeId=12"
+[GIN] 2026/02/06 - 18:53:09 | 404 |         611ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+2026/02/06 18:53:09 [Executor] Running once...
+2026/02/06 18:53:09 [Executor] No tasks to execute
+[GIN] 2026/02/06 - 18:53:11 | 400 |      12.875µs |    20.2.140.226 | GET      "/api/v1/agent/tasks/pull?nodeId=12"
+[GIN] 2026/02/06 - 18:53:12 | 200 |    2.844535ms |  13.228.178.233 | GET      "/api/v1/line-groups/options"
+[GIN] 2026/02/06 - 18:53:12 | 200 |    7.733481ms |  13.228.178.233 | GET      "/api/v1/origin-groups/options"
+[GIN] 2026/02/06 - 18:53:12 | 200 |    5.750015ms |  13.228.178.233 | GET      "/api/v1/websites?page=1&pageSize=15"
+[GIN] 2026/02/06 - 18:53:12 | 404 |         572ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+2026/02/06 18:53:14 [Executor] Running once...
+2026/02/06 18:53:14 [Executor] No tasks to execute
+[GIN] 2026/02/06 - 18:53:15 | 404 |         561ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+[GIN] 2026/02/06 - 18:53:16 | 400 |      14.578µs |    20.2.140.226 | GET      "/api/v1/agent/tasks/pull?nodeId=12"
+[GIN] 2026/02/06 - 18:53:18 | 404 |         572ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+2026/02/06 18:53:19 [Executor] Running once...
+2026/02/06 18:53:19 [DNS Worker] Tick: processing DNS records...
+2026/02/06 18:53:19 [Executor] No tasks to execute
+2026/02/06 18:53:19 [DNS Service] GetDeletionRecords: found 0 records (limit=10, error=<nil>)
+2026/02/06 18:53:19 [DNS Worker] Tick done: present_candidates=0, absent_candidates=0, claimed_running=0, claim_skipped=0, success=0, error=0, deleted=0
+[GIN] 2026/02/06 - 18:53:21 | 404 |         521ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+[GIN] 2026/02/06 - 18:53:21 | 400 |      13.294µs |    20.2.140.226 | GET      "/api/v1/agent/tasks/pull?nodeId=12"
+[GIN] 2026/02/06 - 18:53:24 | 404 |         591ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+2026/02/06 18:53:24 [Executor] Running once...
+2026/02/06 18:53:24 [Executor] No tasks to execute
+[GIN] 2026/02/06 - 18:53:26 | 400 |      13.436µs |    20.2.140.226 | GET      "/api/v1/agent/tasks/pull?nodeId=12"
+[GIN] 2026/02/06 - 18:53:27 | 404 |         591ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+2026/02/06 18:53:29 [Executor] Running once...
+2026/02/06 18:53:29 [Executor] No tasks to execute
+
+2026/02/06 18:53:30 [32m/opt/go_cmdb/internal/nodehealth/worker.go:189 [33mSLOW SQL >= 200ms
+[0m[31;1m[233.331ms] [33m[rows:1][35m UPDATE `nodes` SET `health_fail_count`=106,`last_health_error`='Get "https://:8443/api/v1/ping": dial tcp :8443: connect: connection refused',`status`='offline',`updated_at`='2026-02-06 18:53:29.982' WHERE `id` = 126[0m
+
+2026/02/06 18:53:30 [32m/opt/go_cmdb/internal/nodehealth/worker.go:189 [33mSLOW SQL >= 200ms
+[0m[31;1m[235.415ms] [33m[rows:1][35m UPDATE `nodes` SET `health_fail_count`=949,`last_health_error`='Get "https://127.0.0.1:8080/api/v1/ping": http: server gave HTTP response to HTTPS client',`status`='offline',`updated_at`='2026-02-06 18:53:29.983' WHERE `id` = 123[0m
+[GIN] 2026/02/06 - 18:53:30 | 404 |         531ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+[GIN] 2026/02/06 - 18:53:31 | 400 |      13.897µs |    20.2.140.226 | GET      "/api/v1/agent/tasks/pull?nodeId=12"
+[GIN] 2026/02/06 - 18:53:33 | 404 |         551ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+2026/02/06 18:53:34 [Executor] Running once...
+2026/02/06 18:53:34 [Executor] No tasks to execute
+[GIN] 2026/02/06 - 18:53:36 | 404 |         601ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+[GIN] 2026/02/06 - 18:53:36 | 400 |      14.247µs |    20.2.140.226 | GET      "/api/v1/agent/tasks/pull?nodeId=12"
+[GIN] 2026/02/06 - 18:53:39 | 404 |         501ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+2026/02/06 18:53:39 [Executor] Running once...
+2026/02/06 18:53:39 [Executor] No tasks to execute
+[GIN] 2026/02/06 - 18:53:41 | 400 |      12.944µs |    20.2.140.226 | GET      "/api/v1/agent/tasks/pull?nodeId=12"
+[GIN] 2026/02/06 - 18:53:42 | 404 |         590ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+2026/02/06 18:53:44 [Executor] Running once...
+2026/02/06 18:53:44 [Executor] No tasks to execute
+[GIN] 2026/02/06 - 18:53:45 | 404 |         571ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+[GIN] 2026/02/06 - 18:53:46 | 400 |      23.825µs |    20.2.140.226 | GET      "/api/v1/agent/tasks/pull?nodeId=12"
+[GIN] 2026/02/06 - 18:53:48 | 404 |         601ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+2026/02/06 18:53:49 [Executor] Running once...
+2026/02/06 18:53:49 [DNS Worker] Tick: processing DNS records...
+2026/02/06 18:53:49 [Executor] No tasks to execute
+2026/02/06 18:53:49 [DNS Service] GetDeletionRecords: found 0 records (limit=10, error=<nil>)
+2026/02/06 18:53:49 [DNS Worker] Tick done: present_candidates=0, absent_candidates=0, claimed_running=0, claim_skipped=0, success=0, error=0, deleted=0
+[GIN] 2026/02/06 - 18:53:51 | 404 |         781ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+[GIN] 2026/02/06 - 18:53:51 | 400 |      14.397µs |    20.2.140.226 | GET      "/api/v1/agent/tasks/pull?nodeId=12"
+[GIN] 2026/02/06 - 18:53:54 | 404 |         561ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+2026/02/06 18:53:54 [Executor] Running once...
+2026/02/06 18:53:54 [Executor] No tasks to execute
+[GIN] 2026/02/06 - 18:53:56 | 400 |      13.836µs |    20.2.140.226 | GET      "/api/v1/agent/tasks/pull?nodeId=12"
+[GIN] 2026/02/06 - 18:53:57 | 404 |         581ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+2026/02/06 18:53:59 [Executor] Running once...
+2026/02/06 18:53:59 [Executor] No tasks to execute
+[GIN] 2026/02/06 - 18:54:00 | 404 |       1.563µs |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+[GIN] 2026/02/06 - 18:54:01 | 400 |      23.104µs |    20.2.140.226 | GET      "/api/v1/agent/tasks/pull?nodeId=12"
+[GIN] 2026/02/06 - 18:54:03 | 404 |         601ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+2026/02/06 18:54:04 [Executor] Running once...
+2026/02/06 18:54:04 [Executor] No tasks to execute
+[GIN] 2026/02/06 - 18:54:06 | 400 |       15.68µs |    20.2.140.226 | GET      "/api/v1/agent/tasks/pull?nodeId=12"
+[GIN] 2026/02/06 - 18:54:06 | 404 |         341ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+[GIN] 2026/02/06 - 18:54:09 | 404 |         521ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+2026/02/06 18:54:09 [Executor] Running once...
+2026/02/06 18:54:09 [Executor] No tasks to execute
+[GIN] 2026/02/06 - 18:54:11 | 400 |      13.596µs |    20.2.140.226 | GET      "/api/v1/agent/tasks/pull?nodeId=12"
+[GIN] 2026/02/06 - 18:54:12 | 404 |         602ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+2026/02/06 18:54:14 [Executor] Running once...
+2026/02/06 18:54:14 [Executor] No tasks to execute
+[GIN] 2026/02/06 - 18:54:15 | 404 |         591ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+[GIN] 2026/02/06 - 18:54:16 | 400 |      18.555µs |    20.2.140.226 | GET      "/api/v1/agent/tasks/pull?nodeId=12"
+[GIN] 2026/02/06 - 18:54:18 | 404 |         592ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+2026/02/06 18:54:19 [Executor] Running once...
+2026/02/06 18:54:19 [DNS Worker] Tick: processing DNS records...
+2026/02/06 18:54:19 [Executor] No tasks to execute
+2026/02/06 18:54:19 [DNS Service] GetDeletionRecords: found 0 records (limit=10, error=<nil>)
+2026/02/06 18:54:19 [DNS Worker] Tick done: present_candidates=0, absent_candidates=0, claimed_running=0, claim_skipped=0, success=0, error=0, deleted=0
+[GIN] 2026/02/06 - 18:54:21 | 404 |         611ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+[GIN] 2026/02/06 - 18:54:21 | 400 |      11.652µs |    20.2.140.226 | GET      "/api/v1/agent/tasks/pull?nodeId=12"
+[GIN] 2026/02/06 - 18:54:24 | 404 |         601ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+2026/02/06 18:54:24 [Executor] Running once...
+2026/02/06 18:54:24 [Executor] No tasks to execute
+[GIN] 2026/02/06 - 18:54:26 | 400 |      17.553µs |    20.2.140.226 | GET      "/api/v1/agent/tasks/pull?nodeId=12"
+[GIN] 2026/02/06 - 18:54:27 | 404 |         561ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+2026/02/06 18:54:29 [Executor] Running once...
+2026/02/06 18:54:29 [Executor] No tasks to execute
+[GIN] 2026/02/06 - 18:54:30 | 404 |         551ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+[GIN] 2026/02/06 - 18:54:31 | 400 |      13.145µs |    20.2.140.226 | GET      "/api/v1/agent/tasks/pull?nodeId=12"
+[GIN] 2026/02/06 - 18:54:33 | 404 |         562ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+2026/02/06 18:54:34 [Executor] Running once...
+2026/02/06 18:54:34 [Executor] No tasks to execute
+[GIN] 2026/02/06 - 18:54:36 | 404 |         591ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+[GIN] 2026/02/06 - 18:54:36 | 400 |       10.67µs |    20.2.140.226 | GET      "/api/v1/agent/tasks/pull?nodeId=12"
+[GIN] 2026/02/06 - 18:54:39 | 404 |         552ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+2026/02/06 18:54:39 [Executor] Running once...
+2026/02/06 18:54:39 [Executor] No tasks to execute
+[GIN] 2026/02/06 - 18:54:41 | 400 |      14.828µs |    20.2.140.226 | GET      "/api/v1/agent/tasks/pull?nodeId=12"
+[GIN] 2026/02/06 - 18:54:42 | 404 |         591ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+2026/02/06 18:54:44 [Executor] Running once...
+2026/02/06 18:54:44 [Executor] No tasks to execute
+[GIN] 2026/02/06 - 18:54:45 | 404 |         651ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+[GIN] 2026/02/06 - 18:54:46 | 400 |      14.207µs |    20.2.140.226 | GET      "/api/v1/agent/tasks/pull?nodeId=12"
+[GIN] 2026/02/06 - 18:54:48 | 404 |         571ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+2026/02/06 18:54:49 [DNS Worker] Tick: processing DNS records...
+2026/02/06 18:54:49 [Executor] Running once...
+2026/02/06 18:54:49 [Executor] No tasks to execute
+2026/02/06 18:54:49 [DNS Service] GetDeletionRecords: found 0 records (limit=10, error=<nil>)
+2026/02/06 18:54:49 [DNS Worker] Tick done: present_candidates=0, absent_candidates=0, claimed_running=0, claim_skipped=0, success=0, error=0, deleted=0
+[GIN] 2026/02/06 - 18:54:51 | 404 |         571ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+[GIN] 2026/02/06 - 18:54:51 | 400 |      20.609µs |    20.2.140.226 | GET      "/api/v1/agent/tasks/pull?nodeId=12"
+[GIN] 2026/02/06 - 18:54:54 | 404 |         571ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+2026/02/06 18:54:54 [Executor] Running once...
+2026/02/06 18:54:54 [Executor] No tasks to execute
+[GIN] 2026/02/06 - 18:54:56 | 400 |      12.594µs |    20.2.140.226 | GET      "/api/v1/agent/tasks/pull?nodeId=12"
+[GIN] 2026/02/06 - 18:54:57 | 404 |         601ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+2026/02/06 18:54:59 [Executor] Running once...
+2026/02/06 18:54:59 [Executor] No tasks to execute
+[GIN] 2026/02/06 - 18:55:00 | 404 |         601ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+[GIN] 2026/02/06 - 18:55:01 | 400 |      16.041µs |    20.2.140.226 | GET      "/api/v1/agent/tasks/pull?nodeId=12"
+[GIN] 2026/02/06 - 18:55:03 | 404 |         831ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+2026/02/06 18:55:04 [Executor] Running once...
+2026/02/06 18:55:04 [Executor] No tasks to execute
+[GIN] 2026/02/06 - 18:55:06 | 400 |      21.781µs |    20.2.140.226 | GET      "/api/v1/agent/tasks/pull?nodeId=12"
+[GIN] 2026/02/06 - 18:55:06 | 404 |         271ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+[GIN] 2026/02/06 - 18:55:09 | 404 |         572ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+2026/02/06 18:55:09 [Executor] Running once...
+2026/02/06 18:55:09 [Executor] No tasks to execute
+[GIN] 2026/02/06 - 18:55:11 | 400 |      13.215µs |    20.2.140.226 | GET      "/api/v1/agent/tasks/pull?nodeId=12"
+[GIN] 2026/02/06 - 18:55:12 | 404 |         601ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+2026/02/06 18:55:14 [Executor] Running once...
+2026/02/06 18:55:14 [Executor] No tasks to execute
+[GIN] 2026/02/06 - 18:55:15 | 404 |         570ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+[GIN] 2026/02/06 - 18:55:16 | 400 |      18.185µs |    20.2.140.226 | GET      "/api/v1/agent/tasks/pull?nodeId=12"
+[GIN] 2026/02/06 - 18:55:18 | 404 |         531ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+2026/02/06 18:55:19 [RiskScanner] Running scheduled scan...
+2026/02/06 18:55:19 [RiskScanner] Starting scan...
+2026/02/06 18:55:19 [Executor] Running once...
+2026/02/06 18:55:19 [DNS Worker] Tick: processing DNS records...
+2026/02/06 18:55:19 [Executor] No tasks to execute
+2026/02/06 18:55:19 [RiskScanner] Scan completed: 0 risks detected, 0 new, 0 updated
+2026/02/06 18:55:19 [DNS Service] GetDeletionRecords: found 0 records (limit=10, error=<nil>)
+2026/02/06 18:55:19 [DNS Worker] Tick done: present_candidates=0, absent_candidates=0, claimed_running=0, claim_skipped=0, success=0, error=0, deleted=0
+[GIN] 2026/02/06 - 18:55:21 | 404 |         932ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+[GIN] 2026/02/06 - 18:55:21 | 400 |      16.141µs |    20.2.140.226 | GET      "/api/v1/agent/tasks/pull?nodeId=12"
+[GIN] 2026/02/06 - 18:55:24 | 404 |         501ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+2026/02/06 18:55:24 [Executor] Running once...
+2026/02/06 18:55:24 [Executor] No tasks to execute
+[GIN] 2026/02/06 - 18:55:26 | 400 |      12.644µs |    20.2.140.226 | GET      "/api/v1/agent/tasks/pull?nodeId=12"
+[GIN] 2026/02/06 - 18:55:27 | 404 |         772ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+2026/02/06 18:55:29 [Executor] Running once...
+2026/02/06 18:55:29 [Executor] No tasks to execute
+[GIN] 2026/02/06 - 18:55:30 | 404 |         602ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+[GIN] 2026/02/06 - 18:55:31 | 400 |      14.016µs |    20.2.140.226 | GET      "/api/v1/agent/tasks/pull?nodeId=12"
+[GIN] 2026/02/06 - 18:55:33 | 404 |         631ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+2026/02/06 18:55:34 [Executor] Running once...
+2026/02/06 18:55:34 [Executor] No tasks to execute
+[GIN] 2026/02/06 - 18:55:36 | 404 |         531ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+[GIN] 2026/02/06 - 18:55:36 | 400 |      17.774µs |    20.2.140.226 | GET      "/api/v1/agent/tasks/pull?nodeId=12"
+[GIN] 2026/02/06 - 18:55:39 | 404 |         612ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+2026/02/06 18:55:39 [Executor] Running once...
+2026/02/06 18:55:39 [Executor] No tasks to execute
+[GIN] 2026/02/06 - 18:55:41 | 400 |      25.238µs |    20.2.140.226 | GET      "/api/v1/agent/tasks/pull?nodeId=12"
+[GIN] 2026/02/06 - 18:55:42 | 404 |         571ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+2026/02/06 18:55:44 [Executor] Running once...
+2026/02/06 18:55:44 [Executor] No tasks to execute
+[GIN] 2026/02/06 - 18:55:45 | 404 |         612ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+[GIN] 2026/02/06 - 18:55:46 | 400 |      13.906µs |    20.2.140.226 | GET      "/api/v1/agent/tasks/pull?nodeId=12"
+[GIN] 2026/02/06 - 18:55:48 | 404 |         641ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+2026/02/06 18:55:49 [Executor] Running once...
+2026/02/06 18:55:49 [DNS Worker] Tick: processing DNS records...
+2026/02/06 18:55:49 [Executor] No tasks to execute
+2026/02/06 18:55:49 [DNS Service] GetDeletionRecords: found 0 records (limit=10, error=<nil>)
+2026/02/06 18:55:49 [DNS Worker] Tick done: present_candidates=0, absent_candidates=0, claimed_running=0, claim_skipped=0, success=0, error=0, deleted=0
+[GIN] 2026/02/06 - 18:55:51 | 404 |         601ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+[GIN] 2026/02/06 - 18:55:51 | 400 |      13.255µs |    20.2.140.226 | GET      "/api/v1/agent/tasks/pull?nodeId=12"
+[GIN] 2026/02/06 - 18:55:54 | 404 |         571ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+2026/02/06 18:55:54 [Executor] Running once...
+2026/02/06 18:55:54 [Executor] No tasks to execute
+[GIN] 2026/02/06 - 18:55:56 | 400 |      13.475µs |    20.2.140.226 | GET      "/api/v1/agent/tasks/pull?nodeId=12"
+[GIN] 2026/02/06 - 18:55:57 | 404 |         551ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+2026/02/06 18:55:59 [Executor] Running once...
+2026/02/06 18:55:59 [Executor] No tasks to execute
+[GIN] 2026/02/06 - 18:56:00 | 404 |         571ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+[GIN] 2026/02/06 - 18:56:01 | 400 |      14.177µs |    20.2.140.226 | GET      "/api/v1/agent/tasks/pull?nodeId=12"
+[GIN] 2026/02/06 - 18:56:03 | 404 |         611ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+2026/02/06 18:56:04 [WebSocket] Handshake rejected: No token from 13.228.178.233:63614
+[GIN] 2026/02/06 - 18:56:04 | 401 |      66.786µs |  13.228.178.233 | GET      "/socket.io/?EIO=4&transport=websocket"
+[GIN] 2026/02/06 - 18:56:04 | 200 |    7.267989ms |  13.228.178.233 | GET      "/api/v1/origin-groups/list?page=1&pageSize=15"
+2026/02/06 18:56:04 [Executor] Running once...
+2026/02/06 18:56:04 [Executor] No tasks to execute
+[GIN] 2026/02/06 - 18:56:06 | 400 |      12.393µs |    20.2.140.226 | GET      "/api/v1/agent/tasks/pull?nodeId=12"
+[GIN] 2026/02/06 - 18:56:06 | 404 |         400ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+2026/02/06 18:56:08 [WebSocket] Handshake rejected: No token from 13.228.178.233:63639
+[GIN] 2026/02/06 - 18:56:08 | 401 |      56.537µs |  13.228.178.233 | GET      "/socket.io/?EIO=4&transport=websocket"
+[GIN] 2026/02/06 - 18:56:08 | 200 |    2.671283ms |  13.228.178.233 | GET      "/api/v1/line-groups?page=1&pageSize=15"
+[GIN] 2026/02/06 - 18:56:09 | 404 |         551ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+2026/02/06 18:56:09 [Executor] Running once...
+2026/02/06 18:56:09 [Executor] No tasks to execute
+[GIN] 2026/02/06 - 18:56:10 | 200 |    2.053473ms |  13.228.178.233 | GET      "/api/v1/nodes?page=1&pageSize=15"
+[GIN] 2026/02/06 - 18:56:11 | 400 |      18.134µs |    20.2.140.226 | GET      "/api/v1/agent/tasks/pull?nodeId=12"
+[GIN] 2026/02/06 - 18:56:12 | 404 |         721ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+2026/02/06 18:56:14 [Executor] Running once...
+2026/02/06 18:56:14 [Executor] No tasks to execute
+[GIN] 2026/02/06 - 18:56:15 | 404 |         491ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+[GIN] 2026/02/06 - 18:56:16 | 400 |      13.476µs |    20.2.140.226 | GET      "/api/v1/agent/tasks/pull?nodeId=12"
+2026/02/06 18:56:18 [WebSocket] Handshake rejected: No token from 13.228.178.233:63698
+[GIN] 2026/02/06 - 18:56:18 | 401 |      61.957µs |  13.228.178.233 | GET      "/socket.io/?EIO=4&transport=websocket"
+[GIN] 2026/02/06 - 18:56:18 | 200 |    2.432223ms |  13.228.178.233 | GET      "/api/v1/line-groups?page=1&pageSize=15"
+[GIN] 2026/02/06 - 18:56:18 | 404 |         581ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+2026/02/06 18:56:19 [Executor] Running once...
+2026/02/06 18:56:19 [DNS Worker] Tick: processing DNS records...
+2026/02/06 18:56:19 [Executor] No tasks to execute
+2026/02/06 18:56:19 [DNS Service] GetDeletionRecords: found 0 records (limit=10, error=<nil>)
+2026/02/06 18:56:19 [DNS Worker] Tick done: present_candidates=0, absent_candidates=0, claimed_running=0, claim_skipped=0, success=0, error=0, deleted=0
+[GIN] 2026/02/06 - 18:56:20 | 200 |    2.191292ms |  13.228.178.233 | GET      "/api/v1/nodes?page=1&pageSize=15"
+[GIN] 2026/02/06 - 18:56:21 | 400 |      16.872µs |    20.2.140.226 | GET      "/api/v1/agent/tasks/pull?nodeId=12"
+[GIN] 2026/02/06 - 18:56:21 | 404 |         221ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+[GIN] 2026/02/06 - 18:56:24 | 404 |         521ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+2026/02/06 18:56:24 [Executor] Running once...
+2026/02/06 18:56:24 [Executor] No tasks to execute
+[GIN] 2026/02/06 - 18:56:26 | 400 |      12.844µs |    20.2.140.226 | GET      "/api/v1/agent/tasks/pull?nodeId=12"
+[GIN] 2026/02/06 - 18:56:27 | 404 |         561ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+2026/02/06 18:56:29 [Executor] Running once...
+2026/02/06 18:56:29 [Executor] No tasks to execute
+[GIN] 2026/02/06 - 18:56:30 | 404 |         521ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+[GIN] 2026/02/06 - 18:56:31 | 400 |      18.695µs |    20.2.140.226 | GET      "/api/v1/agent/tasks/pull?nodeId=12"
+[GIN] 2026/02/06 - 18:56:33 | 404 |         551ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+2026/02/06 18:56:34 [Executor] Running once...
+2026/02/06 18:56:34 [Executor] No tasks to execute
+[GIN] 2026/02/06 - 18:56:36 | 404 |         902ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+[GIN] 2026/02/06 - 18:56:36 | 400 |      10.459µs |    20.2.140.226 | GET      "/api/v1/agent/tasks/pull?nodeId=12"
+[GIN] 2026/02/06 - 18:56:39 | 404 |         541ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+2026/02/06 18:56:39 [Executor] Running once...
+2026/02/06 18:56:39 [Executor] No tasks to execute
+[GIN] 2026/02/06 - 18:56:41 | 400 |      13.195µs |    20.2.140.226 | GET      "/api/v1/agent/tasks/pull?nodeId=12"
+[GIN] 2026/02/06 - 18:56:42 | 404 |         581ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+2026/02/06 18:56:44 [Executor] Running once...
+2026/02/06 18:56:44 [Executor] No tasks to execute
+[GIN] 2026/02/06 - 18:56:45 | 404 |         601ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+[GIN] 2026/02/06 - 18:56:46 | 400 |       15.69µs |    20.2.140.226 | GET      "/api/v1/agent/tasks/pull?nodeId=12"
+[GIN] 2026/02/06 - 18:56:48 | 404 |         521ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+2026/02/06 18:56:49 [Executor] Running once...
+2026/02/06 18:56:49 [DNS Worker] Tick: processing DNS records...
+2026/02/06 18:56:49 [Executor] No tasks to execute
+2026/02/06 18:56:49 [DNS Service] GetDeletionRecords: found 0 records (limit=10, error=<nil>)
+2026/02/06 18:56:49 [DNS Worker] Tick done: present_candidates=0, absent_candidates=0, claimed_running=0, claim_skipped=0, success=0, error=0, deleted=0
+[GIN] 2026/02/06 - 18:56:51 | 400 |      13.737µs |    20.2.140.226 | GET      "/api/v1/agent/tasks/pull?nodeId=12"
+[GIN] 2026/02/06 - 18:56:51 | 404 |         491ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+[GIN] 2026/02/06 - 18:56:54 | 404 |         551ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+2026/02/06 18:56:54 [Executor] Running once...
+2026/02/06 18:56:54 [Executor] No tasks to execute
+[GIN] 2026/02/06 - 18:56:56 | 400 |       15.58µs |    20.2.140.226 | GET      "/api/v1/agent/tasks/pull?nodeId=12"
+[GIN] 2026/02/06 - 18:56:57 | 404 |         571ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+2026/02/06 18:56:59 [Executor] Running once...
+2026/02/06 18:56:59 [Executor] No tasks to execute
+[GIN] 2026/02/06 - 18:57:00 | 404 |         601ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+[GIN] 2026/02/06 - 18:57:01 | 400 |      13.816µs |    20.2.140.226 | GET      "/api/v1/agent/tasks/pull?nodeId=12"
+[GIN] 2026/02/06 - 18:57:03 | 404 |         541ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+2026/02/06 18:57:04 [Executor] Running once...
+2026/02/06 18:57:04 [Executor] No tasks to execute
+[GIN] 2026/02/06 - 18:57:06 | 404 |         551ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+[GIN] 2026/02/06 - 18:57:06 | 400 |       10.32µs |    20.2.140.226 | GET      "/api/v1/agent/tasks/pull?nodeId=12"
+[GIN] 2026/02/06 - 18:57:09 | 404 |         561ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+2026/02/06 18:57:09 [Executor] Running once...
+2026/02/06 18:57:09 [Executor] No tasks to execute
+[GIN] 2026/02/06 - 18:57:11 | 400 |       21.25µs |    20.2.140.226 | GET      "/api/v1/agent/tasks/pull?nodeId=12"
+[GIN] 2026/02/06 - 18:57:12 | 404 |         631ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+2026/02/06 18:57:14 [Executor] Running once...
+2026/02/06 18:57:14 [Executor] No tasks to execute
+[GIN] 2026/02/06 - 18:57:15 | 404 |         561ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+[GIN] 2026/02/06 - 18:57:16 | 400 |      16.902µs |    20.2.140.226 | GET      "/api/v1/agent/tasks/pull?nodeId=12"
+[GIN] 2026/02/06 - 18:57:18 | 404 |         591ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+2026/02/06 18:57:19 [DNS Worker] Tick: processing DNS records...
+2026/02/06 18:57:19 [Executor] Running once...
+2026/02/06 18:57:19 [Executor] No tasks to execute
+2026/02/06 18:57:19 [DNS Service] GetDeletionRecords: found 0 records (limit=10, error=<nil>)
+2026/02/06 18:57:19 [DNS Worker] Tick done: present_candidates=0, absent_candidates=0, claimed_running=0, claim_skipped=0, success=0, error=0, deleted=0
+[GIN] 2026/02/06 - 18:57:21 | 404 |         591ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+[GIN] 2026/02/06 - 18:57:21 | 400 |       10.62µs |    20.2.140.226 | GET      "/api/v1/agent/tasks/pull?nodeId=12"
+[GIN] 2026/02/06 - 18:57:24 | 404 |         562ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+2026/02/06 18:57:24 [Executor] Running once...
+2026/02/06 18:57:24 [Executor] No tasks to execute
+[GIN] 2026/02/06 - 18:57:26 | 400 |      17.403µs |    20.2.140.226 | GET      "/api/v1/agent/tasks/pull?nodeId=12"
+[GIN] 2026/02/06 - 18:57:27 | 404 |         751ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+2026/02/06 18:57:29 [Executor] Running once...
+2026/02/06 18:57:29 [Executor] No tasks to execute
+[GIN] 2026/02/06 - 18:57:30 | 404 |         521ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+[GIN] 2026/02/06 - 18:57:31 | 400 |      12.754µs |    20.2.140.226 | GET      "/api/v1/agent/tasks/pull?nodeId=12"
+[GIN] 2026/02/06 - 18:57:33 | 404 |         591ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+2026/02/06 18:57:34 [Executor] Running once...
+2026/02/06 18:57:34 [Executor] No tasks to execute
+[GIN] 2026/02/06 - 18:57:36 | 404 |         571ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+[GIN] 2026/02/06 - 18:57:36 | 400 |      19.557µs |    20.2.140.226 | GET      "/api/v1/agent/tasks/pull?nodeId=12"
+[GIN] 2026/02/06 - 18:57:39 | 404 |         601ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+2026/02/06 18:57:39 [Executor] Running once...
+2026/02/06 18:57:39 [Executor] No tasks to execute
+[GIN] 2026/02/06 - 18:57:41 | 400 |      13.275µs |    20.2.140.226 | GET      "/api/v1/agent/tasks/pull?nodeId=12"
+[GIN] 2026/02/06 - 18:57:42 | 404 |         611ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+2026/02/06 18:57:44 [Executor] Running once...
+2026/02/06 18:57:44 [Executor] No tasks to execute
+[GIN] 2026/02/06 - 18:57:45 | 404 |         551ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+[GIN] 2026/02/06 - 18:57:46 | 400 |      17.793µs |    20.2.140.226 | GET      "/api/v1/agent/tasks/pull?nodeId=12"
+[GIN] 2026/02/06 - 18:57:48 | 404 |         552ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+2026/02/06 18:57:49 [Executor] Running once...
+2026/02/06 18:57:49 [DNS Worker] Tick: processing DNS records...
+2026/02/06 18:57:49 [Executor] No tasks to execute
+2026/02/06 18:57:49 [DNS Service] GetDeletionRecords: found 0 records (limit=10, error=<nil>)
+2026/02/06 18:57:49 [DNS Worker] Tick done: present_candidates=0, absent_candidates=0, claimed_running=0, claim_skipped=0, success=0, error=0, deleted=0
+[GIN] 2026/02/06 - 18:57:51 | 404 |         551ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+[GIN] 2026/02/06 - 18:57:51 | 400 |      13.615µs |    20.2.140.226 | GET      "/api/v1/agent/tasks/pull?nodeId=12"
+[GIN] 2026/02/06 - 18:57:54 | 404 |         621ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+2026/02/06 18:57:54 [Executor] Running once...
+2026/02/06 18:57:54 [Executor] No tasks to execute
+[GIN] 2026/02/06 - 18:57:56 | 400 |      12.363µs |    20.2.140.226 | GET      "/api/v1/agent/tasks/pull?nodeId=12"
+[GIN] 2026/02/06 - 18:57:57 | 404 |       1.513µs |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+2026/02/06 18:57:59 [Executor] Running once...
+2026/02/06 18:57:59 [Executor] No tasks to execute
+[GIN] 2026/02/06 - 18:58:00 | 404 |         612ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+[GIN] 2026/02/06 - 18:58:01 | 400 |      14.797µs |    20.2.140.226 | GET      "/api/v1/agent/tasks/pull?nodeId=12"
+[GIN] 2026/02/06 - 18:58:03 | 404 |         561ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+2026/02/06 18:58:04 [Executor] Running once...
+2026/02/06 18:58:04 [Executor] No tasks to execute
+[GIN] 2026/02/06 - 18:58:06 | 400 |      12.814µs |    20.2.140.226 | GET      "/api/v1/agent/tasks/pull?nodeId=12"
+[GIN] 2026/02/06 - 18:58:06 | 404 |         561ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+[GIN] 2026/02/06 - 18:58:09 | 404 |         561ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+2026/02/06 18:58:09 [Executor] Running once...
+2026/02/06 18:58:09 [Executor] No tasks to execute
+[GIN] 2026/02/06 - 18:58:11 | 400 |      16.161µs |    20.2.140.226 | GET      "/api/v1/agent/tasks/pull?nodeId=12"
+[GIN] 2026/02/06 - 18:58:12 | 404 |         561ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+2026/02/06 18:58:14 [Executor] Running once...
+2026/02/06 18:58:14 [Executor] No tasks to execute
+[GIN] 2026/02/06 - 18:58:15 | 404 |         601ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+[GIN] 2026/02/06 - 18:58:16 | 400 |      13.926µs |    20.2.140.226 | GET      "/api/v1/agent/tasks/pull?nodeId=12"
+[GIN] 2026/02/06 - 18:58:18 | 404 |         602ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+2026/02/06 18:58:19 [DNS Worker] Tick: processing DNS records...
+2026/02/06 18:58:19 [Executor] Running once...
+2026/02/06 18:58:19 [Executor] No tasks to execute
+2026/02/06 18:58:19 [DNS Service] GetDeletionRecords: found 0 records (limit=10, error=<nil>)
+2026/02/06 18:58:19 [DNS Worker] Tick done: present_candidates=0, absent_candidates=0, claimed_running=0, claim_skipped=0, success=0, error=0, deleted=0
+[GIN] 2026/02/06 - 18:58:21 | 404 |         511ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+[GIN] 2026/02/06 - 18:58:21 | 400 |      13.285µs |    20.2.140.226 | GET      "/api/v1/agent/tasks/pull?nodeId=12"
+[GIN] 2026/02/06 - 18:58:24 | 404 |         571ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+2026/02/06 18:58:24 [Executor] Running once...
+2026/02/06 18:58:24 [Executor] No tasks to execute
+[GIN] 2026/02/06 - 18:58:26 | 400 |      16.581µs |    20.2.140.226 | GET      "/api/v1/agent/tasks/pull?nodeId=12"
+[GIN] 2026/02/06 - 18:58:27 | 404 |         551ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+2026/02/06 18:58:29 [Executor] Running once...
+2026/02/06 18:58:29 [Executor] No tasks to execute
+[GIN] 2026/02/06 - 18:58:30 | 404 |         521ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+[GIN] 2026/02/06 - 18:58:31 | 400 |      16.011µs |    20.2.140.226 | GET      "/api/v1/agent/tasks/pull?nodeId=12"
+[GIN] 2026/02/06 - 18:58:33 | 404 |         561ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+2026/02/06 18:58:34 [Executor] Running once...
+2026/02/06 18:58:34 [Executor] No tasks to execute
+[GIN] 2026/02/06 - 18:58:36 | 400 |      13.316µs |    20.2.140.226 | GET      "/api/v1/agent/tasks/pull?nodeId=12"
+[GIN] 2026/02/06 - 18:58:36 | 404 |         251ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+[GIN] 2026/02/06 - 18:58:39 | 404 |         491ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+2026/02/06 18:58:39 [Executor] Running once...
+2026/02/06 18:58:39 [Executor] No tasks to execute
+[GIN] 2026/02/06 - 18:58:41 | 400 |      13.265µs |    20.2.140.226 | GET      "/api/v1/agent/tasks/pull?nodeId=12"
+[GIN] 2026/02/06 - 18:58:42 | 404 |         561ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+2026/02/06 18:58:44 [Executor] Running once...
+2026/02/06 18:58:44 [Executor] No tasks to execute
+[GIN] 2026/02/06 - 18:58:45 | 404 |         521ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+[GIN] 2026/02/06 - 18:58:46 | 400 |       15.86µs |    20.2.140.226 | GET      "/api/v1/agent/tasks/pull?nodeId=12"
+[GIN] 2026/02/06 - 18:58:48 | 404 |         551ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+2026/02/06 18:58:49 [Executor] Running once...
+2026/02/06 18:58:49 [DNS Worker] Tick: processing DNS records...
+2026/02/06 18:58:49 [Executor] No tasks to execute
+2026/02/06 18:58:49 [DNS Service] GetDeletionRecords: found 0 records (limit=10, error=<nil>)
+2026/02/06 18:58:49 [DNS Worker] Tick done: present_candidates=0, absent_candidates=0, claimed_running=0, claim_skipped=0, success=0, error=0, deleted=0
+[GIN] 2026/02/06 - 18:58:51 | 404 |         771ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+[GIN] 2026/02/06 - 18:58:51 | 400 |      15.299µs |    20.2.140.226 | GET      "/api/v1/agent/tasks/pull?nodeId=12"
+[GIN] 2026/02/06 - 18:58:54 | 404 |         561ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+2026/02/06 18:58:54 [Executor] Running once...
+2026/02/06 18:58:54 [Executor] No tasks to execute
+[GIN] 2026/02/06 - 18:58:56 | 400 |      13.415µs |    20.2.140.226 | GET      "/api/v1/agent/tasks/pull?nodeId=12"
+[GIN] 2026/02/06 - 18:58:57 | 404 |         561ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+2026/02/06 18:58:59 [Executor] Running once...
+2026/02/06 18:58:59 [Executor] No tasks to execute
+[GIN] 2026/02/06 - 18:59:00 | 404 |         531ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+[GIN] 2026/02/06 - 18:59:01 | 400 |      14.087µs |    20.2.140.226 | GET      "/api/v1/agent/tasks/pull?nodeId=12"
+[GIN] 2026/02/06 - 18:59:03 | 404 |         511ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+
+2026/02/06 18:59:04 [31;1m/opt/go_cmdb/api/v1/nodes/handler.go:614 [35;1mError 1451 (23000): Cannot delete or update a parent row: a foreign key constraint fails (`cdn_control`.`agent_tasks`, CONSTRAINT `fk_agent_tasks_node` FOREIGN KEY (`node_id`) REFERENCES `nodes` (`id`))
+[0m[33m[4.345ms] [34;1m[rows:0][0m DELETE FROM `nodes` WHERE `nodes`.`id` = 132
+2026/02/06 18:59:04 [ERROR] failed to delete nodes (code=5002, internal_err=Error 1451 (23000): Cannot delete or update a parent row: a foreign key constraint fails (`cdn_control`.`agent_tasks`, CONSTRAINT `fk_agent_tasks_node` FOREIGN KEY (`node_id`) REFERENCES `nodes` (`id`)))
+[GIN] 2026/02/06 - 18:59:04 | 500 |    4.532481ms |  13.228.178.233 | POST     "/api/v1/nodes/delete"
+2026/02/06 18:59:04 [Executor] Running once...
+2026/02/06 18:59:04 [Executor] No tasks to execute
+[GIN] 2026/02/06 - 18:59:06 | 404 |         821ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+[GIN] 2026/02/06 - 18:59:06 | 400 |      11.773µs |    20.2.140.226 | GET      "/api/v1/agent/tasks/pull?nodeId=12"
+[GIN] 2026/02/06 - 18:59:09 | 404 |         551ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+2026/02/06 18:59:09 [Executor] Running once...
+2026/02/06 18:59:09 [Executor] No tasks to execute
+[GIN] 2026/02/06 - 18:59:11 | 400 |      14.147µs |    20.2.140.226 | GET      "/api/v1/agent/tasks/pull?nodeId=12"
+[GIN] 2026/02/06 - 18:59:12 | 404 |         631ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+2026/02/06 18:59:14 [Executor] Running once...
+2026/02/06 18:59:14 [Executor] No tasks to execute
+[GIN] 2026/02/06 - 18:59:15 | 404 |         531ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+[GIN] 2026/02/06 - 18:59:16 | 400 |      13.695µs |    20.2.140.226 | GET      "/api/v1/agent/tasks/pull?nodeId=12"
+[GIN] 2026/02/06 - 18:59:18 | 404 |         561ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+2026/02/06 18:59:19 [Executor] Running once...
+2026/02/06 18:59:19 [DNS Worker] Tick: processing DNS records...
+2026/02/06 18:59:19 [Executor] No tasks to execute
+2026/02/06 18:59:19 [DNS Service] GetDeletionRecords: found 0 records (limit=10, error=<nil>)
+2026/02/06 18:59:19 [DNS Worker] Tick done: present_candidates=0, absent_candidates=0, claimed_running=0, claim_skipped=0, success=0, error=0, deleted=0
+[GIN] 2026/02/06 - 18:59:21 | 404 |       1.072µs |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+[GIN] 2026/02/06 - 18:59:21 | 400 |      14.587µs |    20.2.140.226 | GET      "/api/v1/agent/tasks/pull?nodeId=12"
+[GIN] 2026/02/06 - 18:59:24 | 404 |         771ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+2026/02/06 18:59:24 [Executor] Running once...
+2026/02/06 18:59:24 [Executor] No tasks to execute
+[GIN] 2026/02/06 - 18:59:26 | 400 |      17.303µs |    20.2.140.226 | GET      "/api/v1/agent/tasks/pull?nodeId=12"
+[GIN] 2026/02/06 - 18:59:27 | 404 |         592ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+2026/02/06 18:59:29 [Executor] Running once...
+2026/02/06 18:59:29 [Executor] No tasks to execute
+[GIN] 2026/02/06 - 18:59:30 | 404 |         561ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+[GIN] 2026/02/06 - 18:59:31 | 400 |      15.509µs |    20.2.140.226 | GET      "/api/v1/agent/tasks/pull?nodeId=12"
+[GIN] 2026/02/06 - 18:59:33 | 404 |         551ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+2026/02/06 18:59:34 [Executor] Running once...
+2026/02/06 18:59:34 [Executor] No tasks to execute
+[GIN] 2026/02/06 - 18:59:36 | 404 |         601ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+[GIN] 2026/02/06 - 18:59:36 | 400 |       10.86µs |    20.2.140.226 | GET      "/api/v1/agent/tasks/pull?nodeId=12"
+[GIN] 2026/02/06 - 18:59:39 | 404 |         561ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+2026/02/06 18:59:39 [Executor] Running once...
+2026/02/06 18:59:39 [Executor] No tasks to execute
+[GIN] 2026/02/06 - 18:59:41 | 400 |       15.69µs |    20.2.140.226 | GET      "/api/v1/agent/tasks/pull?nodeId=12"
+[GIN] 2026/02/06 - 18:59:42 | 404 |         551ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+2026/02/06 18:59:44 [Executor] Running once...
+2026/02/06 18:59:44 [Executor] No tasks to execute
+[GIN] 2026/02/06 - 18:59:45 | 404 |         561ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+[GIN] 2026/02/06 - 18:59:46 | 400 |      15.349µs |    20.2.140.226 | GET      "/api/v1/agent/tasks/pull?nodeId=12"
+[GIN] 2026/02/06 - 18:59:48 | 404 |         561ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+2026/02/06 18:59:49 [Executor] Running once...
+2026/02/06 18:59:49 [DNS Worker] Tick: processing DNS records...
+2026/02/06 18:59:49 [Executor] No tasks to execute
+2026/02/06 18:59:49 [DNS Service] GetDeletionRecords: found 0 records (limit=10, error=<nil>)
+2026/02/06 18:59:49 [DNS Worker] Tick done: present_candidates=0, absent_candidates=0, claimed_running=0, claim_skipped=0, success=0, error=0, deleted=0
+[GIN] 2026/02/06 - 18:59:51 | 404 |         932ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+[GIN] 2026/02/06 - 18:59:51 | 400 |      11.171µs |    20.2.140.226 | GET      "/api/v1/agent/tasks/pull?nodeId=12"
+[GIN] 2026/02/06 - 18:59:54 | 404 |         902ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+2026/02/06 18:59:54 [Executor] Running once...
+2026/02/06 18:59:54 [Executor] No tasks to execute
+[GIN] 2026/02/06 - 18:59:56 | 400 |      14.467µs |    20.2.140.226 | GET      "/api/v1/agent/tasks/pull?nodeId=12"
+[GIN] 2026/02/06 - 18:59:57 | 404 |         601ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+2026/02/06 18:59:59 [Executor] Running once...
+2026/02/06 18:59:59 [Executor] No tasks to execute
+[GIN] 2026/02/06 - 19:00:00 | 404 |         892ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+[GIN] 2026/02/06 - 19:00:01 | 400 |      14.006µs |    20.2.140.226 | GET      "/api/v1/agent/tasks/pull?nodeId=12"
+[GIN] 2026/02/06 - 19:00:03 | 404 |         652ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+2026/02/06 19:00:04 [Executor] Running once...
+2026/02/06 19:00:04 [Executor] No tasks to execute
+[GIN] 2026/02/06 - 19:00:06 | 404 |         611ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+[GIN] 2026/02/06 - 19:00:06 | 400 |      10.349µs |    20.2.140.226 | GET      "/api/v1/agent/tasks/pull?nodeId=12"
+[GIN] 2026/02/06 - 19:00:09 | 404 |         591ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+2026/02/06 19:00:09 [Executor] Running once...
+2026/02/06 19:00:09 [Executor] No tasks to execute
+[GIN] 2026/02/06 - 19:00:11 | 400 |        16.1µs |    20.2.140.226 | GET      "/api/v1/agent/tasks/pull?nodeId=12"
+[GIN] 2026/02/06 - 19:00:12 | 404 |         591ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+2026/02/06 19:00:14 [Executor] Running once...
+2026/02/06 19:00:14 [Executor] No tasks to execute
+[GIN] 2026/02/06 - 19:00:15 | 404 |         571ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+[GIN] 2026/02/06 - 19:00:16 | 400 |      13.335µs |    20.2.140.226 | GET      "/api/v1/agent/tasks/pull?nodeId=12"
+[GIN] 2026/02/06 - 19:00:18 | 404 |         481ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+2026/02/06 19:00:19 [Executor] Running once...
+2026/02/06 19:00:19 [DNS Worker] Tick: processing DNS records...
+2026/02/06 19:00:19 [RiskScanner] Running scheduled scan...
+2026/02/06 19:00:19 [RiskScanner] Starting scan...
+2026/02/06 19:00:19 [Executor] No tasks to execute
+2026/02/06 19:00:19 [DNS Service] GetDeletionRecords: found 0 records (limit=10, error=<nil>)
+2026/02/06 19:00:19 [DNS Worker] Tick done: present_candidates=0, absent_candidates=0, claimed_running=0, claim_skipped=0, success=0, error=0, deleted=0
+2026/02/06 19:00:19 [RiskScanner] Scan completed: 0 risks detected, 0 new, 0 updated
+[GIN] 2026/02/06 - 19:00:21 | 404 |       2.154µs |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+[GIN] 2026/02/06 - 19:00:21 | 400 |      11.371µs |    20.2.140.226 | GET      "/api/v1/agent/tasks/pull?nodeId=12"
+[GIN] 2026/02/06 - 19:00:24 | 404 |         561ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+2026/02/06 19:00:24 [Executor] Running once...
+2026/02/06 19:00:24 [Executor] No tasks to execute
+[GIN] 2026/02/06 - 19:00:26 | 400 |      23.434µs |    20.2.140.226 | GET      "/api/v1/agent/tasks/pull?nodeId=12"
+[GIN] 2026/02/06 - 19:00:27 | 404 |         531ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+2026/02/06 19:00:29 [Executor] Running once...
+2026/02/06 19:00:29 [Executor] No tasks to execute
+[GIN] 2026/02/06 - 19:00:30 | 404 |         561ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+[GIN] 2026/02/06 - 19:00:31 | 400 |      12.543µs |    20.2.140.226 | GET      "/api/v1/agent/tasks/pull?nodeId=12"
+[GIN] 2026/02/06 - 19:00:33 | 404 |         571ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+2026/02/06 19:00:34 [Executor] Running once...
+2026/02/06 19:00:34 [Executor] No tasks to execute
+[GIN] 2026/02/06 - 19:00:36 | 404 |         500ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+[GIN] 2026/02/06 - 19:00:36 | 400 |      16.662µs |    20.2.140.226 | GET      "/api/v1/agent/tasks/pull?nodeId=12"
+[GIN] 2026/02/06 - 19:00:39 | 404 |         521ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+2026/02/06 19:00:39 [Executor] Running once...
+2026/02/06 19:00:39 [Executor] No tasks to execute
+[GIN] 2026/02/06 - 19:00:41 | 400 |      17.834µs |    20.2.140.226 | GET      "/api/v1/agent/tasks/pull?nodeId=12"
+[GIN] 2026/02/06 - 19:00:42 | 404 |         591ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+2026/02/06 19:00:44 [Executor] Running once...
+2026/02/06 19:00:44 [Executor] No tasks to execute
+[GIN] 2026/02/06 - 19:00:45 | 404 |         601ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+[GIN] 2026/02/06 - 19:00:46 | 400 |      18.846µs |    20.2.140.226 | GET      "/api/v1/agent/tasks/pull?nodeId=12"
+[GIN] 2026/02/06 - 19:00:48 | 404 |         561ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+2026/02/06 19:00:49 [Executor] Running once...
+2026/02/06 19:00:49 [DNS Worker] Tick: processing DNS records...
+2026/02/06 19:00:49 [Executor] No tasks to execute
+2026/02/06 19:00:49 [DNS Service] GetDeletionRecords: found 0 records (limit=10, error=<nil>)
+2026/02/06 19:00:49 [DNS Worker] Tick done: present_candidates=0, absent_candidates=0, claimed_running=0, claim_skipped=0, success=0, error=0, deleted=0
+[GIN] 2026/02/06 - 19:00:51 | 400 |      13.836µs |    20.2.140.226 | GET      "/api/v1/agent/tasks/pull?nodeId=12"
+[GIN] 2026/02/06 - 19:00:51 | 404 |         231ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+[GIN] 2026/02/06 - 19:00:54 | 404 |         551ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+2026/02/06 19:00:54 [Executor] Running once...
+2026/02/06 19:00:54 [Executor] No tasks to execute
+[GIN] 2026/02/06 - 19:00:56 | 400 |      13.215µs |    20.2.140.226 | GET      "/api/v1/agent/tasks/pull?nodeId=12"
+[GIN] 2026/02/06 - 19:00:57 | 404 |         571ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+2026/02/06 19:00:59 [Executor] Running once...
+2026/02/06 19:00:59 [Executor] No tasks to execute
+[GIN] 2026/02/06 - 19:01:00 | 404 |         492ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+[GIN] 2026/02/06 - 19:01:01 | 400 |      15.459µs |    20.2.140.226 | GET      "/api/v1/agent/tasks/pull?nodeId=12"
+[GIN] 2026/02/06 - 19:01:03 | 404 |         601ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+2026/02/06 19:01:04 [Executor] Running once...
+2026/02/06 19:01:04 [Executor] No tasks to execute
+[GIN] 2026/02/06 - 19:01:06 | 404 |         731ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+[GIN] 2026/02/06 - 19:01:06 | 400 |      16.241µs |    20.2.140.226 | GET      "/api/v1/agent/tasks/pull?nodeId=12"
+[GIN] 2026/02/06 - 19:01:09 | 404 |         541ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+2026/02/06 19:01:09 [Executor] Running once...
+2026/02/06 19:01:09 [Executor] No tasks to execute
+[GIN] 2026/02/06 - 19:01:11 | 400 |      28.765µs |    20.2.140.226 | GET      "/api/v1/agent/tasks/pull?nodeId=12"
+[GIN] 2026/02/06 - 19:01:12 | 404 |         552ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+2026/02/06 19:01:14 [Executor] Running once...
+2026/02/06 19:01:14 [Executor] No tasks to execute
+[GIN] 2026/02/06 - 19:01:15 | 404 |         622ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+[GIN] 2026/02/06 - 19:01:16 | 400 |       15.75µs |    20.2.140.226 | GET      "/api/v1/agent/tasks/pull?nodeId=12"
+[GIN] 2026/02/06 - 19:01:18 | 404 |         611ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+2026/02/06 19:01:19 [Executor] Running once...
+2026/02/06 19:01:19 [DNS Worker] Tick: processing DNS records...
+2026/02/06 19:01:19 [Executor] No tasks to execute
+2026/02/06 19:01:19 [DNS Service] GetDeletionRecords: found 0 records (limit=10, error=<nil>)
+2026/02/06 19:01:19 [DNS Worker] Tick done: present_candidates=0, absent_candidates=0, claimed_running=0, claim_skipped=0, success=0, error=0, deleted=0
+[GIN] 2026/02/06 - 19:01:21 | 400 |      13.285µs |    20.2.140.226 | GET      "/api/v1/agent/tasks/pull?nodeId=12"
+[GIN] 2026/02/06 - 19:01:21 | 404 |         260ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+[GIN] 2026/02/06 - 19:01:24 | 404 |         571ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+2026/02/06 19:01:24 [Executor] Running once...
+2026/02/06 19:01:24 [Executor] No tasks to execute
+[GIN] 2026/02/06 - 19:01:26 | 400 |      20.599µs |    20.2.140.226 | GET      "/api/v1/agent/tasks/pull?nodeId=12"
+[GIN] 2026/02/06 - 19:01:27 | 404 |         531ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"
+2026/02/06 19:01:29 [Executor] Running once...
+2026/02/06 19:01:29 [Executor] No tasks to execute
+[GIN] 2026/02/06 - 19:01:30 | 404 |         722ns |    20.2.140.226 | POST     "/api/v1/agents/tasks/claim"

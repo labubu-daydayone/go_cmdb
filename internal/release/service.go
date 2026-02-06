@@ -194,3 +194,8 @@ func (s *Service) GetRelease(releaseID int64) (*GetReleaseResponse, error) {
 		UpdatedAt:    task.UpdatedAt.Format("2006-01-02T15:04:05Z07:00"),
 	}, nil
 }
+
+// GetDB 获取数据库连接
+func (s *Service) GetDB() *gorm.DB {
+	return s.db
+}

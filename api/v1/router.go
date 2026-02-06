@@ -7,6 +7,7 @@ import (
 	"go_cmdb/api/v1/agents"
 	bootstrapHandler "go_cmdb/api/bootstrap"
 	"go_cmdb/api/v1/agent_tasks"
+	"go_cmdb/api/v1/agent_exec"
 	"go_cmdb/api/v1/api_keys"
 	"go_cmdb/api/v1/auth"
 	"go_cmdb/api/v1/cache_rules"
@@ -23,9 +24,11 @@ import (
 	"go_cmdb/api/v1/origin_groups"
 	"go_cmdb/api/v1/origin_sets"
 	"go_cmdb/api/v1/origins"
+	"go_cmdb/api/v1/release_tasks"
 	"go_cmdb/api/v1/releases"
 	"go_cmdb/api/v1/risks"
 	"go_cmdb/api/v1/websites"
+	"go_cmdb/api/v1/website_release_tasks"
 	bootstrapPkg "go_cmdb/internal/bootstrap"
 	"go_cmdb/internal/config"
 	"go_cmdb/internal/httpx"
@@ -61,11 +64,19 @@ func SetupRouter(r *gin.Engine, db *gorm.DB, cfg *config.Config, acmeWorker *acm
 		// Public routes (no authentication required)
 		v1.GET("/ping", pingHandler)
 
-		// Auth routes
-		authGroup := v1.Group("/auth")
-		{
-			authGroup.POST("/login", auth.LoginHandler(db, cfg))
-		}
+			// Auth routes
+			authGroup := v1.Group("/auth")
+			{
+				authGroup.POST("/login", auth.LoginHandler(db, cfg))
+			}
+
+			// Agent execution routes (no JWT auth, uses mTLS or X-Node-Id)
+			agentExecHandler := agent_exec.NewHandler(db)
+			agentExecGroup := v1.Group("/agent")
+			{
+				agentExecGroup.GET("/tasks/pull", agentExecHandler.Pull)
+				agentExecGroup.POST("/tasks/update-status", agentExecHandler.UpdateStatus)
+			}
 
 		// Demo routes for testing error responses
 		demo := v1.Group("/demo")
@@ -129,6 +140,7 @@ func SetupRouter(r *gin.Engine, db *gorm.DB, cfg *config.Config, acmeWorker *acm
 		lineGroupsGroup := protected.Group("/line-groups")
 		{
 			lineGroupsGroup.GET("", lineGroupsHandler.List)
+			lineGroupsGroup.GET("/options", lineGroupsHandler.Options)
 			lineGroupsGroup.POST("/create", lineGroupsHandler.Create)
 			lineGroupsGroup.POST("/update", lineGroupsHandler.Update)
 			lineGroupsGroup.POST("/delete", lineGroupsHandler.Delete)
@@ -141,6 +153,7 @@ func SetupRouter(r *gin.Engine, db *gorm.DB, cfg *config.Config, acmeWorker *acm
 		{
 			originGroupsGroup.GET("/list", originGroupsHandler.List)
 			originGroupsGroup.GET("/detail", originGroupsHandler.Detail)
+			originGroupsGroup.GET("/options", originGroupsHandler.Options)
 			originGroupsGroup.POST("/create", originGroupsHandler.Create)
 		originGroupsGroup.POST("/addresses/upsert", originGroupsHandler.AddressesUpsert)
 		originGroupsGroup.POST("/update", originGroupsHandler.Update)
@@ -163,6 +176,7 @@ func SetupRouter(r *gin.Engine, db *gorm.DB, cfg *config.Config, acmeWorker *acm
 			{
 				originSetsGroup.POST("/create", originSetsHandler.Create)
 				originSetsGroup.GET("", originSetsHandler.List)
+				originSetsGroup.GET("/options", originSetsHandler.Options)
 				originSetsGroup.GET("/:id", originSetsHandler.Detail)
 				originSetsGroup.POST("/bind-website", originSetsHandler.BindWebsite)
 			}
@@ -186,11 +200,21 @@ func SetupRouter(r *gin.Engine, db *gorm.DB, cfg *config.Config, acmeWorker *acm
 			{
 				websitesGroup.GET("", websitesHandler.List)
 				websitesGroup.GET("/:id", websitesHandler.GetByID)
+				websitesGroup.GET("/:id/https", websitesHandler.GetHTTPS)
 				websitesGroup.POST("/create", websitesHandler.Create)
 				websitesGroup.POST("/update", websitesHandler.Update)
 				websitesGroup.POST("/delete", websitesHandler.Delete)
 				websitesGroup.POST("/bind-origin-set", websitesHandler.BindOriginSet)
 				websitesGroup.POST("/origin-set/bind", websitesHandler.BatchBindOriginSet)
+			}
+
+			// Website Release Tasks routes
+			websiteReleaseTasksHandler := website_release_tasks.NewHandler(db)
+			websiteReleaseTasksGroup := protected.Group("/website-release-tasks")
+			{
+				websiteReleaseTasksGroup.GET("", websiteReleaseTasksHandler.List)
+				websiteReleaseTasksGroup.GET("/:id", websiteReleaseTasksHandler.Detail)
+				websiteReleaseTasksGroup.POST("/retry", websiteReleaseTasksHandler.Retry)
 			}
 
 			// Agent tasks routes
@@ -295,7 +319,12 @@ func SetupRouter(r *gin.Engine, db *gorm.DB, cfg *config.Config, acmeWorker *acm
 				releasesHandlerInstance := releases.NewHandler(db)
 			protected.GET("/releases", releasesHandlerInstance.ListReleases)
 			protected.POST("/releases", releasesHandlerInstance.CreateRelease)
+
+				// Release tasks routes (C2-04-02)
+				releaseTasksHandlerInstance := release_tasks.NewHandler(db)
+			protected.GET("/release-tasks", releaseTasksHandlerInstance.List)
 			protected.GET("/releases/detail", releasesHandlerInstance.GetReleaseDetail)
+			protected.GET("/releases/list", releasesHandlerInstance.List)
 
 				// Domain routes (T2-10-02, T2-10-03, T2-10-04, C1-02)
 				domainsOptionsHandler := domains.NewOptionsHandler(db)

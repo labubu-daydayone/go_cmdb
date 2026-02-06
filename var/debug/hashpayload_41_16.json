@@ -1,0 +1,1 @@
+{"origins":[{"address":"192.168.1.100:80","role":"primary","weight":10,"enabled":true,"protocol":"http"}]}

@@ -598,3 +598,60 @@ func (h *Handler) Delete(c *gin.Context) {
 
 	httpx.OK(c, nil)
 }
+
+// OptionsResponse represents options response
+type OptionsResponse struct {
+	Items []OriginGroupOptionDTO `json:"items"`
+}
+
+// OriginGroupOptionDTO represents an origin group option for dropdown
+type OriginGroupOptionDTO struct {
+	ID                  int    `json:"id"`
+	Name                string `json:"name"`
+	Status              string `json:"status"`
+	PrimaryCount        int    `json:"primaryCount"`
+	BackupCount         int    `json:"backupCount"`
+	EnabledPrimaryCount int    `json:"enabledPrimaryCount"`
+}
+
+// Options handles GET /api/v1/origin-groups/options
+func (h *Handler) Options(c *gin.Context) {
+	// Query only active origin groups
+	var groups []model.OriginGroup
+	if err := h.db.
+		Where("status = ?", model.OriginGroupStatusActive).
+		Order("id DESC").
+		Find(&groups).Error; err != nil {
+		httpx.FailErr(c, httpx.ErrDatabaseError("failed to fetch origin groups", err))
+		return
+	}
+
+	// Convert to DTOs
+	items := make([]OriginGroupOptionDTO, len(groups))
+	for i, group := range groups {
+		// Count addresses
+		var primaryCount, backupCount, enabledPrimaryCount int64
+		h.db.Model(&model.OriginGroupAddress{}).
+			Where("origin_group_id = ? AND role = ?", group.ID, model.OriginRolePrimary).
+			Count(&primaryCount)
+		h.db.Model(&model.OriginGroupAddress{}).
+			Where("origin_group_id = ? AND role = ?", group.ID, model.OriginRoleBackup).
+			Count(&backupCount)
+		h.db.Model(&model.OriginGroupAddress{}).
+			Where("origin_group_id = ? AND role = ? AND enabled = ?", group.ID, model.OriginRolePrimary, true).
+			Count(&enabledPrimaryCount)
+
+		items[i] = OriginGroupOptionDTO{
+			ID:                  group.ID,
+			Name:                group.Name,
+			Status:              group.Status,
+			PrimaryCount:        int(primaryCount),
+			BackupCount:         int(backupCount),
+			EnabledPrimaryCount: int(enabledPrimaryCount),
+		}
+	}
+
+	httpx.OK(c, OptionsResponse{
+		Items: items,
+	})
+}

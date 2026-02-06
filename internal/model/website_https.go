@@ -10,11 +10,11 @@ type WebsiteHTTPS struct {
 	CertMode      string `gorm:"type:enum('select','acme');default:'select'" json:"cert_mode"`
 
 	// select模式
-	CertificateID int `gorm:"default:0;index" json:"certificate_id"` // 选择已有证书
+	CertificateID *uint `gorm:"column:certificate_id;index" json:"certificate_id"` // 选择已有证书
 
 	// acme模式
-	ACMEProviderID int `gorm:"default:0;index" json:"acme_provider_id"` // ACME Provider ID
-	ACMEAccountID  int `gorm:"default:0;index" json:"acme_account_id"`  // ACME Account ID
+	ACMEProviderID *uint `gorm:"column:acme_provider_id;index" json:"acme_provider_id"` // ACME Provider ID
+	ACMEAccountID  *uint `gorm:"column:acme_account_id;index" json:"acme_account_id"`  // ACME Account ID
 
 	// 关联
 	Website *Website `gorm:"foreignKey:WebsiteID" json:"website,omitempty"`
