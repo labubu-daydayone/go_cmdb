@@ -153,10 +153,9 @@ func (h *Handler) UpdateStatus(c *gin.Context) {
 
 	// Parse request body
 	var req struct {
-		TaskID       int64  `json:"taskId" binding:"required"`
-		Status       string `json:"status" binding:"required"`
-		ErrorMessage string `json:"errorMessage"`
-		Result       string `json:"result"`
+		ID        int64  `json:"id" binding:"required"`
+		Status    string `json:"status" binding:"required"`
+		LastError string `json:"lastError"`
 	}
 
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -170,25 +169,16 @@ func (h *Handler) UpdateStatus(c *gin.Context) {
 		return
 	}
 
-	// Validate errorMessage
+	// Validate lastError (optional for failed, must be empty for succeeded)
 	if req.Status == "failed" {
-		if req.ErrorMessage == "" {
-			httpx.FailErr(c, httpx.ErrParamInvalid("errorMessage is required for failed status"))
-			return
-		}
-		if len(req.ErrorMessage) > 2048 {
-			httpx.FailErr(c, httpx.ErrParamInvalid("errorMessage too long (max 2048)"))
-			return
-		}
-	} else {
-		if req.ErrorMessage != "" {
-			httpx.FailErr(c, httpx.ErrParamInvalid("errorMessage must be empty for succeeded status"))
+		if len(req.LastError) > 2048 {
+			httpx.FailErr(c, httpx.ErrParamInvalid("lastError too long (max 2048)"))
 			return
 		}
 	}
 
 	// Call the service layer to handle the update and propagate to release_task
-	if err := service.UpdateTaskStatus(uint(nodeID), uint(req.TaskID), req.Status, req.ErrorMessage); err != nil {
+	if err := service.UpdateTaskStatus(uint(nodeID), uint(req.ID), req.Status, req.LastError); err != nil {
 		httpx.FailErr(c, httpx.ErrDatabaseError("failed to update task status", err))
 		return
 	}
