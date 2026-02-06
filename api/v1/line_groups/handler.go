@@ -282,6 +282,23 @@ func (h *Handler) Create(c *gin.Context) {
 		return
 	}
 
+	// Validate node group has at least one active node
+	var activeNodeCount int64
+	if err := h.db.Table("node_group_ips").
+		Joins("JOIN node_ips ON node_group_ips.ip_id = node_ips.id").
+		Joins("JOIN nodes ON node_ips.node_id = nodes.id").
+		Where("node_group_ips.node_group_id = ?", req.NodeGroupID).
+		Where("nodes.enabled = ?", true).
+		Where("node_ips.enabled = ?", true).
+		Count(&activeNodeCount).Error; err != nil {
+		httpx.FailErr(c, httpx.ErrDatabaseError("failed to check node group nodes", err))
+		return
+	}
+	if activeNodeCount == 0 {
+		httpx.FailErr(c, httpx.ErrForbidden("node group has no active nodes"))
+		return
+	}
+
 	// Check name uniqueness
 	var count int64
 	if err := h.db.Model(&model.LineGroup{}).Where("name = ?", req.Name).Count(&count).Error; err != nil {
@@ -421,7 +438,7 @@ func (h *Handler) Update(c *gin.Context) {
 		updates["status"] = *req.Status
 	}
 
-	if req.NodeGroupID != nil {
+		if req.NodeGroupID != nil {
 		// Check node group exists
 		var nodeGroup model.NodeGroup
 		if err := tx.First(&nodeGroup, *req.NodeGroupID).Error; err != nil {
@@ -431,6 +448,25 @@ func (h *Handler) Update(c *gin.Context) {
 				return
 			}
 			httpx.FailErr(c, httpx.ErrDatabaseError("failed to find node group", err))
+			return
+		}
+
+		// Validate node group has at least one active node
+		var activeNodeCount int64
+		if err := tx.Table("node_group_ips").
+			Joins("JOIN node_ips ON node_group_ips.ip_id = node_ips.id").
+			Joins("JOIN nodes ON node_ips.node_id = nodes.id").
+			Where("node_group_ips.node_group_id = ?", *req.NodeGroupID).
+			Where("nodes.enabled = ?", true).
+			Where("node_ips.enabled = ?", true).
+			Count(&activeNodeCount).Error; err != nil {
+			tx.Rollback()
+			httpx.FailErr(c, httpx.ErrDatabaseError("failed to check node group nodes", err))
+			return
+		}
+		if activeNodeCount == 0 {
+			tx.Rollback()
+			httpx.FailErr(c, httpx.ErrForbidden("node group has no active nodes"))
 			return
 		}
 

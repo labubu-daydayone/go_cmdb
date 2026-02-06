@@ -2,6 +2,7 @@ package nodes
 
 import (
 	"fmt"
+	"log"
 	"strings"
 
 	"go_cmdb/internal/dto"
@@ -366,15 +367,12 @@ func (h *Handler) Update(c *gin.Context) {
 		return
 	}
 
-	// Build updates map
+	// Update fields
 	updates := make(map[string]interface{})
-
 	if req.Name != nil {
-		// Check name uniqueness (exclude current node)
+		// Check name uniqueness
 		var count int64
-		if err := h.db.Model(&model.Node{}).
-			Where("name = ? AND id != ?", *req.Name, req.ID).
-			Count(&count).Error; err != nil {
+		if err := h.db.Model(&model.Node{}).Where("name = ? AND id != ?", *req.Name, req.ID).Count(&count).Error; err != nil {
 			httpx.FailErr(c, httpx.ErrDatabaseError("failed to check name uniqueness", err))
 			return
 		}
@@ -384,13 +382,10 @@ func (h *Handler) Update(c *gin.Context) {
 		}
 		updates["name"] = *req.Name
 	}
-
 	if req.MainIP != nil {
-		// Check mainIp uniqueness (exclude current node's IPs)
+		// Check mainIp uniqueness
 		var count int64
-		if err := h.db.Model(&model.NodeIP{}).
-			Where("ip = ? AND node_id != ?", *req.MainIP, req.ID).
-			Count(&count).Error; err != nil {
+		if err := h.db.Model(&model.NodeIP{}).Where("ip = ? AND node_id != ?", *req.MainIP, req.ID).Count(&count).Error; err != nil {
 			httpx.FailErr(c, httpx.ErrDatabaseError("failed to check mainIp uniqueness", err))
 			return
 		}
@@ -398,25 +393,21 @@ func (h *Handler) Update(c *gin.Context) {
 			httpx.FailErr(c, httpx.ErrAlreadyExists("mainIp already exists"))
 			return
 		}
-		// Update main IP in node_ips table
+		updates["main_ip"] = *req.MainIP
+		// Update main IP in node_ips
 		if err := h.db.Model(&model.NodeIP{}).
 			Where("node_id = ? AND ip_type = ?", req.ID, model.NodeIPTypeMain).
 			Update("ip", *req.MainIP).Error; err != nil {
-			httpx.FailErr(c, httpx.ErrDatabaseError("failed to update mainIp", err))
+			httpx.FailErr(c, httpx.ErrDatabaseError("failed to update main IP", err))
 			return
 		}
-		// Also update in nodes table for backward compatibility
-		updates["main_ip"] = *req.MainIP
 	}
-
 	if req.AgentPort != nil {
 		updates["agent_port"] = *req.AgentPort
 	}
-
 	if req.Enabled != nil {
 		updates["enabled"] = *req.Enabled
 	}
-
 	if req.Status != nil {
 		updates["status"] = *req.Status
 	}
@@ -424,83 +415,115 @@ func (h *Handler) Update(c *gin.Context) {
 	// Update node
 	if len(updates) > 0 {
 		if err := h.db.Model(&node).Updates(updates).Error; err != nil {
-			// Check for duplicate key error
-			if strings.Contains(err.Error(), "Duplicate entry") || strings.Contains(err.Error(), "duplicate key") {
-				if strings.Contains(err.Error(), "uk_nodes_main_ip") {
-					httpx.FailErr(c, httpx.ErrAlreadyExists("mainIp already exists"))
-					return
-				}
-			}
 			httpx.FailErr(c, httpx.ErrDatabaseError("failed to update node", err))
 			return
 		}
 	}
 
-	// Handle sub IPs update
+	// Handle sub IPs
 	if req.SubIPs != nil {
-		// Delete all existing sub IPs
-		if err := h.db.Where("node_id = ? AND ip_type = ?", req.ID, model.NodeIPTypeSub).Delete(&model.NodeIP{}).Error; err != nil {
-			httpx.FailErr(c, httpx.ErrDatabaseError("failed to delete old sub IPs", err))
+		// Get existing sub IPs
+		var existingIPs []model.NodeIP
+		if err := h.db.Where("node_id = ? AND ip_type = ?", req.ID, model.NodeIPTypeSub).Find(&existingIPs).Error; err != nil {
+			httpx.FailErr(c, httpx.ErrDatabaseError("failed to fetch existing sub IPs", err))
 			return
 		}
 
-		// Create new sub IPs
+		// Build map of existing IPs
+		existingMap := make(map[int]model.NodeIP)
+		for _, ip := range existingIPs {
+			existingMap[ip.ID] = ip
+		}
+
+		// Process sub IPs
 		for _, subIP := range req.SubIPs {
-			enabled := true
-			if subIP.Enabled != nil {
-				enabled = *subIP.Enabled
+			if subIP.ID > 0 {
+				// Update existing
+				if _, exists := existingMap[subIP.ID]; exists {
+					ipUpdates := make(map[string]interface{})
+					ipUpdates["ip"] = subIP.IP
+					if subIP.Enabled != nil {
+						ipUpdates["enabled"] = *subIP.Enabled
+					}
+					if err := h.db.Model(&model.NodeIP{}).Where("id = ?", subIP.ID).Updates(ipUpdates).Error; err != nil {
+						httpx.FailErr(c, httpx.ErrDatabaseError("failed to update sub IP", err))
+						return
+					}
+					delete(existingMap, subIP.ID)
+				}
+			} else {
+				// Create new
+				enabled := true
+				if subIP.Enabled != nil {
+					enabled = *subIP.Enabled
+				}
+				newIP := model.NodeIP{
+					NodeID:  req.ID,
+					IP:      subIP.IP,
+					IPType:  model.NodeIPTypeSub,
+					Enabled: enabled,
+				}
+				if err := h.db.Create(&newIP).Error; err != nil {
+					httpx.FailErr(c, httpx.ErrDatabaseError("failed to create sub IP", err))
+					return
+				}
 			}
-			newIP := model.NodeIP{
-				NodeID:  req.ID,
-				IP:      subIP.IP,
-				IPType:  model.NodeIPTypeSub,
-				Enabled: enabled,
-			}
-			if err := h.db.Create(&newIP).Error; err != nil {
-				httpx.FailErr(c, httpx.ErrDatabaseError("failed to create sub IP", err))
+		}
+
+		// Delete removed sub IPs
+		for id := range existingMap {
+			if err := h.db.Delete(&model.NodeIP{}, id).Error; err != nil {
+				httpx.FailErr(c, httpx.ErrDatabaseError("failed to delete sub IP", err))
 				return
 			}
 		}
 	}
 
-	// Reload node with IPs
+	// Fetch updated node
 	if err := h.db.Preload("IPs").First(&node, req.ID).Error; err != nil {
-		httpx.FailErr(c, httpx.ErrDatabaseError("failed to reload node", err))
+		httpx.FailErr(c, httpx.ErrDatabaseError("failed to fetch updated node", err))
 		return
 	}
 
-	// Extract main IP and sub IPs
+	// Extract main IP and build ips.items
 	mainIp := ""
-	var subIps []dto.SubIpDTO
+	var ipItems []dto.NodeIPItemDTO
 	for _, ip := range node.IPs {
 		if ip.IPType == model.NodeIPTypeMain {
 			mainIp = ip.IP
-		} else {
-			subIps = append(subIps, dto.SubIpDTO{
-				ID:      ip.ID,
-				IP:      ip.IP,
-				Enabled: ip.Enabled,
-			})
 		}
+		ipType := "sub"
+		if ip.IPType == model.NodeIPTypeMain {
+			ipType = "main"
+		}
+		ipItems = append(ipItems, dto.NodeIPItemDTO{
+			ID:               ip.ID,
+			IP:               ip.IP,
+			IpType:           ipType,
+			IpEnabled:        ip.Enabled,
+			EffectiveEnabled: node.Enabled && ip.Enabled,
+		})
 	}
 
 	// Build DTO response
-	response := dto.NodeDTO{
-				ID:              node.ID,
-					Name:            node.Name,
-					MainIp:          mainIp,
-					AgentPort:       node.AgentPort,
-					Enabled:         node.Enabled,
-					AgentStatus:     string(node.Status),
-					LastSeenAt:      node.LastSeenAt,
-					LastHealthError: node.LastHealthError,
-					HealthFailCount: node.HealthFailCount,
-					SubIps:          subIps,
-					CreatedAt:       node.CreatedAt,
-					UpdatedAt:       node.UpdatedAt,
-				}
+	response := dto.NodeDetailItemDTO{
+		ID:              node.ID,
+		Name:            node.Name,
+		MainIp:          mainIp,
+		AgentPort:       node.AgentPort,
+		Enabled:         node.Enabled,
+		AgentStatus:     string(node.Status),
+		LastSeenAt:      node.LastSeenAt,
+		LastHealthError: node.LastHealthError,
+		HealthFailCount: node.HealthFailCount,
+		Ips: dto.NodeIPsContainerDTO{
+			Items: ipItems,
+		},
+		CreatedAt:       node.CreatedAt,
+		UpdatedAt:       node.UpdatedAt,
+	}
 
-	httpx.OK(c, response)
+		httpx.OK(c, response)
 }
 
 // Get handles GET /api/v1/nodes/:id
@@ -610,16 +633,95 @@ func (h *Handler) Delete(c *gin.Context) {
 		return
 	}
 
-	// Delete nodes (cascade delete will handle sub IPs)
-	result := h.db.Delete(&model.Node{}, req.IDs)
-	if result.Error != nil {
-		httpx.FailErr(c, httpx.ErrDatabaseError("failed to delete nodes", result.Error))
+	// Use transaction for cascade deletion
+	err := h.db.Transaction(func(tx *gorm.DB) error {
+		// 1. Query nodes
+		var nodes []model.Node
+		if err := tx.Where("id IN ?", req.IDs).Find(&nodes).Error; err != nil {
+			return fmt.Errorf("failed to query nodes: %w", err)
+		}
+
+		if len(nodes) == 0 {
+			return fmt.Errorf("no nodes found")
+		}
+
+		// 2. Check if any node is online and enabled (protection)
+		for _, node := range nodes {
+			if node.Enabled && node.Status == model.NodeStatusOnline {
+				return fmt.Errorf("node %d is online, disable before delete", node.ID)
+			}
+		}
+
+		// 3. Query node_ips
+		var nodeIPs []model.NodeIP
+		nodeIDs := make([]int, len(nodes))
+		for i, node := range nodes {
+			nodeIDs[i] = node.ID
+		}
+
+		if err := tx.Where("node_id IN ?", nodeIDs).Find(&nodeIPs).Error; err != nil {
+			return fmt.Errorf("failed to query node_ips: %w", err)
+		}
+
+		// 4. Delete node_group_ips
+		if len(nodeIPs) > 0 {
+			ipIDs := make([]int, len(nodeIPs))
+			for i, ip := range nodeIPs {
+				ipIDs[i] = ip.ID
+			}
+
+			if err := tx.Exec("DELETE FROM node_group_ips WHERE ip_id IN ?", ipIDs).Error; err != nil {
+				return fmt.Errorf("failed to delete node_group_ips: %w", err)
+			}
+
+			// After deleting node_group_ips, check and mark inactive node_groups
+			var affectedNodeGroupIDs []int
+			if err := tx.Raw(`
+				SELECT DISTINCT ng.id 
+				FROM node_groups ng
+				LEFT JOIN node_group_ips ngi ON ng.id = ngi.node_group_id
+				WHERE ngi.id IS NULL AND ng.status = 'active'
+			`).Scan(&affectedNodeGroupIDs).Error; err != nil {
+				return fmt.Errorf("failed to query affected node_groups: %w", err)
+			}
+
+			if len(affectedNodeGroupIDs) > 0 {
+				if err := tx.Exec("UPDATE node_groups SET status = 'inactive' WHERE id IN ?", affectedNodeGroupIDs).Error; err != nil {
+					return fmt.Errorf("failed to mark node_groups as inactive: %w", err)
+				}
+				log.Printf("[Node Delete] Marked %d node_groups as inactive due to no active nodes", len(affectedNodeGroupIDs))
+			}
+		}
+
+		// 5. Delete node_ips
+		if err := tx.Where("node_id IN ?", nodeIDs).Delete(&model.NodeIP{}).Error; err != nil {
+			return fmt.Errorf("failed to delete node_ips: %w", err)
+		}
+
+		// 6. Delete agent_tasks
+		if err := tx.Exec("DELETE FROM agent_tasks WHERE node_id IN ?", nodeIDs).Error; err != nil {
+			return fmt.Errorf("failed to delete agent_tasks: %w", err)
+		}
+
+		// 7. Delete nodes
+		if err := tx.Delete(&model.Node{}, req.IDs).Error; err != nil {
+			return fmt.Errorf("failed to delete nodes: %w", err)
+		}
+
+		return nil
+	})
+
+	if err != nil {
+		// Check for online node protection
+		if strings.Contains(err.Error(), "is online, disable before delete") {
+			httpx.FailErr(c, httpx.ErrForbidden(err.Error()))
+			return
+		}
+		httpx.FailErr(c, httpx.ErrDatabaseError("failed to delete nodes", err))
 		return
 	}
 
-	httpx.OK(c, gin.H{
-		"affected": result.RowsAffected,
-	})
+	httpx.OK(c, nil)
 }
 
 // AddSubIPs handles POST /api/v1/nodes/sub-ips/add
@@ -702,8 +804,19 @@ func (h *Handler) DeleteSubIPs(c *gin.Context) {
 		return
 	}
 
+	// Check node exists
+	var node model.Node
+	if err := h.db.First(&node, req.NodeID).Error; err != nil {
+		if err == gorm.ErrRecordNotFound {
+			httpx.FailErr(c, httpx.ErrNotFound("node not found"))
+			return
+		}
+		httpx.FailErr(c, httpx.ErrDatabaseError("failed to find node", err))
+		return
+	}
+
 	// Delete sub IPs
-	result := h.db.Where("node_id = ? AND id IN ?", req.NodeID, req.SubIPIDs).Delete(&model.NodeIP{})
+	result := h.db.Where("node_id = ? AND id IN ? AND ip_type = ?", req.NodeID, req.SubIPIDs, model.NodeIPTypeSub).Delete(&model.NodeIP{})
 	if result.Error != nil {
 		httpx.FailErr(c, httpx.ErrDatabaseError("failed to delete sub IPs", result.Error))
 		return
@@ -722,11 +835,21 @@ func (h *Handler) ToggleSubIP(c *gin.Context) {
 		return
 	}
 
+	// Check node exists
+	var node model.Node
+	if err := h.db.First(&node, req.NodeID).Error; err != nil {
+		if err == gorm.ErrRecordNotFound {
+			httpx.FailErr(c, httpx.ErrNotFound("node not found"))
+			return
+		}
+		httpx.FailErr(c, httpx.ErrDatabaseError("failed to find node", err))
+		return
+	}
+
 	// Update sub IP enabled status
-	result := h.db.Model(&model.NodeSubIP{}).
-		Where("node_id = ? AND id = ?", req.NodeID, req.SubIPID).
+	result := h.db.Model(&model.NodeIP{}).
+		Where("node_id = ? AND id = ? AND ip_type = ?", req.NodeID, req.SubIPID, model.NodeIPTypeSub).
 		Update("enabled", req.Enabled)
-	
 	if result.Error != nil {
 		httpx.FailErr(c, httpx.ErrDatabaseError("failed to toggle sub IP", result.Error))
 		return
@@ -740,142 +863,4 @@ func (h *Handler) ToggleSubIP(c *gin.Context) {
 	httpx.OK(c, gin.H{
 		"message": "sub IP toggled successfully",
 	})
-}
-
-// GetIdentity handles GET /api/v1/nodes/:id/identity
-func (h *Handler) GetIdentity(c *gin.Context) {
-	nodeID := c.Param("id")
-	if nodeID == "" {
-		httpx.FailErr(c, httpx.ErrParamInvalid("node ID is required"))
-		return
-	}
-
-	// Convert to int
-	var id int
-	if _, err := fmt.Sscanf(nodeID, "%d", &id); err != nil {
-		httpx.FailErr(c, httpx.ErrParamInvalid("invalid node ID"))
-		return
-	}
-
-	// Check if node exists
-	var node model.Node
-	if err := h.db.First(&node, id).Error; err != nil {
-		if err == gorm.ErrRecordNotFound {
-			httpx.FailErr(c, httpx.ErrNotFound("node not found"))
-			return
-		}
-		httpx.FailErr(c, httpx.ErrDatabaseError("failed to find node", err))
-		return
-	}
-
-	// Get identity
-	identity, err := h.identityService.GetIdentityByNodeID(id)
-	if err != nil {
-		httpx.FailErr(c, httpx.ErrNotFound("identity not found"))
-		return
-	}
-
-	httpx.OK(c, identity)
-}
-
-// RevokeIdentity handles POST /api/v1/nodes/:id/identity/revoke
-func (h *Handler) RevokeIdentity(c *gin.Context) {
-	nodeID := c.Param("id")
-	if nodeID == "" {
-		httpx.FailErr(c, httpx.ErrParamInvalid("node ID is required"))
-		return
-	}
-
-	// Convert to int
-	var id int
-	if _, err := fmt.Sscanf(nodeID, "%d", &id); err != nil {
-		httpx.FailErr(c, httpx.ErrParamInvalid("invalid node ID"))
-		return
-	}
-
-	// Check if node exists
-	var node model.Node
-	if err := h.db.First(&node, id).Error; err != nil {
-		if err == gorm.ErrRecordNotFound {
-			httpx.FailErr(c, httpx.ErrNotFound("node not found"))
-			return
-		}
-		httpx.FailErr(c, httpx.ErrDatabaseError("failed to find node", err))
-		return
-	}
-
-	// Revoke identity
-	if err := h.identityService.RevokeIdentity(id); err != nil {
-		httpx.FailErr(c, httpx.ErrDatabaseError("failed to revoke identity", err))
-		return
-	}
-
-	httpx.OK(c, gin.H{"message": "identity revoked"})
-}
-
-
-// EnableRequest represents enable node request
-type EnableRequest struct {
-	ID int `json:"id" binding:"required"`
-}
-
-// DisableRequest represents disable node request
-type DisableRequest struct {
-	ID int `json:"id" binding:"required"`
-}
-
-// Enable handles POST /api/v1/nodes/enable
-func (h *Handler) Enable(c *gin.Context) {
-	var req EnableRequest
-	if err := c.ShouldBindJSON(&req); err != nil {
-		httpx.FailErr(c, httpx.ErrParamMissing(err.Error()))
-		return
-	}
-
-	// Check if node exists
-	var node model.Node
-	if err := h.db.First(&node, req.ID).Error; err != nil {
-		if err == gorm.ErrRecordNotFound {
-			httpx.FailErr(c, httpx.ErrNotFound("node not found"))
-			return
-		}
-		httpx.FailErr(c, httpx.ErrDatabaseError("failed to find node", err))
-		return
-	}
-
-	// Update enabled status (idempotent)
-	if err := h.db.Model(&node).Update("enabled", true).Error; err != nil {
-		httpx.FailErr(c, httpx.ErrDatabaseError("failed to enable node", err))
-		return
-	}
-
-	httpx.OK(c, nil)
-}
-
-// Disable handles POST /api/v1/nodes/disable
-func (h *Handler) Disable(c *gin.Context) {
-	var req DisableRequest
-	if err := c.ShouldBindJSON(&req); err != nil {
-		httpx.FailErr(c, httpx.ErrParamMissing(err.Error()))
-		return
-	}
-
-	// Check if node exists
-	var node model.Node
-	if err := h.db.First(&node, req.ID).Error; err != nil {
-		if err == gorm.ErrRecordNotFound {
-			httpx.FailErr(c, httpx.ErrNotFound("node not found"))
-			return
-		}
-		httpx.FailErr(c, httpx.ErrDatabaseError("failed to find node", err))
-		return
-	}
-
-	// Update enabled status (idempotent)
-	if err := h.db.Model(&node).Update("enabled", false).Error; err != nil {
-		httpx.FailErr(c, httpx.ErrDatabaseError("failed to disable node", err))
-		return
-	}
-
-	httpx.OK(c, nil)
 }
