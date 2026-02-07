@@ -338,6 +338,7 @@ func (h *Handler) ListAccounts(c *gin.Context) {
 	email := c.Query("email")
 
 	// Build query with LEFT JOIN to get default account info
+	// Global unique default: JOIN by account_id directly, only one account can be default
 	query := h.db.Table("acme_accounts a").
 		Select(`
 			a.id,
@@ -354,7 +355,7 @@ func (h *Handler) ListAccounts(c *gin.Context) {
 			CASE WHEN d.account_id = a.id THEN 1 ELSE 0 END as is_default
 		`).
 		Joins("LEFT JOIN acme_providers p ON p.id = a.provider_id").
-		Joins("LEFT JOIN acme_provider_defaults d ON d.provider_id = a.provider_id")
+		Joins("LEFT JOIN acme_provider_defaults d ON d.account_id = a.id")
 
 	// Apply filters
 	if providerIDStr != "" {
@@ -739,37 +740,33 @@ func (h *Handler) SetDefault(c *gin.Context) {
 		}
 	}
 
-	// Upsert default (replace if exists)
-	var defaultRecord model.ACMEProviderDefault
-	result := h.db.Where("provider_id = ?", req.ProviderID).First(&defaultRecord)
-
-	if result.Error == gorm.ErrRecordNotFound {
-		// Insert new
-		defaultRecord = model.ACMEProviderDefault{
+	// Global unique default: delete all existing defaults, then insert the new one
+	// This ensures only one account is marked as default across all providers
+	txErr := h.db.Transaction(func(dbTx *gorm.DB) error {
+		// Delete all existing defaults
+		if err := dbTx.Where("1 = 1").Delete(&model.ACMEProviderDefault{}).Error; err != nil {
+			return err
+		}
+		// Insert the new global default
+		defaultRecord := model.ACMEProviderDefault{
 			ProviderID: req.ProviderID,
 			AccountID:  req.AccountID,
 		}
-		if err := h.db.Create(&defaultRecord).Error; err != nil {
-			httpx.FailErr(c, httpx.ErrInternalError("failed to create default", err))
-			return
-		}
-	} else if result.Error != nil {
-		httpx.FailErr(c, httpx.ErrInternalError("failed to query default", result.Error))
+		return dbTx.Create(&defaultRecord).Error
+	})
+
+	if txErr != nil {
+		httpx.FailErr(c, httpx.ErrInternalError("failed to set default", txErr))
 		return
-	} else {
-		// Update existing
-		if err := h.db.Model(&defaultRecord).Update("account_id", req.AccountID).Error; err != nil {
-			httpx.FailErr(c, httpx.ErrInternalError("failed to update default", err))
-			return
-		}
 	}
 
-	// Return as items array (T0-STD-01 compliance)
-	item := map[string]interface{}{
-		"providerId": req.ProviderID,
-		"accountId":  req.AccountID,
-	}
-	httpx.OKItems(c, []interface{}{item}, 1, 1, 1)
+	// Return single object (T0-STD-01: data.item)
+	httpx.OK(c, gin.H{
+		"item": gin.H{
+			"providerId": req.ProviderID,
+			"accountId":  req.AccountID,
+		},
+	})
 }
 
 // DeleteAccountRequest represents delete account request
