@@ -17,8 +17,8 @@ import (
 // CreateRequest 创建请求
 type CreateRequest struct {
 	DomainsText        string  `json:"domainsText" binding:"required"`
-	LineGroupID        int     `json:"lineGroupId" binding:"required"`
-	CacheRuleID        int     `json:"cacheRuleId"`
+	LineGroupID        int  `json:"lineGroupId" binding:"required"`
+	CacheRuleID        *int `json:"cacheRuleId"`
 	OriginMode         string  `json:"originMode" binding:"required,oneof=group manual redirect"`
 	OriginGroupID      *int    `json:"originGroupId"`
 	OriginSetID        *int    `json:"originSetId"`
@@ -112,13 +112,19 @@ func (h *Handler) Create(c *gin.Context) {
 				}
 			}
 
-			// 创建 website
-			website := model.Website{
-				LineGroupID: req.LineGroupID,
-				CacheRuleID: req.CacheRuleID,
-				OriginMode:  req.OriginMode,
-				Status:      model.WebsiteStatusActive,
-			}
+				// 创建 website
+				website := model.Website{
+					LineGroupID: req.LineGroupID,
+					OriginMode:  req.OriginMode,
+					Status:      model.WebsiteStatusActive,
+				}
+
+				// 处理 CacheRuleID
+				if req.CacheRuleID != nil && *req.CacheRuleID > 0 {
+					website.CacheRuleID = sql.NullInt32{Int32: int32(*req.CacheRuleID), Valid: true}
+				} else {
+					website.CacheRuleID = sql.NullInt32{Valid: false}
+				}
 
 				// 根据 originMode 设置字段
 				switch req.OriginMode {

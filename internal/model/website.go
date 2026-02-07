@@ -5,8 +5,8 @@ import "database/sql"
 // Website 网站配置
 type Website struct {
 	BaseModel
-	LineGroupID int `gorm:"not null;index" json:"lineGroupId"` // 线路分组ID
-	CacheRuleID int `gorm:"default:0;index" json:"cacheRuleId"` // 缓存规则ID（可选）
+	LineGroupID int           `gorm:"not null;index" json:"lineGroupId"` // 线路分组ID
+	CacheRuleID sql.NullInt32 `gorm:"index;default:null" json:"cacheRuleId"` // 缓存规则ID（可选）
 
 	// 回源配置
 	OriginMode         string        `gorm:"type:enum('group','manual','redirect');not null" json:"originMode"`
