@@ -120,19 +120,35 @@ func findCoveringCertificate(tx *gorm.DB, domains []string) (int, bool, error) {
 	return bestCertID, found, nil
 }
 
-// findDefaultACME finds the default active ACME provider and account
+// FindDefaultACME finds the default active ACME provider and account
+// Priority: google_publicca > letsencrypt > others
 func FindDefaultACME(tx *gorm.DB) (int, int, error) {
-	var provider model.AcmeProvider
-	if err := tx.Where("status = ?", "active").First(&provider).Error; err != nil {
-		return 0, 0, err
+	var providers []model.AcmeProvider
+	if err := tx.Where("status = ?", "active").Find(&providers).Error; err != nil || len(providers) == 0 {
+		if err != nil {
+			return 0, 0, err
+		}
+		return 0, 0, gorm.ErrRecordNotFound
+	}
+
+	// Prefer google_publicca
+	var selectedProvider *model.AcmeProvider
+	for i := range providers {
+		if providers[i].Name == "google_publicca" {
+			selectedProvider = &providers[i]
+			break
+		}
+	}
+	if selectedProvider == nil {
+		selectedProvider = &providers[0]
 	}
 
 	var account model.AcmeAccount
-	if err := tx.Where("provider_id = ? AND status = ?", provider.ID, "active").First(&account).Error; err != nil {
+	if err := tx.Where("provider_id = ? AND status = ?", selectedProvider.ID, "active").First(&account).Error; err != nil {
 		return 0, 0, err
 	}
 
-	return int(provider.ID), int(account.ID), nil
+	return int(selectedProvider.ID), int(account.ID), nil
 }
 
 // triggerACMERequest creates a certificate request (idempotent)
