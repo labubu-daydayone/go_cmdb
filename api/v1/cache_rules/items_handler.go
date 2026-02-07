@@ -2,9 +2,11 @@ package cache_rules
 
 import (
 	"strconv"
+	"strings"
 
 	"go_cmdb/internal/httpx"
 	"go_cmdb/internal/model"
+	"go_cmdb/internal/validator"
 
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
@@ -42,6 +44,19 @@ func (h *Handler) ItemsUpsert(c *gin.Context) {
 			httpx.FailErr(c, httpx.ErrDatabaseError("failed to find cache rule", err))
 		}
 		return
+	}
+
+	// 校验每个规则项
+	validatorInst := validator.NewCacheRuleItemValidator()
+	for i, item := range req.Items {
+		// 去除首尾空格
+		item.MatchValue = strings.TrimSpace(item.MatchValue)
+		req.Items[i].MatchValue = item.MatchValue
+
+		if err := validatorInst.Validate(item.MatchType, item.MatchValue, item.TTLSeconds); err != nil {
+			httpx.FailErr(c, httpx.ErrParamInvalid(err.Error()))
+			return
+		}
 	}
 
 	// 开始事务

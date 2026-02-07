@@ -22,17 +22,19 @@ func NewHandler(db *gorm.DB) *Handler {
 
 // CreateRequest 创建缓存规则组请求
 type CreateRequest struct {
-	Name    string `json:"name" binding:"required"`
-	Enabled bool   `json:"enabled"`
+	Name        string `json:"name" binding:"required"`
+	Enabled     bool   `json:"enabled"`
+	CachePolicy string `json:"cachePolicy" binding:"required,oneof=respect_origin force_cache default_cache"`
 }
 
 // CreateResponse 创建缓存规则组响应
 type CreateResponse struct {
-	ID        int    `json:"id"`
-	Name      string `json:"name"`
-	Enabled   bool   `json:"enabled"`
-	CreatedAt string `json:"createdAt"`
-	UpdatedAt string `json:"updatedAt"`
+	ID          int    `json:"id"`
+	Name        string `json:"name"`
+	Enabled     bool   `json:"enabled"`
+	CachePolicy string `json:"cachePolicy"`
+	CreatedAt   string `json:"createdAt"`
+	UpdatedAt   string `json:"updatedAt"`
 }
 
 // Create 创建缓存规则组
@@ -54,11 +56,11 @@ func (h *Handler) Create(c *gin.Context) {
 		httpx.FailErr(c, httpx.ErrStateConflict("cache rule name already exists"))
 		return
 	}
-
-	// 创建cache_rule
+	// 创建 cache_rule
 	rule := model.CacheRule{
-		Name:    req.Name,
-		Enabled: req.Enabled,
+		Name:        req.Name,
+		Enabled:     req.Enabled,
+		CachePolicy: req.CachePolicy,
 	}
 
 	if err := h.db.Create(&rule).Error; err != nil {
@@ -68,11 +70,12 @@ func (h *Handler) Create(c *gin.Context) {
 
 	// 构造响应
 	resp := CreateResponse{
-		ID:        rule.ID,
-		Name:      rule.Name,
-		Enabled:   rule.Enabled,
-		CreatedAt: rule.CreatedAt.Format("2006-01-02T15:04:05Z07:00"),
-		UpdatedAt: rule.UpdatedAt.Format("2006-01-02T15:04:05Z07:00"),
+		ID:          rule.ID,
+		Name:        rule.Name,
+		Enabled:     rule.Enabled,
+		CachePolicy: rule.CachePolicy,
+		CreatedAt:   rule.CreatedAt.Format("2006-01-02T15:04:05Z07:00"),
+		UpdatedAt:   rule.UpdatedAt.Format("2006-01-02T15:04:05Z07:00"),
 	}
 
 	httpx.OK(c, gin.H{"item": resp})
@@ -88,12 +91,13 @@ type ListResponse struct {
 
 // ListItemDTO 列表项DTO
 type ListItemDTO struct {
-	ID        int    `json:"id"`
-	Name      string `json:"name"`
-	Enabled   bool   `json:"enabled"`
-	ItemCount int    `json:"itemCount"`
-	CreatedAt string `json:"createdAt"`
-	UpdatedAt string `json:"updatedAt"`
+	ID          int    `json:"id"`
+	Name        string `json:"name"`
+	Enabled     bool   `json:"enabled"`
+	CachePolicy string `json:"cachePolicy"`
+	ItemCount   int    `json:"itemCount"`
+	CreatedAt   string `json:"createdAt"`
+	UpdatedAt   string `json:"updatedAt"`
 }
 
 // List 缓存规则组列表
@@ -163,12 +167,13 @@ func (h *Handler) List(c *gin.Context) {
 	items := make([]ListItemDTO, len(rules))
 	for i, rule := range rules {
 		items[i] = ListItemDTO{
-			ID:        rule.ID,
-			Name:      rule.Name,
-			Enabled:   rule.Enabled,
-			ItemCount: countMap[rule.ID],
-			CreatedAt: rule.CreatedAt.Format("2006-01-02T15:04:05Z07:00"),
-			UpdatedAt: rule.UpdatedAt.Format("2006-01-02T15:04:05Z07:00"),
+			ID:          rule.ID,
+			Name:        rule.Name,
+			Enabled:     rule.Enabled,
+			CachePolicy: rule.CachePolicy,
+			ItemCount:   countMap[rule.ID],
+			CreatedAt:   rule.CreatedAt.Format("2006-01-02T15:04:05Z07:00"),
+			UpdatedAt:   rule.UpdatedAt.Format("2006-01-02T15:04:05Z07:00"),
 		}
 	}
 
@@ -184,9 +189,10 @@ func (h *Handler) List(c *gin.Context) {
 
 // UpdateRequest 更新缓存规则组请求
 type UpdateRequest struct {
-	ID      int    `json:"id" binding:"required"`
-	Name    string `json:"name" binding:"required"`
-	Enabled bool   `json:"enabled"`
+	ID          int    `json:"id" binding:"required"`
+	Name        string `json:"name" binding:"required"`
+	Enabled     bool   `json:"enabled"`
+	CachePolicy string `json:"cachePolicy" binding:"required,oneof=respect_origin force_cache default_cache"`
 }
 
 // Update 更新缓存规则组
@@ -224,8 +230,9 @@ func (h *Handler) Update(c *gin.Context) {
 
 	// 更新
 	if err := h.db.Model(&rule).Updates(map[string]interface{}{
-		"name":    req.Name,
-		"enabled": req.Enabled,
+		"name":         req.Name,
+		"enabled":      req.Enabled,
+		"cache_policy": req.CachePolicy,
 	}).Error; err != nil {
 		httpx.FailErr(c, httpx.ErrDatabaseError("failed to update cache rule", err))
 		return
