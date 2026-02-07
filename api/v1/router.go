@@ -190,6 +190,7 @@ func SetupRouter(r *gin.Engine, db *gorm.DB, cfg *config.Config, acmeWorker *acm
 				cacheRulesGroup.GET("", cacheRulesHandler.List)
 				cacheRulesGroup.POST("/update", cacheRulesHandler.Update)
 				cacheRulesGroup.POST("/delete", cacheRulesHandler.Delete)
+				cacheRulesGroup.POST("/items/create", cacheRulesHandler.ItemCreate)
 				cacheRulesGroup.POST("/items/upsert", cacheRulesHandler.ItemsUpsert)
 				cacheRulesGroup.GET("/:id/items", cacheRulesHandler.GetItems)
 				cacheRulesGroup.POST("/items/delete", cacheRulesHandler.DeleteItems)

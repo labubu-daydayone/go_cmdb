@@ -24,7 +24,7 @@ func NewHandler(db *gorm.DB) *Handler {
 type CreateRequest struct {
 	Name        string `json:"name" binding:"required"`
 	Enabled     bool   `json:"enabled"`
-	CachePolicy string `json:"cachePolicy" binding:"required,oneof=respect_origin force_cache default_cache"`
+	DefaultMode string `json:"defaultMode" binding:"required,oneof=default follow force bypass"`
 }
 
 // CreateResponse 创建缓存规则组响应
@@ -32,7 +32,7 @@ type CreateResponse struct {
 	ID          int    `json:"id"`
 	Name        string `json:"name"`
 	Enabled     bool   `json:"enabled"`
-	CachePolicy string `json:"cachePolicy"`
+	DefaultMode string `json:"defaultMode"`
 	CreatedAt   string `json:"createdAt"`
 	UpdatedAt   string `json:"updatedAt"`
 }
@@ -60,7 +60,7 @@ func (h *Handler) Create(c *gin.Context) {
 	rule := model.CacheRule{
 		Name:        req.Name,
 		Enabled:     req.Enabled,
-		CachePolicy: req.CachePolicy,
+		DefaultMode: req.DefaultMode,
 	}
 
 	if err := h.db.Create(&rule).Error; err != nil {
@@ -73,7 +73,7 @@ func (h *Handler) Create(c *gin.Context) {
 		ID:          rule.ID,
 		Name:        rule.Name,
 		Enabled:     rule.Enabled,
-		CachePolicy: rule.CachePolicy,
+		DefaultMode: rule.DefaultMode,
 		CreatedAt:   rule.CreatedAt.Format("2006-01-02T15:04:05Z07:00"),
 		UpdatedAt:   rule.UpdatedAt.Format("2006-01-02T15:04:05Z07:00"),
 	}
@@ -190,7 +190,7 @@ type UpdateRequest struct {
 	ID          int    `json:"id" binding:"required"`
 	Name        string `json:"name" binding:"required"`
 	Enabled     bool   `json:"enabled"`
-	CachePolicy string `json:"cachePolicy" binding:"required,oneof=respect_origin force_cache default_cache"`
+	DefaultMode string `json:"defaultMode" binding:"required,oneof=default follow force bypass"`
 }
 
 // Update 更新缓存规则组
@@ -230,7 +230,7 @@ func (h *Handler) Update(c *gin.Context) {
 	if err := h.db.Model(&rule).Updates(map[string]interface{}{
 		"name":         req.Name,
 		"enabled":      req.Enabled,
-		"cache_policy": req.CachePolicy,
+		"default_mode": req.DefaultMode,
 	}).Error; err != nil {
 		httpx.FailErr(c, httpx.ErrDatabaseError("failed to update cache rule", err))
 		return

@@ -5,7 +5,7 @@ type CacheRule struct {
 	BaseModel
 	Name        string `gorm:"type:varchar(128);uniqueIndex;not null" json:"name"`
 	Enabled     bool   `gorm:"default:true;not null" json:"enabled"`
-	CachePolicy string `gorm:"type:enum('respect_origin','force_cache','default_cache');not null;default:'respect_origin'" json:"cachePolicy"`
+	DefaultMode string `gorm:"type:enum('default','follow','force','bypass');not null;default:'default'" json:"defaultMode"`
 
 	// 关联
 	Items []CacheRuleItem `gorm:"foreignKey:CacheRuleID;constraint:OnDelete:CASCADE" json:"items,omitempty"`
@@ -16,9 +16,10 @@ func (CacheRule) TableName() string {
 	return "cache_rules"
 }
 
-// CachePolicy constants
+// CacheMode constants
 const (
-	CachePolicyRespectOrigin = "respect_origin" // 追随后端
-	CachePolicyForceCache    = "force_cache"    // 强制缓存
-	CachePolicyDefaultCache  = "default_cache"  // 默认缓存（支持强刷绕过）
+	CacheModeDefault = "default" // 最简单缓存，仅开启 cache
+	CacheModeFollow  = "follow"  // 追随后端（尊重 Cache-Control/Expires）
+	CacheModeForce   = "force"   // 强制缓存（忽略后端头，TTL 由控制端下发）
+	CacheModeBypass  = "bypass"  // 不缓存（强制回源，不落盘）
 )

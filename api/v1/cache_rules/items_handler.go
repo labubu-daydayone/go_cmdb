@@ -12,9 +12,67 @@ import (
 	"gorm.io/gorm"
 )
 
+// ItemCreateRequest 创建规则项请求
+type ItemCreateRequest struct {
+	CacheRuleID int    `json:"cacheRuleId" binding:"required"`
+	MatchType   string `json:"matchType" binding:"required,oneof=path suffix exact"`
+	MatchValue  string `json:"matchValue" binding:"required"`
+	Mode        string `json:"mode" binding:"required,oneof=default follow force bypass"`
+	TTLSeconds  int    `json:"ttlSeconds"`
+	Enabled     bool   `json:"enabled"`
+}
+
+// ItemCreate 创建规则项
+// POST /api/v1/cache-rules/items/create
+func (h *Handler) ItemCreate(c *gin.Context) {
+	var req ItemCreateRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		httpx.FailErr(c, httpx.ErrParamMissing("invalid request"))
+		return
+	}
+
+	// 检查cache rule是否存在
+	var rule model.CacheRule
+	if err := h.db.First(&rule, req.CacheRuleID).Error; err != nil {
+		if err == gorm.ErrRecordNotFound {
+			httpx.FailErr(c, httpx.ErrNotFound("cache rule not found"))
+		} else {
+			httpx.FailErr(c, httpx.ErrDatabaseError("failed to find cache rule", err))
+		}
+		return
+	}
+
+	// 去除首尾空格
+	req.MatchValue = strings.TrimSpace(req.MatchValue)
+
+	// 校验规则项
+	validatorInst := validator.NewCacheRuleItemValidator()
+	if err := validatorInst.Validate(req.MatchType, req.MatchValue, req.TTLSeconds); err != nil {
+		httpx.FailErr(c, httpx.ErrParamInvalid(err.Error()))
+		return
+	}
+
+	// 创建规则项
+	item := model.CacheRuleItem{
+		CacheRuleID: req.CacheRuleID,
+		MatchType:   req.MatchType,
+		MatchValue:  req.MatchValue,
+		Mode:        req.Mode,
+		TTLSeconds:  req.TTLSeconds,
+		Enabled:     req.Enabled,
+	}
+
+	if err := h.db.Create(&item).Error; err != nil {
+		httpx.FailErr(c, httpx.ErrDatabaseError("failed to create item", err))
+		return
+	}
+
+	httpx.OK(c, nil)
+}
+
 // ItemUpsertRequest 规则项批量upsert请求
 type ItemUpsertRequest struct {
-	CacheRuleID int                 `json:"cacheRuleId" binding:"required"`
+	CacheRuleID int               `json:"cacheRuleId" binding:"required"`
 	Items       []ItemUpsertInput `json:"items" binding:"required,min=1"`
 }
 
@@ -22,7 +80,8 @@ type ItemUpsertRequest struct {
 type ItemUpsertInput struct {
 	MatchType  string `json:"matchType" binding:"required,oneof=path suffix exact"`
 	MatchValue string `json:"matchValue" binding:"required"`
-	TTLSeconds int    `json:"ttlSeconds" binding:"required,min=0"`
+	Mode       string `json:"mode" binding:"required,oneof=default follow force bypass"`
+	TTLSeconds int    `json:"ttlSeconds"`
 	Enabled    bool   `json:"enabled"`
 }
 
@@ -74,12 +133,17 @@ func (h *Handler) ItemsUpsert(c *gin.Context) {
 		return
 	}
 
-	// 创建新规则项 - 使用原生 SQL 确保 enabled 字段被正确设置
+	// 创建新规则项
 	for _, item := range req.Items {
-		if err := tx.Exec(
-			"INSERT INTO cache_rule_items (cache_rule_id, match_type, match_value, ttl_seconds, enabled, created_at, updated_at) VALUES (?, ?, ?, ?, ?, NOW(), NOW())",
-			req.CacheRuleID, item.MatchType, item.MatchValue, item.TTLSeconds, item.Enabled,
-		).Error; err != nil {
+		newItem := model.CacheRuleItem{
+			CacheRuleID: req.CacheRuleID,
+			MatchType:   item.MatchType,
+			MatchValue:  item.MatchValue,
+			Mode:        item.Mode,
+			TTLSeconds:  item.TTLSeconds,
+			Enabled:     item.Enabled,
+		}
+		if err := tx.Create(&newItem).Error; err != nil {
 			tx.Rollback()
 			httpx.FailErr(c, httpx.ErrDatabaseError("failed to create item", err))
 			return
@@ -100,6 +164,7 @@ type ItemDTO struct {
 	ID         int    `json:"id"`
 	MatchType  string `json:"matchType"`
 	MatchValue string `json:"matchValue"`
+	Mode       string `json:"mode"`
 	TTLSeconds int    `json:"ttlSeconds"`
 	Enabled    bool   `json:"enabled"`
 	CreatedAt  string `json:"createdAt"`
@@ -146,6 +211,7 @@ func (h *Handler) GetItems(c *gin.Context) {
 			ID:         item.ID,
 			MatchType:  item.MatchType,
 			MatchValue: item.MatchValue,
+			Mode:       item.Mode,
 			TTLSeconds: item.TTLSeconds,
 			Enabled:    item.Enabled,
 			CreatedAt:  item.CreatedAt.Format("2006-01-02T15:04:05Z07:00"),
