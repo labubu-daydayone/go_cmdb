@@ -2,6 +2,7 @@ package cert
 
 import (
 	"go_cmdb/internal/model"
+	"log"
 	"time"
 
 	"gorm.io/gorm"
@@ -13,19 +14,73 @@ type DecisionResult struct {
 	CertFound bool
 	// CertificateID is the ID of the found certificate (0 if not found)
 	CertificateID int
-	// ACMETriggered indicates whether an ACME request was triggered
-	ACMETriggered bool
+	// ACMENeeded indicates whether an ACME request is needed (replaces ACMETriggered)
+	ACMENeeded bool
+	// ACMEProviderID is the default ACME provider ID (set when ACMENeeded=true)
+	ACMEProviderID int
+	// ACMEAccountID is the default ACME account ID (set when ACMENeeded=true)
+	ACMEAccountID int
 	// Downgraded indicates whether HTTPS was downgraded (no cert, no ACME available)
 	Downgraded bool
 	// DowngradeReason explains why HTTPS was downgraded
 	DowngradeReason string
+	// ACMETriggered kept for backward compatibility
+	ACMETriggered bool
 }
 
-// DecideCertificate implements the certificate decision logic:
-// 1. Find existing valid certificate that fully covers all domains
-// 2. If found -> use it (return cert ID)
-// 3. If not found -> check if ACME is available and trigger request
-// 4. If ACME not available -> downgrade (return downgraded=true)
+// DecideCertificateReadOnly performs certificate decision without any DB writes.
+// This is safe to call outside a transaction.
+//
+// Decision flow:
+//  1. Find existing valid certificate that fully covers all domains
+//  2. If found -> return cert ID (CertFound=true)
+//  3. If not found -> check if ACME is available
+//  4. If ACME available -> return ACMENeeded=true with provider/account IDs
+//  5. If ACME not available -> return Downgraded=true
+func DecideCertificateReadOnly(db *gorm.DB, domains []string) (*DecisionResult, error) {
+	result := &DecisionResult{}
+
+	if len(domains) == 0 {
+		result.Downgraded = true
+		result.DowngradeReason = "no domains provided"
+		return result, nil
+	}
+
+	// Step 1: Find existing valid certificate that fully covers all domains
+	log.Printf("[CertDecision] Searching for covering certificate for domains: %v", domains)
+	certID, found, err := findCoveringCertificate(db, domains)
+	if err != nil {
+		return nil, err
+	}
+
+	if found {
+		result.CertFound = true
+		result.CertificateID = certID
+		log.Printf("[CertDecision] Found covering certificate: id=%d", certID)
+		return result, nil
+	}
+	log.Printf("[CertDecision] No covering certificate found")
+
+	// Step 2: No existing cert found, check if ACME is available
+	acmeProviderID, acmeAccountID, err := FindDefaultACME(db)
+	if err != nil {
+		// No ACME available -> downgrade
+		result.Downgraded = true
+		result.DowngradeReason = "no active ACME provider/account available"
+		log.Printf("[CertDecision] No ACME available: %v", err)
+		return result, nil
+	}
+
+	// ACME is available
+	result.ACMENeeded = true
+	result.ACMEProviderID = acmeProviderID
+	result.ACMEAccountID = acmeAccountID
+	log.Printf("[CertDecision] ACME needed: providerID=%d, accountID=%d", acmeProviderID, acmeAccountID)
+	return result, nil
+}
+
+// DecideCertificate implements the certificate decision logic (legacy, writes to DB).
+// Prefer DecideCertificateReadOnly + TriggerACMERequest for new code.
 func DecideCertificate(tx *gorm.DB, websiteID int, domains []string) (*DecisionResult, error) {
 	result := &DecisionResult{}
 
@@ -57,13 +112,16 @@ func DecideCertificate(tx *gorm.DB, websiteID int, domains []string) (*DecisionR
 	}
 
 	// Step 3: Trigger ACME request
-	if err := triggerACMERequest(tx, websiteID, acmeAccountID, domains); err != nil {
+	if err := TriggerACMERequest(tx, websiteID, acmeAccountID, domains); err != nil {
 		result.Downgraded = true
 		result.DowngradeReason = "failed to trigger ACME request: " + err.Error()
 		return result, nil
 	}
 
 	result.ACMETriggered = true
+	result.ACMENeeded = true
+	result.ACMEProviderID = acmeProviderID
+	result.ACMEAccountID = acmeAccountID
 
 	// Also store ACME provider/account in website_https
 	if err := updateWebsiteHTTPSACME(tx, websiteID, acmeProviderID, acmeAccountID); err != nil {
@@ -76,10 +134,11 @@ func DecideCertificate(tx *gorm.DB, websiteID int, domains []string) (*DecisionR
 
 // findCoveringCertificate finds a valid certificate that fully covers all given domains
 // Priority: prefer certificates with more domain coverage, then by latest expiry
-func findCoveringCertificate(tx *gorm.DB, domains []string) (int, bool, error) {
-	// Get all valid certificates (not expired)
+func findCoveringCertificate(db *gorm.DB, domains []string) (int, bool, error) {
+	// Get all valid certificates (not expired, with >30 days remaining)
+	minExpiry := time.Now().Add(30 * 24 * time.Hour)
 	var certificates []model.Certificate
-	if err := tx.Where("status = ? AND expire_at > ?", model.CertificateStatusValid, time.Now()).
+	if err := db.Where("status = ? AND expire_at > ?", model.CertificateStatusValid, minExpiry).
 		Find(&certificates).Error; err != nil {
 		return 0, false, err
 	}
@@ -96,7 +155,7 @@ func findCoveringCertificate(tx *gorm.DB, domains []string) (int, bool, error) {
 	for _, cert := range certificates {
 		// Get certificate domains
 		var certDomains []model.CertificateDomain
-		if err := tx.Where("certificate_id = ?", cert.ID).Find(&certDomains).Error; err != nil {
+		if err := db.Where("certificate_id = ?", cert.ID).Find(&certDomains).Error; err != nil {
 			continue
 		}
 
@@ -123,20 +182,20 @@ func findCoveringCertificate(tx *gorm.DB, domains []string) (int, bool, error) {
 // FindDefaultACME finds the global default ACME provider and account
 // Reads from acme_provider_defaults table (global unique default).
 // Fallback: if no default set, prefer google_publicca > letsencrypt > others.
-func FindDefaultACME(tx *gorm.DB) (int, int, error) {
+func FindDefaultACME(db *gorm.DB) (int, int, error) {
 	// Step 1: Try to get the global default from acme_provider_defaults
 	var defaultRecord model.ACMEProviderDefault
-	if err := tx.Order("id DESC").First(&defaultRecord).Error; err == nil {
+	if err := db.Order("id DESC").First(&defaultRecord).Error; err == nil {
 		// Verify the account is still active
 		var account model.AcmeAccount
-		if err := tx.Where("id = ? AND status = ?", defaultRecord.AccountID, "active").First(&account).Error; err == nil {
+		if err := db.Where("id = ? AND status = ?", defaultRecord.AccountID, "active").First(&account).Error; err == nil {
 			return int(defaultRecord.ProviderID), int(defaultRecord.AccountID), nil
 		}
 	}
 
 	// Step 2: Fallback - no valid default set, pick by provider priority
 	var providers []model.AcmeProvider
-	if err := tx.Where("status = ?", "active").Find(&providers).Error; err != nil || len(providers) == 0 {
+	if err := db.Where("status = ?", "active").Find(&providers).Error; err != nil || len(providers) == 0 {
 		if err != nil {
 			return 0, 0, err
 		}
@@ -156,15 +215,16 @@ func FindDefaultACME(tx *gorm.DB) (int, int, error) {
 	}
 
 	var account model.AcmeAccount
-	if err := tx.Where("provider_id = ? AND status = ?", selectedProvider.ID, "active").First(&account).Error; err != nil {
+	if err := db.Where("provider_id = ? AND status = ?", selectedProvider.ID, "active").First(&account).Error; err != nil {
 		return 0, 0, err
 	}
 
 	return int(selectedProvider.ID), int(account.ID), nil
 }
 
-// triggerACMERequest creates a certificate request (idempotent)
-func triggerACMERequest(tx *gorm.DB, websiteID int, acmeAccountID int, domains []string) error {
+// TriggerACMERequest creates a certificate request (idempotent).
+// Exported so it can be called outside a transaction.
+func TriggerACMERequest(db *gorm.DB, websiteID int, acmeAccountID int, domains []string) error {
 	if len(domains) == 0 {
 		return nil
 	}
@@ -174,12 +234,13 @@ func triggerACMERequest(tx *gorm.DB, websiteID int, acmeAccountID int, domains [
 
 	// Check if there's already a pending/running request with same domains
 	var existingRequest model.CertificateRequest
-	err := tx.Where("acme_account_id = ? AND domains_json = ? AND status IN (?)",
+	err := db.Where("acme_account_id = ? AND domains_json = ? AND status IN (?)",
 		acmeAccountID, domainsJSON, []string{"pending", "running"}).
 		First(&existingRequest).Error
 
 	if err == nil {
 		// Already exists, skip
+		log.Printf("[ACME] Certificate request already exists (id=%d) for domains %s", existingRequest.ID, domainsJSON)
 		return nil
 	} else if err != gorm.ErrRecordNotFound {
 		return err
@@ -195,7 +256,12 @@ func triggerACMERequest(tx *gorm.DB, websiteID int, acmeAccountID int, domains [
 		Attempts:        0,
 	}
 
-	return tx.Create(&certRequest).Error
+	if err := db.Create(&certRequest).Error; err != nil {
+		return err
+	}
+
+	log.Printf("[ACME] Created certificate request (id=%d) for domains %s", certRequest.ID, domainsJSON)
+	return nil
 }
 
 // updateWebsiteHTTPSACME updates the ACME provider/account in website_https

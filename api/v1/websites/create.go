@@ -111,7 +111,8 @@ func (h *Handler) Create(c *gin.Context) {
 		}
 		domains = normalizedDomains
 
-		// 使用 PSL 计算 apex 并校验 domains 表中是否存在 active 记录
+		// [事务外] Step 1: 域名授权校验（PSL + domains 表 active 检查）
+		log.Printf("[Create] Step 1: domain authorization check for %v", domains)
 		if err := domainutil.ValidateWebsiteDomains(h.db, domains); err != nil {
 			httpx.FailErr(c, httpx.ErrParamInvalid(err.Error()))
 			return
@@ -122,7 +123,30 @@ func (h *Handler) Create(c *gin.Context) {
 			Domains: domains,
 		}
 
-		// 在事务中创建
+		// [事务外] Step 2: 证书决策（查找已有证书 / 判断是否需要 ACME）
+		// 注意：这里只做查询和决策，不写入任何数据
+		var certDecision *cert.DecisionResult
+		httpsRequested := req.HTTPSEnabled != nil && *req.HTTPSEnabled
+
+		if httpsRequested {
+			log.Printf("[Create] Step 2: certificate decision for domains %v", domains)
+			var err error
+			certDecision, err = cert.DecideCertificateReadOnly(h.db, domains)
+			if err != nil {
+				log.Printf("[Create] Step 2 failed: certificate decision error: %v", err)
+				// 证书决策失败不阻塞创建，降级为 HTTPS=false
+				certDecision = &cert.DecisionResult{
+					Downgraded:      true,
+					DowngradeReason: "certificate decision failed: " + err.Error(),
+				}
+			}
+			log.Printf("[Create] Step 2 result: certFound=%v certID=%d acmeNeeded=%v downgraded=%v",
+				certDecision.CertFound, certDecision.CertificateID, certDecision.ACMENeeded, certDecision.Downgraded)
+		}
+
+		// [事务内] Step 3: 创建 website + domains + website_https（只写 DB）
+		log.Printf("[Create] Step 3: begin transaction for website creation")
+		var websiteID int
 		err := h.db.Transaction(func(tx *gorm.DB) error {
 			// 检查域名是否已存在
 			for _, domain := range domains {
@@ -190,50 +214,141 @@ func (h *Handler) Create(c *gin.Context) {
 				}
 			}
 
-			// 处理 HTTPS 配置（含证书决策和降级逻辑）
-			certDecisionStr, httpsActual, err := h.handleHTTPSConfig(tx, website.ID, req.HTTPSEnabled, req.ForceHTTPSRedirect, domains)
-			if err != nil {
-				return err
-			}
-			result.CertDecision = certDecisionStr
-			result.HTTPSActual = httpsActual
+			// 写入 website_https 记录（纯 DB 写入，不调用外部服务）
+			if req.HTTPSEnabled != nil {
+				forceRedir := false
+				if req.ForceHTTPSRedirect != nil {
+					forceRedir = *req.ForceHTTPSRedirect
+				}
 
-			// 创建 DNS CNAME 记录（无论 HTTPS 状态如何）
-			if err := dnspkg.EnsureWebsiteDomainCNAMEs(tx, website.ID, domains, req.LineGroupID); err != nil {
-				log.Printf("[Create] Failed to create DNS CNAME records for website %d: %v", website.ID, err)
-				// DNS 创建失败不阻塞网站创建
+				if !*req.HTTPSEnabled || (certDecision != nil && certDecision.Downgraded) {
+					// HTTPS 禁用或被降级
+					if err := tx.Exec(
+						"INSERT INTO website_https (website_id, enabled, force_redirect, hsts, cert_mode, certificate_id, acme_provider_id, acme_account_id, created_at, updated_at) VALUES (?, ?, ?, ?, ?, NULL, NULL, NULL, NOW(), NOW())",
+						website.ID, false, false, false, model.CertModeACME,
+					).Error; err != nil {
+						return err
+					}
+				} else if certDecision != nil && certDecision.CertFound {
+					// 找到已有证书
+					if err := tx.Exec(
+						"INSERT INTO website_https (website_id, enabled, force_redirect, hsts, cert_mode, certificate_id, acme_provider_id, acme_account_id, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, NULL, NULL, NOW(), NOW())",
+						website.ID, true, forceRedir, false, model.CertModeSelect, certDecision.CertificateID,
+					).Error; err != nil {
+						return err
+					}
+					// 创建证书绑定
+					binding := model.CertificateBinding{
+						CertificateID: certDecision.CertificateID,
+						WebsiteID:     website.ID,
+						Status:        model.CertificateBindingStatusActive,
+					}
+					if err := tx.Create(&binding).Error; err != nil {
+						return err
+					}
+				} else if certDecision != nil && certDecision.ACMENeeded {
+					// 需要 ACME 申请
+					if err := tx.Exec(
+						"INSERT INTO website_https (website_id, enabled, force_redirect, hsts, cert_mode, certificate_id, acme_provider_id, acme_account_id, created_at, updated_at) VALUES (?, ?, ?, ?, ?, NULL, ?, ?, NOW(), NOW())",
+						website.ID, true, forceRedir, false, model.CertModeACME, certDecision.ACMEProviderID, certDecision.ACMEAccountID,
+					).Error; err != nil {
+						return err
+					}
+				} else {
+					// 默认：HTTPS 禁用
+					if err := tx.Exec(
+						"INSERT INTO website_https (website_id, enabled, force_redirect, hsts, cert_mode, certificate_id, acme_provider_id, acme_account_id, created_at, updated_at) VALUES (?, ?, ?, ?, ?, NULL, NULL, NULL, NOW(), NOW())",
+						website.ID, false, false, false, model.CertModeACME,
+					).Error; err != nil {
+						return err
+					}
+				}
 			}
 
 			result.Created = true
-			websiteID := website.ID
-			result.WebsiteID = &websiteID
+			websiteID = website.ID
+			wid := website.ID
+			result.WebsiteID = &wid
 			return nil
 		})
+		log.Printf("[Create] Step 3: transaction completed, websiteID=%d, err=%v", websiteID, err)
 
 		if err != nil {
 			errMsg := err.Error()
 			result.Error = &errMsg
 			result.Created = false
+			results = append(results, result)
+			continue
+		}
+
+		// 如果事务内标记了错误（如域名已存在），跳过后续步骤
+		if result.Error != nil {
+			results = append(results, result)
+			continue
+		}
+
+		// 设置证书决策结果到返回值
+		if certDecision != nil {
+			if certDecision.CertFound {
+				result.CertDecision = "existing_cert"
+				actualHTTPS := true
+				result.HTTPSActual = &actualHTTPS
+			} else if certDecision.ACMENeeded {
+				result.CertDecision = "acme_triggered"
+				actualHTTPS := true
+				result.HTTPSActual = &actualHTTPS
+			} else if certDecision.Downgraded {
+				result.CertDecision = "downgraded"
+				actualHTTPS := false
+				result.HTTPSActual = &actualHTTPS
+				log.Printf("[Create] Website %d: HTTPS explicitly downgraded - %s", websiteID, certDecision.DowngradeReason)
+			}
+		} else if req.HTTPSEnabled != nil {
+			result.CertDecision = "none"
+			actualHTTPS := *req.HTTPSEnabled
+			result.HTTPSActual = &actualHTTPS
+		}
+
+		// [事务外] Step 4: 触发 ACME 申请（如需要）
+		if certDecision != nil && certDecision.ACMENeeded {
+			log.Printf("[Create] Step 4: triggering ACME request for website %d, accountID=%d", websiteID, certDecision.ACMEAccountID)
+			if err := cert.TriggerACMERequest(h.db, websiteID, certDecision.ACMEAccountID, domains); err != nil {
+				log.Printf("[Create] Step 4 failed: ACME request trigger error: %v", err)
+				// ACME 触发失败不阻塞创建，但记录错误
+			} else {
+				log.Printf("[Create] Step 4 completed: ACME request created for website %d", websiteID)
+			}
+		}
+
+		// [事务外] Step 5: 创建 DNS CNAME 记录（无论证书状态如何，只要网站创建成功就补齐 DNS）
+		log.Printf("[Create] Step 5: creating DNS CNAME records for website %d, domains=%v, lineGroupId=%d", websiteID, domains, req.LineGroupID)
+		if err := dnspkg.EnsureWebsiteDomainCNAMEs(h.db, websiteID, domains, req.LineGroupID); err != nil {
+			log.Printf("[Create] Step 5 failed: DNS CNAME creation error: %v", err)
+			// DNS 创建失败不阻塞网站创建
 		} else {
-			// 创建成功后触发发布任务
-			if result.WebsiteID != nil {
-				releaseService := service.NewWebsiteReleaseService(h.db)
-				traceID := fmt.Sprintf("website_create_%d", *result.WebsiteID)
-				releaseResult, releaseErr := releaseService.CreateWebsiteReleaseTaskWithDispatch(int64(*result.WebsiteID), traceID)
-				if releaseErr != nil {
-					log.Printf("[Create] Failed to create release task for website %d: %v", *result.WebsiteID, releaseErr)
-				} else {
-					result.ReleaseTaskID = int(releaseResult.ReleaseTaskID)
-					result.TaskCreated = releaseResult.TaskCreated
-					result.SkipReason = releaseResult.SkipReason
-					result.DispatchTriggered = releaseResult.DispatchTriggered
-					result.TargetNodeCount = releaseResult.TargetNodeCount
-					result.CreatedAgentTaskCount = releaseResult.CreatedAgentTaskCount
-					result.SkippedAgentTaskCount = releaseResult.SkippedAgentTaskCount
-					result.AgentTaskCountAfter = releaseResult.AgentTaskCountAfter
-					result.PayloadValid = releaseResult.PayloadValid
-					result.PayloadInvalidReason = releaseResult.PayloadInvalidReason
-				}
+			log.Printf("[Create] Step 5 completed: DNS CNAME records created for website %d", websiteID)
+		}
+
+		// [事务外] Step 6: 触发发布任务
+		if result.WebsiteID != nil {
+			log.Printf("[Create] Step 6: creating release task for website %d", *result.WebsiteID)
+			releaseService := service.NewWebsiteReleaseService(h.db)
+			traceID := fmt.Sprintf("website_create_%d", *result.WebsiteID)
+			releaseResult, releaseErr := releaseService.CreateWebsiteReleaseTaskWithDispatch(int64(*result.WebsiteID), traceID)
+			if releaseErr != nil {
+				log.Printf("[Create] Step 6 failed: release task error: %v", releaseErr)
+			} else {
+				result.ReleaseTaskID = int(releaseResult.ReleaseTaskID)
+				result.TaskCreated = releaseResult.TaskCreated
+				result.SkipReason = releaseResult.SkipReason
+				result.DispatchTriggered = releaseResult.DispatchTriggered
+				result.TargetNodeCount = releaseResult.TargetNodeCount
+				result.CreatedAgentTaskCount = releaseResult.CreatedAgentTaskCount
+				result.SkippedAgentTaskCount = releaseResult.SkippedAgentTaskCount
+				result.AgentTaskCountAfter = releaseResult.AgentTaskCountAfter
+				result.PayloadValid = releaseResult.PayloadValid
+				result.PayloadInvalidReason = releaseResult.PayloadInvalidReason
+				log.Printf("[Create] Step 6 completed: releaseTaskID=%d", releaseResult.ReleaseTaskID)
 			}
 		}
 
@@ -241,112 +356,6 @@ func (h *Handler) Create(c *gin.Context) {
 	}
 
 	httpx.OK(c, CreateResponse{Items: results})
-}
-
-// handleHTTPSConfig 处理 HTTPS 配置
-// 返回: (certDecision, httpsActual, error)
-// certDecision: "existing_cert" / "acme_triggered" / "downgraded" / "none"
-// httpsActual: 实际 HTTPS 状态（可能被降级为 false）
-func (h *Handler) handleHTTPSConfig(tx *gorm.DB, websiteID int, httpsEnabled *bool, forceRedirect *bool, domains []string) (string, *bool, error) {
-	// 如果未传 httpsEnabled，不处理
-	if httpsEnabled == nil {
-		return "none", nil, nil
-	}
-
-	actualHTTPS := *httpsEnabled
-
-	if !*httpsEnabled {
-		// httpsEnabled=false，创建禁用状态的记录
-		if err := tx.Exec(
-			"INSERT INTO website_https (website_id, enabled, force_redirect, hsts, cert_mode, certificate_id, acme_provider_id, acme_account_id, created_at, updated_at) VALUES (?, ?, ?, ?, ?, NULL, NULL, NULL, NOW(), NOW())",
-			websiteID, false, false, false, model.CertModeACME,
-		).Error; err != nil {
-			return "", nil, err
-		}
-		return "none", &actualHTTPS, nil
-	}
-
-	// httpsEnabled=true，执行证书决策流程
-	forceRedir := false
-	if forceRedirect != nil {
-		forceRedir = *forceRedirect
-	}
-
-	// 调用证书决策逻辑
-	decision, err := cert.DecideCertificate(tx, websiteID, domains)
-	if err != nil {
-		return "", nil, err
-	}
-
-	certDecisionStr := "none"
-
-	if decision.CertFound {
-		// 找到已有证书，直接绑定
-		certDecisionStr = "existing_cert"
-		log.Printf("[Create] Website %d: found existing certificate %d", websiteID, decision.CertificateID)
-
-		// 创建 website_https 记录（cert_mode=select）
-		if err := tx.Exec(
-			"INSERT INTO website_https (website_id, enabled, force_redirect, hsts, cert_mode, certificate_id, acme_provider_id, acme_account_id, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, NULL, NULL, NOW(), NOW())",
-			websiteID, true, forceRedir, false, model.CertModeSelect, decision.CertificateID,
-		).Error; err != nil {
-			return "", nil, err
-		}
-
-		// 创建证书绑定
-		binding := model.CertificateBinding{
-			CertificateID: decision.CertificateID,
-			WebsiteID:     websiteID,
-			Status:        model.CertificateBindingStatusActive,
-		}
-		if err := tx.Create(&binding).Error; err != nil {
-			return "", nil, err
-		}
-
-	} else if decision.ACMETriggered {
-		// 触发了 ACME 申请
-		certDecisionStr = "acme_triggered"
-		log.Printf("[Create] Website %d: ACME certificate request triggered", websiteID)
-
-		// 创建 website_https 记录（cert_mode=acme，ACME provider/account 已由 decision 设置）
-		// 先查询 ACME provider/account
-		acmeProviderID, acmeAccountID, _ := getDefaultACMEIDs(tx)
-		if err := tx.Exec(
-			"INSERT INTO website_https (website_id, enabled, force_redirect, hsts, cert_mode, certificate_id, acme_provider_id, acme_account_id, created_at, updated_at) VALUES (?, ?, ?, ?, ?, NULL, ?, ?, NOW(), NOW())",
-			websiteID, true, forceRedir, false, model.CertModeACME, acmeProviderID, acmeAccountID,
-		).Error; err != nil {
-			return "", nil, err
-		}
-
-	} else if decision.Downgraded {
-		// 降级：无证书、无 ACME
-		certDecisionStr = "downgraded"
-		actualHTTPS = false
-		log.Printf("[Create] Website %d: HTTPS downgraded - %s", websiteID, decision.DowngradeReason)
-
-		// 创建 website_https 记录（enabled=false）
-		if err := tx.Exec(
-			"INSERT INTO website_https (website_id, enabled, force_redirect, hsts, cert_mode, certificate_id, acme_provider_id, acme_account_id, created_at, updated_at) VALUES (?, ?, ?, ?, ?, NULL, NULL, NULL, NOW(), NOW())",
-			websiteID, false, false, false, model.CertModeACME,
-		).Error; err != nil {
-			return "", nil, err
-		}
-	}
-
-	return certDecisionStr, &actualHTTPS, nil
-}
-
-// getDefaultACMEIDs 获取默认的 ACME provider 和 account ID
-func getDefaultACMEIDs(tx *gorm.DB) (int, int, error) {
-	var provider model.AcmeProvider
-	if err := tx.Where("status = ?", "active").First(&provider).Error; err != nil {
-		return 0, 0, err
-	}
-	var account model.AcmeAccount
-	if err := tx.Where("provider_id = ? AND status = ?", provider.ID, "active").First(&account).Error; err != nil {
-		return 0, 0, err
-	}
-	return int(provider.ID), int(account.ID), nil
 }
 
 // parseText 解析文本为域名列表

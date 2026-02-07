@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 
+	"go_cmdb/internal/cert"
 	dnspkg "go_cmdb/internal/dns"
 	"go_cmdb/internal/domainutil"
 	"go_cmdb/internal/httpx"
@@ -33,16 +34,16 @@ type UpdateRequest struct {
 // UpdateResultItem 更新结果
 type UpdateResultItem struct {
 	WebsiteDTO
-	ReleaseTaskID          int    `json:"releaseTaskId"`
-	TaskCreated            bool   `json:"taskCreated"`
-	SkipReason             string `json:"skipReason"`
-	DispatchTriggered      bool   `json:"dispatchTriggered"`
-	TargetNodeCount        int    `json:"targetNodeCount"`
-	CreatedAgentTaskCount  int    `json:"createdAgentTaskCount"`
-	SkippedAgentTaskCount  int    `json:"skippedAgentTaskCount"`
-	AgentTaskCountAfter    int    `json:"agentTaskCountAfter"`
-	PayloadValid           bool   `json:"payloadValid"`
-	PayloadInvalidReason   string `json:"payloadInvalidReason"`
+	ReleaseTaskID         int    `json:"releaseTaskId"`
+	TaskCreated           bool   `json:"taskCreated"`
+	SkipReason            string `json:"skipReason"`
+	DispatchTriggered     bool   `json:"dispatchTriggered"`
+	TargetNodeCount       int    `json:"targetNodeCount"`
+	CreatedAgentTaskCount int    `json:"createdAgentTaskCount"`
+	SkippedAgentTaskCount int    `json:"skippedAgentTaskCount"`
+	AgentTaskCountAfter   int    `json:"agentTaskCountAfter"`
+	PayloadValid          bool   `json:"payloadValid"`
+	PayloadInvalidReason  string `json:"payloadInvalidReason"`
 }
 
 // Update 更新网站
@@ -64,7 +65,65 @@ func (h *Handler) Update(c *gin.Context) {
 		return
 	}
 
-	// 在事务中更新
+	// 计算最终域名列表（用于证书决策和 DNS）
+	var finalDomains []string
+	if req.DomainsText != nil {
+		lines := parseText(*req.DomainsText)
+		if len(lines) == 0 {
+			httpx.FailErr(c, httpx.ErrParamMissing("domains required"))
+			return
+		}
+		if len(lines) > 1 {
+			httpx.FailErr(c, httpx.ErrParamInvalid("update only supports single website"))
+			return
+		}
+		// 规范化域名
+		for _, d := range lines[0] {
+			nd, err := domainutil.Normalize(d)
+			if err != nil {
+				httpx.FailErr(c, httpx.ErrParamInvalid(err.Error()))
+				return
+			}
+			finalDomains = append(finalDomains, nd)
+		}
+		// PSL + domains 表 active 校验
+		if err := domainutil.ValidateWebsiteDomains(h.db, finalDomains); err != nil {
+			httpx.FailErr(c, httpx.ErrParamInvalid(err.Error()))
+			return
+		}
+	} else {
+		for _, d := range website.Domains {
+			finalDomains = append(finalDomains, d.Domain)
+		}
+	}
+
+	// 计算最终 lineGroupID
+	finalLineGroupID := website.LineGroupID
+	if req.LineGroupID != nil {
+		finalLineGroupID = *req.LineGroupID
+	}
+
+	// [事务外] Step 1: 证书决策（如需要）
+	var certDecision *cert.DecisionResult
+	httpsRequested := req.HTTPSEnabled != nil && *req.HTTPSEnabled
+
+	if httpsRequested && len(finalDomains) > 0 {
+		log.Printf("[Update] Step 1: certificate decision for website %d, domains %v", req.ID, finalDomains)
+		var err error
+		certDecision, err = cert.DecideCertificateReadOnly(h.db, finalDomains)
+		if err != nil {
+			log.Printf("[Update] Step 1 failed: certificate decision error: %v", err)
+			certDecision = &cert.DecisionResult{
+				Downgraded:      true,
+				DowngradeReason: "certificate decision failed: " + err.Error(),
+			}
+		}
+		log.Printf("[Update] Step 1 result: certFound=%v certID=%d acmeNeeded=%v downgraded=%v",
+			certDecision.CertFound, certDecision.CertificateID, certDecision.ACMENeeded, certDecision.Downgraded)
+	}
+
+	// [事务内] Step 2: 更新 website + domains + website_https（只写 DB）
+	log.Printf("[Update] Step 2: begin transaction for website %d update", req.ID)
 	err := h.db.Transaction(func(tx *gorm.DB) error {
 		updates := make(map[string]interface{})
 
@@ -92,24 +151,17 @@ func (h *Handler) Update(c *gin.Context) {
 
 		// 更新 originMode 及相关字段
 		if req.OriginMode != nil {
-			// 校验 originMode
 			if *req.OriginMode != model.OriginModeGroup && *req.OriginMode != model.OriginModeManual && *req.OriginMode != model.OriginModeRedirect {
 				return httpx.ErrParamInvalid("originMode must be group, manual or redirect")
 			}
-
-			// 校验字段组合
 			if err := validateUpdateOriginMode(&req); err != nil {
 				return err
 			}
-
-			// 校验存在性和关联性
 			if err := validateUpdateOriginReferences(tx, &req); err != nil {
 				return err
 			}
 
 			updates["origin_mode"] = *req.OriginMode
-
-			// 根据 originMode 设置字段
 			switch *req.OriginMode {
 			case model.OriginModeGroup:
 				updates["origin_group_id"] = *req.OriginGroupID
@@ -142,34 +194,8 @@ func (h *Handler) Update(c *gin.Context) {
 
 		// 更新域名
 		if req.DomainsText != nil {
-			lines := parseText(*req.DomainsText)
-			if len(lines) == 0 {
-				return httpx.ErrParamMissing("domains required")
-			}
-			if len(lines) > 1 {
-				return httpx.ErrParamInvalid("update only supports single website")
-			}
-
-			domains := lines[0]
-
-			// 对域名进行规范化和 apex 校验
-			normalizedDomains := make([]string, 0, len(domains))
-			for _, d := range domains {
-				nd, err := domainutil.Normalize(d)
-				if err != nil {
-					return httpx.ErrParamInvalid(err.Error())
-				}
-				normalizedDomains = append(normalizedDomains, nd)
-			}
-			domains = normalizedDomains
-
-			// 使用 PSL 计算 apex 并校验 domains 表中是否存在 active 记录
-			if err := domainutil.ValidateWebsiteDomains(tx, domains); err != nil {
-				return httpx.ErrParamInvalid(err.Error())
-			}
-
 			// 检查域名是否已被其他网站使用
-			for _, domain := range domains {
+			for _, domain := range finalDomains {
 				var count int64
 				if err := tx.Model(&model.WebsiteDomain{}).
 					Where("domain = ? AND website_id != ?", domain, website.ID).
@@ -187,7 +213,7 @@ func (h *Handler) Update(c *gin.Context) {
 			}
 
 			// 创建新域名
-			for idx, domain := range domains {
+			for idx, domain := range finalDomains {
 				wd := model.WebsiteDomain{
 					WebsiteID: website.ID,
 					Domain:    domain,
@@ -199,79 +225,176 @@ func (h *Handler) Update(c *gin.Context) {
 			}
 		}
 
-		// 处理 HTTPS 配置
+		// 写入 website_https 记录（纯 DB 写入）
 		if req.HTTPSEnabled != nil || req.ForceHTTPSRedirect != nil {
-			// 获取当前域名列表
-			var currentDomains []string
-			if req.DomainsText != nil {
-				lines := parseText(*req.DomainsText)
-				if len(lines) > 0 {
-					currentDomains = lines[0]
+			var websiteHTTPS model.WebsiteHTTPS
+			existErr := tx.Where("website_id = ?", website.ID).First(&websiteHTTPS).Error
+
+			forceRedir := false
+			if req.ForceHTTPSRedirect != nil {
+				forceRedir = *req.ForceHTTPSRedirect
+			}
+
+			if req.HTTPSEnabled != nil && !*req.HTTPSEnabled {
+				// HTTPS 禁用
+				if existErr == gorm.ErrRecordNotFound {
+					if err := tx.Exec(
+						"INSERT INTO website_https (website_id, enabled, force_redirect, hsts, cert_mode, certificate_id, acme_provider_id, acme_account_id, created_at, updated_at) VALUES (?, ?, ?, ?, ?, NULL, NULL, NULL, NOW(), NOW())",
+						website.ID, false, false, false, model.CertModeACME,
+					).Error; err != nil {
+						return err
+					}
+				} else if existErr == nil {
+					if err := tx.Model(&model.WebsiteHTTPS{}).Where("website_id = ?", website.ID).Updates(map[string]interface{}{
+						"enabled":        false,
+						"force_redirect": false,
+						"certificate_id": nil,
+					}).Error; err != nil {
+						return err
+					}
+				} else {
+					return existErr
 				}
-			} else {
-				for _, d := range website.Domains {
-					currentDomains = append(currentDomains, d.Domain)
+			} else if certDecision != nil && certDecision.Downgraded {
+				// HTTPS 被降级
+				log.Printf("[Update] Website %d: HTTPS explicitly downgraded - %s", website.ID, certDecision.DowngradeReason)
+				if existErr == gorm.ErrRecordNotFound {
+					if err := tx.Exec(
+						"INSERT INTO website_https (website_id, enabled, force_redirect, hsts, cert_mode, certificate_id, acme_provider_id, acme_account_id, created_at, updated_at) VALUES (?, ?, ?, ?, ?, NULL, NULL, NULL, NOW(), NOW())",
+						website.ID, false, false, false, model.CertModeACME,
+					).Error; err != nil {
+						return err
+					}
+				} else if existErr == nil {
+					if err := tx.Model(&model.WebsiteHTTPS{}).Where("website_id = ?", website.ID).Updates(map[string]interface{}{
+						"enabled":        false,
+						"force_redirect": false,
+						"certificate_id": nil,
+					}).Error; err != nil {
+						return err
+					}
+				} else {
+					return existErr
 				}
-			}
-
-			_, actualHTTPS, err := h.handleHTTPSConfigUpdate(tx, website.ID, req.HTTPSEnabled, req.ForceHTTPSRedirect, currentDomains)
-			if err != nil {
-				return err
-			}
-
-			// 如果 HTTPS 被降级，更新 website 记录
-			if actualHTTPS != nil && !*actualHTTPS && req.HTTPSEnabled != nil && *req.HTTPSEnabled {
-				log.Printf("[Update] Website %d: HTTPS downgraded from requested=true to actual=false", website.ID)
-			}
-		}
-
-		// DNS CNAME 解析（无论 HTTPS 状态如何）
-		var allDomains []string
-		if req.DomainsText != nil {
-			lines := parseText(*req.DomainsText)
-			if len(lines) > 0 {
-				allDomains = lines[0]
-			}
-		} else {
-			for _, d := range website.Domains {
-				allDomains = append(allDomains, d.Domain)
-			}
-		}
-
-		lineGroupID := website.LineGroupID
-		if req.LineGroupID != nil {
-			lineGroupID = *req.LineGroupID
-		}
-
-		if len(allDomains) > 0 && lineGroupID > 0 {
-			if err := dnspkg.EnsureWebsiteDomainCNAMEs(tx, website.ID, allDomains, lineGroupID); err != nil {
-				log.Printf("[Update] DNS CNAME creation failed for website %d: %v", website.ID, err)
-				// DNS 失败不阻塞更新
+			} else if certDecision != nil && certDecision.CertFound {
+				// 找到已有证书
+				if existErr == gorm.ErrRecordNotFound {
+					if err := tx.Exec(
+						"INSERT INTO website_https (website_id, enabled, force_redirect, hsts, cert_mode, certificate_id, acme_provider_id, acme_account_id, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, NULL, NULL, NOW(), NOW())",
+						website.ID, true, forceRedir, false, model.CertModeSelect, certDecision.CertificateID,
+					).Error; err != nil {
+						return err
+					}
+				} else if existErr == nil {
+					if err := tx.Model(&model.WebsiteHTTPS{}).Where("website_id = ?", website.ID).Updates(map[string]interface{}{
+						"enabled":        true,
+						"force_redirect": forceRedir,
+						"cert_mode":      model.CertModeSelect,
+						"certificate_id": certDecision.CertificateID,
+					}).Error; err != nil {
+						return err
+					}
+				} else {
+					return existErr
+				}
+				// 创建/更新证书绑定
+				var existingBinding model.CertificateBinding
+				if err := tx.Where("website_id = ?", website.ID).First(&existingBinding).Error; err == gorm.ErrRecordNotFound {
+					binding := model.CertificateBinding{
+						CertificateID: certDecision.CertificateID,
+						WebsiteID:     website.ID,
+						Status:        model.CertificateBindingStatusActive,
+					}
+					if err := tx.Create(&binding).Error; err != nil {
+						return err
+					}
+				} else if err == nil {
+					if err := tx.Model(&existingBinding).Updates(map[string]interface{}{
+						"certificate_id": certDecision.CertificateID,
+						"status":         model.CertificateBindingStatusActive,
+					}).Error; err != nil {
+						return err
+					}
+				}
+			} else if certDecision != nil && certDecision.ACMENeeded {
+				// 需要 ACME 申请
+				if existErr == gorm.ErrRecordNotFound {
+					if err := tx.Exec(
+						"INSERT INTO website_https (website_id, enabled, force_redirect, hsts, cert_mode, certificate_id, acme_provider_id, acme_account_id, created_at, updated_at) VALUES (?, ?, ?, ?, ?, NULL, ?, ?, NOW(), NOW())",
+						website.ID, true, forceRedir, false, model.CertModeACME, certDecision.ACMEProviderID, certDecision.ACMEAccountID,
+					).Error; err != nil {
+						return err
+					}
+				} else if existErr == nil {
+					if err := tx.Model(&model.WebsiteHTTPS{}).Where("website_id = ?", website.ID).Updates(map[string]interface{}{
+						"enabled":          true,
+						"force_redirect":   forceRedir,
+						"cert_mode":        model.CertModeACME,
+						"certificate_id":   nil,
+						"acme_provider_id": certDecision.ACMEProviderID,
+						"acme_account_id":  certDecision.ACMEAccountID,
+					}).Error; err != nil {
+						return err
+					}
+				} else {
+					return existErr
+				}
+			} else if req.ForceHTTPSRedirect != nil && req.HTTPSEnabled == nil {
+				// 只更新 forceRedirect
+				if existErr == nil {
+					if err := tx.Model(&model.WebsiteHTTPS{}).Where("website_id = ?", website.ID).Updates(map[string]interface{}{
+						"force_redirect": forceRedir,
+					}).Error; err != nil {
+						return err
+					}
+				}
 			}
 		}
 
 		return nil
 	})
+	log.Printf("[Update] Step 2: transaction completed for website %d, err=%v", req.ID, err)
 
-		if err != nil {
-			if appErr, ok := err.(*httpx.AppError); ok {
-				httpx.FailErr(c, appErr)
-			} else {
-				httpx.FailErr(c, httpx.ErrDatabaseError("failed to update website", err))
-			}
-			return
+	if err != nil {
+		if appErr, ok := err.(*httpx.AppError); ok {
+			httpx.FailErr(c, appErr)
+		} else {
+			httpx.FailErr(c, httpx.ErrDatabaseError("failed to update website", err))
 		}
+		return
+	}
 
-		// 更新成功后触发发布任务
-		releaseService := service.NewWebsiteReleaseService(h.db)
-		traceID := fmt.Sprintf("website_update_%d", req.ID)
-		releaseResult, releaseErr := releaseService.CreateWebsiteReleaseTaskWithDispatch(int64(req.ID), traceID)
-		if releaseErr != nil {
-			log.Printf("[Update] Failed to create release task for website %d: %v", req.ID, releaseErr)
-			// 发布任务创建失败，返回错误
-			httpx.FailErr(c, httpx.ErrInternalError("failed to create release task", releaseErr))
-			return
+	// [事务外] Step 3: 触发 ACME 申请（如需要）
+	if certDecision != nil && certDecision.ACMENeeded {
+		log.Printf("[Update] Step 3: triggering ACME request for website %d, accountID=%d", req.ID, certDecision.ACMEAccountID)
+		if err := cert.TriggerACMERequest(h.db, req.ID, certDecision.ACMEAccountID, finalDomains); err != nil {
+			log.Printf("[Update] Step 3 failed: ACME request trigger error: %v", err)
+		} else {
+			log.Printf("[Update] Step 3 completed: ACME request created for website %d", req.ID)
 		}
+	}
+
+	// [事务外] Step 4: DNS CNAME 补齐（无论证书状态如何）
+	if len(finalDomains) > 0 && finalLineGroupID > 0 {
+		log.Printf("[Update] Step 4: creating DNS CNAME records for website %d, domains=%v, lineGroupId=%d", req.ID, finalDomains, finalLineGroupID)
+		if err := dnspkg.EnsureWebsiteDomainCNAMEs(h.db, req.ID, finalDomains, finalLineGroupID); err != nil {
+			log.Printf("[Update] Step 4 failed: DNS CNAME creation error: %v", err)
+		} else {
+			log.Printf("[Update] Step 4 completed: DNS CNAME records created for website %d", req.ID)
+		}
+	}
+
+	// [事务外] Step 5: 触发发布任务
+	log.Printf("[Update] Step 5: creating release task for website %d", req.ID)
+	releaseService := service.NewWebsiteReleaseService(h.db)
+	traceID := fmt.Sprintf("website_update_%d", req.ID)
+	releaseResult, releaseErr := releaseService.CreateWebsiteReleaseTaskWithDispatch(int64(req.ID), traceID)
+	if releaseErr != nil {
+		log.Printf("[Update] Step 5 failed: release task error: %v", releaseErr)
+		httpx.FailErr(c, httpx.ErrInternalError("failed to create release task", releaseErr))
+		return
+	}
+	log.Printf("[Update] Step 5 completed: releaseTaskID=%d", releaseResult.ReleaseTaskID)
 
 	// 重新查询返回
 	if err := h.db.
@@ -315,7 +438,6 @@ func (h *Handler) Update(c *gin.Context) {
 	// LineGroup名称和CNAME
 	if website.LineGroup != nil {
 		item.LineGroupName = website.LineGroup.Name
-		// 加载Domain信息以计算CNAME
 		var domain model.Domain
 		if err := h.db.First(&domain, website.LineGroup.DomainID).Error; err == nil {
 			item.CNAME = website.LineGroup.CNAMEPrefix + "." + domain.Domain
@@ -419,7 +541,6 @@ func validateUpdateOriginReferences(db *gorm.DB, req *UpdateRequest) *httpx.AppE
 
 	switch *req.OriginMode {
 	case model.OriginModeGroup:
-		// 校验 originGroupId 存在
 		var originGroup model.OriginGroup
 		if err := db.First(&originGroup, *req.OriginGroupID).Error; err != nil {
 			if err == gorm.ErrRecordNotFound {
@@ -428,7 +549,6 @@ func validateUpdateOriginReferences(db *gorm.DB, req *UpdateRequest) *httpx.AppE
 			return httpx.ErrDatabaseError("failed to query origin group", err)
 		}
 
-		// 校验 originSetId 存在
 		var originSet model.OriginSet
 		if err := db.First(&originSet, *req.OriginSetID).Error; err != nil {
 			if err == gorm.ErrRecordNotFound {
@@ -437,13 +557,11 @@ func validateUpdateOriginReferences(db *gorm.DB, req *UpdateRequest) *httpx.AppE
 			return httpx.ErrDatabaseError("failed to query origin set", err)
 		}
 
-		// 校验 originSetId 属于 originGroupId
 		if int(originSet.OriginGroupID) != *req.OriginGroupID {
 			return httpx.ErrParamInvalid("originSetId does not belong to originGroupId")
 		}
 
 	case model.OriginModeManual:
-		// 校验 originSetId 存在
 		var originSet model.OriginSet
 		if err := db.First(&originSet, *req.OriginSetID).Error; err != nil {
 			if err == gorm.ErrRecordNotFound {
@@ -452,7 +570,6 @@ func validateUpdateOriginReferences(db *gorm.DB, req *UpdateRequest) *httpx.AppE
 			return httpx.ErrDatabaseError("failed to query origin set", err)
 		}
 
-		// 如果传了 originGroupId，也要校验存在性
 		if req.OriginGroupID != nil && *req.OriginGroupID > 0 {
 			var originGroup model.OriginGroup
 			if err := db.First(&originGroup, *req.OriginGroupID).Error; err != nil {
