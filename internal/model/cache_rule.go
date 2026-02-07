@@ -3,9 +3,8 @@ package model
 // CacheRule 缓存规则组
 type CacheRule struct {
 	BaseModel
-	Name        string `gorm:"type:varchar(128);uniqueIndex;not null" json:"name"`
-	Enabled     bool   `gorm:"default:true;not null" json:"enabled"`
-	DefaultMode string `gorm:"type:enum('default','follow','force','bypass');not null;default:'default'" json:"defaultMode"`
+	Name    string `gorm:"type:varchar(128);uniqueIndex;not null" json:"name"`
+	Enabled bool   `gorm:"default:true;not null" json:"enabled"`
 
 	// 关联
 	Items []CacheRuleItem `gorm:"foreignKey:CacheRuleID;constraint:OnDelete:CASCADE" json:"items,omitempty"`
@@ -16,7 +15,7 @@ func (CacheRule) TableName() string {
 	return "cache_rules"
 }
 
-// CacheMode constants
+// CacheMode constants (used in cache_rule_items)
 const (
 	CacheModeDefault = "default" // 最简单缓存，仅开启 cache
 	CacheModeFollow  = "follow"  // 追随后端（尊重 Cache-Control/Expires）

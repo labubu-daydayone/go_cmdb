@@ -22,19 +22,17 @@ func NewHandler(db *gorm.DB) *Handler {
 
 // CreateRequest 创建缓存规则组请求
 type CreateRequest struct {
-	Name        string `json:"name" binding:"required"`
-	Enabled     bool   `json:"enabled"`
-	DefaultMode string `json:"defaultMode" binding:"required,oneof=default follow force bypass"`
+	Name    string `json:"name" binding:"required"`
+	Enabled bool   `json:"enabled"`
 }
 
 // CreateResponse 创建缓存规则组响应
 type CreateResponse struct {
-	ID          int    `json:"id"`
-	Name        string `json:"name"`
-	Enabled     bool   `json:"enabled"`
-	DefaultMode string `json:"defaultMode"`
-	CreatedAt   string `json:"createdAt"`
-	UpdatedAt   string `json:"updatedAt"`
+	ID        int    `json:"id"`
+	Name      string `json:"name"`
+	Enabled   bool   `json:"enabled"`
+	CreatedAt string `json:"createdAt"`
+	UpdatedAt string `json:"updatedAt"`
 }
 
 // Create 创建缓存规则组
@@ -58,9 +56,8 @@ func (h *Handler) Create(c *gin.Context) {
 	}
 	// 创建 cache_rule
 	rule := model.CacheRule{
-		Name:        req.Name,
-		Enabled:     req.Enabled,
-		DefaultMode: req.DefaultMode,
+		Name:    req.Name,
+		Enabled: req.Enabled,
 	}
 
 	if err := h.db.Create(&rule).Error; err != nil {
@@ -70,12 +67,11 @@ func (h *Handler) Create(c *gin.Context) {
 
 	// 构造响应
 	resp := CreateResponse{
-		ID:          rule.ID,
-		Name:        rule.Name,
-		Enabled:     rule.Enabled,
-		DefaultMode: rule.DefaultMode,
-		CreatedAt:   rule.CreatedAt.Format("2006-01-02T15:04:05Z07:00"),
-		UpdatedAt:   rule.UpdatedAt.Format("2006-01-02T15:04:05Z07:00"),
+		ID:        rule.ID,
+		Name:      rule.Name,
+		Enabled:   rule.Enabled,
+		CreatedAt: rule.CreatedAt.Format("2006-01-02T15:04:05Z07:00"),
+		UpdatedAt: rule.UpdatedAt.Format("2006-01-02T15:04:05Z07:00"),
 	}
 
 	httpx.OK(c, gin.H{"item": resp})
@@ -187,10 +183,9 @@ func (h *Handler) List(c *gin.Context) {
 
 // UpdateRequest 更新缓存规则组请求
 type UpdateRequest struct {
-	ID          int    `json:"id" binding:"required"`
-	Name        string `json:"name" binding:"required"`
-	Enabled     bool   `json:"enabled"`
-	DefaultMode string `json:"defaultMode" binding:"required,oneof=default follow force bypass"`
+	ID      int    `json:"id" binding:"required"`
+	Name    string `json:"name" binding:"required"`
+	Enabled bool   `json:"enabled"`
 }
 
 // Update 更新缓存规则组
@@ -228,9 +223,8 @@ func (h *Handler) Update(c *gin.Context) {
 
 	// 更新
 	if err := h.db.Model(&rule).Updates(map[string]interface{}{
-		"name":         req.Name,
-		"enabled":      req.Enabled,
-		"default_mode": req.DefaultMode,
+		"name":    req.Name,
+		"enabled": req.Enabled,
 	}).Error; err != nil {
 		httpx.FailErr(c, httpx.ErrDatabaseError("failed to update cache rule", err))
 		return
