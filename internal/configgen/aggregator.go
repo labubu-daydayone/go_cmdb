@@ -113,7 +113,7 @@ func (a *Aggregator) buildOrigin(website *model.Website) (*OriginConfig, error) 
 			First(&originSet).Error; err != nil {
 			if err == gorm.ErrRecordNotFound {
 				// No origin set yet, return empty addresses
-				config.UpstreamName = fmt.Sprintf("upstream_site_%d", website.ID)
+				// 如果没有 origin_set，不生成 upstream
 				config.Addresses = []AddressConfig{}
 				return config, nil
 			}
@@ -128,8 +128,9 @@ func (a *Aggregator) buildOrigin(website *model.Website) (*OriginConfig, error) 
 			return nil, fmt.Errorf("failed to query origin addresses: %w", err)
 		}
 
-		config.UpstreamName = fmt.Sprintf("upstream_site_%d", website.ID)
-		config.Addresses = make([]AddressConfig, 0, len(addresses))
+			// upstream 命名改为以 origin_set_id 为键
+			config.UpstreamName = fmt.Sprintf("upstream_originset_%d", originSet.ID)
+			config.Addresses = make([]AddressConfig, 0, len(addresses))
 
 		for _, addr := range addresses {
 			config.Addresses = append(config.Addresses, AddressConfig{

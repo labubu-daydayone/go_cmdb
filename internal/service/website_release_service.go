@@ -13,15 +13,17 @@ import (
 
 // WebsiteReleaseService 网站发布服务
 type WebsiteReleaseService struct {
-	db         *gorm.DB
-	dispatcher *AgentTaskDispatcher
+	db                      *gorm.DB
+	dispatcher              *AgentTaskDispatcher
+	originSetReleaseService *OriginSetReleaseService
 }
 
 // NewWebsiteReleaseService 创建网站发布服务实例
 func NewWebsiteReleaseService(db *gorm.DB) *WebsiteReleaseService {
 	return &WebsiteReleaseService{
-		db:         db,
-		dispatcher: NewAgentTaskDispatcher(db),
+		db:                      db,
+		dispatcher:              NewAgentTaskDispatcher(db),
+		originSetReleaseService: NewOriginSetReleaseService(db),
 	}
 }
 
@@ -101,7 +103,19 @@ func (s *WebsiteReleaseService) CreateWebsiteReleaseTaskWithDispatch(websiteID i
 	result.ReleaseTaskID = releaseTask.ID
 	result.TaskCreated = true
 
-	// 5. 派发到 Agent
+	// 4.5. 如果是 group 模式，先创建 upstream 发布任务
+	if website.OriginMode == "group" && website.OriginSetID.Valid && website.OriginSetID.Int32 > 0 {
+		upstreamResult, err := s.originSetReleaseService.CreateOriginSetReleaseTask(int64(website.OriginSetID.Int32), traceID+"_upstream")
+		if err != nil {
+			log.Printf("[WebsiteReleaseService] Failed to create upstream release_task: originSetId=%d, error=%v", website.OriginSetID.Int32, err)
+			// 不阻断 server 任务创建，仅记录日志
+		} else {
+			log.Printf("[WebsiteReleaseService] Upstream release_task: taskId=%d, taskCreated=%v, skipReason=%s",
+				upstreamResult.ReleaseTaskID, upstreamResult.TaskCreated, upstreamResult.SkipReason)
+		}
+	}
+
+	// 5. 派发 server 任务到 Agent
 	dispatchResult, err := s.dispatcher.EnsureDispatched(releaseTask.ID, websiteID, traceID)
 	if err != nil {
 		log.Printf("[WebsiteReleaseService] Failed to dispatch release_task: id=%d, error=%v", releaseTask.ID, err)
