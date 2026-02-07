@@ -17,9 +17,9 @@ type RequestWebsitesData struct {
 // WebsiteListItem represents a website item in the list
 type WebsiteListItem struct {
 	ID                 int      `json:"id"`
-	LineGroupID        int      `json:"line_group_id"`
-	LineGroupName      string   `json:"line_group_name"`
-	CacheRuleID        int      `json:"cache_rule_id"`
+	LineGroupID        int    `json:"line_group_id"`
+	LineGroupName      string `json:"line_group_name"`
+	CacheRuleID        *int   `json:"cache_rule_id"`
 	OriginMode         string   `json:"origin_mode"`
 	OriginGroupID      int      `json:"origin_group_id"`
 	OriginGroupName    string   `json:"origin_group_name"`
@@ -148,7 +148,6 @@ func sendFullWebsitesList(s socketio.Conn) {
 		item := WebsiteListItem{
 			ID:                 website.ID,
 			LineGroupID:        website.LineGroupID,
-			CacheRuleID:        website.CacheRuleID,
 			OriginMode:         website.OriginMode,
 			OriginGroupID:      int(website.OriginGroupID.Int32),
 			OriginSetID:        int(website.OriginSetID.Int32),
@@ -158,6 +157,12 @@ func sendFullWebsitesList(s socketio.Conn) {
 			HTTPSEnabled:       false, // TODO: Query from website_https table
 			CreatedAt:          website.CreatedAt.Format("2006-01-02 15:04:05"),
 			UpdatedAt:          website.UpdatedAt.Format("2006-01-02 15:04:05"),
+		}
+
+		// CacheRuleID 处理
+		if website.CacheRuleID.Valid {
+			val := int(website.CacheRuleID.Int32)
+			item.CacheRuleID = &val
 		}
 
 		// TODO: Query domains, line group name, origin group name, etc.

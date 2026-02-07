@@ -102,13 +102,18 @@ func (h *Handler) List(c *gin.Context) {
 		item := WebsiteListItemDTO{
 			ID:                 w.ID,
 			LineGroupID:        w.LineGroupID,
-			CacheRuleID:        w.CacheRuleID,
 			OriginMode:         w.OriginMode,
 			RedirectURL:        w.RedirectURL,
 			RedirectStatusCode: w.RedirectStatusCode,
 			Status:             w.Status,
 			CreatedAt:          w.CreatedAt,
 			UpdatedAt:          w.UpdatedAt,
+		}
+
+		// CacheRuleID 处理
+		if w.CacheRuleID.Valid {
+			val := int(w.CacheRuleID.Int32)
+			item.CacheRuleID = &val
 		}
 
 		// OriginGroupID 和 OriginSetID 处理
@@ -196,13 +201,18 @@ func (h *Handler) GetByID(c *gin.Context) {
 	item := WebsiteDTO{
 		ID:                 website.ID,
 		LineGroupID:        website.LineGroupID,
-		CacheRuleID:        website.CacheRuleID,
 		OriginMode:         website.OriginMode,
 		RedirectURL:        website.RedirectURL,
 		RedirectStatusCode: website.RedirectStatusCode,
 		Status:             website.Status,
 		CreatedAt:          website.CreatedAt,
 		UpdatedAt:          website.UpdatedAt,
+	}
+
+	// CacheRuleID 处理
+	if website.CacheRuleID.Valid {
+		val := int(website.CacheRuleID.Int32)
+		item.CacheRuleID = &val
 	}
 
 	// OriginGroupID 和 OriginSetID 处理

@@ -7,7 +7,7 @@ type WebsiteListItemDTO struct {
 	ID                 int       `json:"id"`
 	LineGroupID        int       `json:"lineGroupId"`
 	LineGroupName      string    `json:"lineGroupName,omitempty"`
-	CacheRuleID        int       `json:"cacheRuleId"`
+	CacheRuleID        *int      `json:"cacheRuleId"`
 	OriginMode         string    `json:"originMode"`
 	OriginGroupID      *int      `json:"originGroupId"`
 	OriginGroupName    string    `json:"originGroupName,omitempty"`
@@ -27,7 +27,7 @@ type WebsiteDTO struct {
 	ID                 int       `json:"id"`
 	LineGroupID        int       `json:"lineGroupId"`
 	LineGroupName      string    `json:"lineGroupName,omitempty"`
-	CacheRuleID        int       `json:"cacheRuleId"`
+	CacheRuleID        *int      `json:"cacheRuleId"`
 	OriginMode         string    `json:"originMode"`
 	OriginGroupID      *int      `json:"originGroupId"`
 	OriginGroupName    string    `json:"originGroupName,omitempty"`

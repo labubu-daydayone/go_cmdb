@@ -71,7 +71,11 @@ func (h *Handler) Update(c *gin.Context) {
 
 		// 更新 cacheRuleId
 		if req.CacheRuleID != nil {
-			updates["cache_rule_id"] = *req.CacheRuleID
+			if *req.CacheRuleID > 0 {
+				updates["cache_rule_id"] = sql.NullInt32{Int32: int32(*req.CacheRuleID), Valid: true}
+			} else {
+				updates["cache_rule_id"] = sql.NullInt32{Valid: false}
+			}
 		}
 
 		// 更新 redirectUrl 和 redirectStatusCode（允许单独更新）
@@ -233,13 +237,18 @@ func (h *Handler) Update(c *gin.Context) {
 	item := WebsiteDTO{
 		ID:                 website.ID,
 		LineGroupID:        website.LineGroupID,
-		CacheRuleID:        website.CacheRuleID,
 		OriginMode:         website.OriginMode,
 		RedirectURL:        website.RedirectURL,
 		RedirectStatusCode: website.RedirectStatusCode,
 		Status:             website.Status,
 		CreatedAt:          website.CreatedAt,
 		UpdatedAt:          website.UpdatedAt,
+	}
+
+	// CacheRuleID 处理
+	if website.CacheRuleID.Valid {
+		val := int(website.CacheRuleID.Int32)
+		item.CacheRuleID = &val
 	}
 
 	// OriginGroupID 和 OriginSetID 处理
