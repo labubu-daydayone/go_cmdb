@@ -3,6 +3,7 @@ package websites
 import (
 	"database/sql"
 	"fmt"
+	"go_cmdb/internal/domainutil"
 	"go_cmdb/internal/httpx"
 	"go_cmdb/internal/model"
 	"go_cmdb/internal/service"
@@ -92,6 +93,25 @@ func (h *Handler) Create(c *gin.Context) {
 	results := make([]CreateResultItem, 0, len(lines))
 	for i, domains := range lines {
 		lineNum := i + 1
+
+		// 对每行域名进行规范化和 apex 校验
+		normalizedDomains := make([]string, 0, len(domains))
+		for _, d := range domains {
+			nd, err := domainutil.Normalize(d)
+			if err != nil {
+				httpx.FailErr(c, httpx.ErrParamInvalid(err.Error()))
+				return
+			}
+			normalizedDomains = append(normalizedDomains, nd)
+		}
+		domains = normalizedDomains
+
+		// 使用 PSL 计算 apex 并校验 domains 表中是否存在 active 记录
+		if err := domainutil.ValidateWebsiteDomains(h.db, domains); err != nil {
+			httpx.FailErr(c, httpx.ErrParamInvalid(err.Error()))
+			return
+		}
+
 		result := CreateResultItem{
 			Line:    lineNum,
 			Domains: domains,

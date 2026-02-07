@@ -13,6 +13,7 @@ import (
 	"time"
 
 	"go_cmdb/internal/dns"
+	"go_cmdb/internal/domainutil"
 	"go_cmdb/internal/model"
 
 	"github.com/go-acme/lego/v4/certificate"
@@ -229,17 +230,22 @@ func (p *CustomDNSProvider) Present(domain, token, keyAuth string) error {
 
 	// Extract domain name from FQDN
 	// fqdn is like "_acme-challenge.example.com."
-	// We need to extract "example.com" and "_acme-challenge"
-	parts := strings.Split(strings.TrimSuffix(fqdn, "."), ".")
-	if len(parts) < 2 {
-		return fmt.Errorf("invalid FQDN: %s", fqdn)
+	// We need to extract apex (e.g. "example.com") and subdomain (e.g. "_acme-challenge")
+	cleanFQDN := strings.TrimSuffix(fqdn, ".")
+
+	// Use PSL to calculate apex (eTLD+1)
+	baseDomain, err := domainutil.EffectiveApex(cleanFQDN)
+	if err != nil {
+		return fmt.Errorf("failed to calculate apex for %s: %w", cleanFQDN, err)
 	}
 
-	// Get base domain (last 2 parts)
-	baseDomain := strings.Join(parts[len(parts)-2:], ".")
-	
-	// Get subdomain (all parts except last 2)
-	subdomain := strings.Join(parts[:len(parts)-2], ".")
+	// Get subdomain by removing the base domain suffix
+	var subdomain string
+	if len(cleanFQDN) > len(baseDomain)+1 {
+		subdomain = cleanFQDN[:len(cleanFQDN)-len(baseDomain)-1]
+	} else {
+		subdomain = ""
+	}
 
 	// Find domain in database
 	var domainRecord model.Domain

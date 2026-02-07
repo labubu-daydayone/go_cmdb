@@ -3,6 +3,7 @@ package websites
 import (
 	"database/sql"
 	"fmt"
+	"go_cmdb/internal/domainutil"
 	"go_cmdb/internal/httpx"
 	"go_cmdb/internal/model"
 	"go_cmdb/internal/service"
@@ -148,6 +149,22 @@ func (h *Handler) Update(c *gin.Context) {
 			}
 
 			domains := lines[0]
+
+			// 对域名进行规范化和 apex 校验
+			normalizedDomains := make([]string, 0, len(domains))
+			for _, d := range domains {
+				nd, err := domainutil.Normalize(d)
+				if err != nil {
+					return httpx.ErrParamInvalid(err.Error())
+				}
+				normalizedDomains = append(normalizedDomains, nd)
+			}
+			domains = normalizedDomains
+
+			// 使用 PSL 计算 apex 并校验 domains 表中是否存在 active 记录
+			if err := domainutil.ValidateWebsiteDomains(tx, domains); err != nil {
+				return httpx.ErrParamInvalid(err.Error())
+			}
 
 			// 检查域名是否已被其他网站使用
 			for _, domain := range domains {

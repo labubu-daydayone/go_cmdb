@@ -3,6 +3,7 @@ package risk
 import (
 	"fmt"
 	"go_cmdb/internal/cert"
+	"go_cmdb/internal/domainutil"
 	"go_cmdb/internal/model"
 	"time"
 
@@ -408,20 +409,19 @@ func isWildcard(domain string) bool {
 }
 
 // isApexDomain 判断是否为apex域名（不包含子域名）
+// 使用 PSL 计算 eTLD+1，如果域名等于其 eTLD+1 则为 apex
 func isApexDomain(domain string) bool {
-	// 简单判断：域名中只有一个点
-	// 例如：example.com是apex，www.example.com不是
-	count := 0
-	for _, ch := range domain {
-		if ch == '.' {
-			count++
-		}
+	apex, err := domainutil.EffectiveApex(domain)
+	if err != nil {
+		return false
 	}
-	return count == 1
+	return domain == apex
 }
 
-// extractBaseDomain 提取基础域名
-// 例如：www.example.com -> example.com
+// extractBaseDomain 提取基础域名（eTLD+1）
+// 使用 PSL 计算，例如：
+//   - www.example.com -> example.com
+//   - a.b.example.co.uk -> example.co.uk
 func extractBaseDomain(domains []string) string {
 	for _, domain := range domains {
 		if isApexDomain(domain) {
@@ -429,20 +429,13 @@ func extractBaseDomain(domains []string) string {
 		}
 	}
 
-	// 如果没有apex域名，从第一个域名提取
+	// 如果没有 apex 域名，从第一个域名提取 eTLD+1
 	if len(domains) > 0 {
-		// 简单提取：取最后两段
-		parts := []rune(domains[0])
-		dotCount := 0
-		for i := len(parts) - 1; i >= 0; i-- {
-			if parts[i] == '.' {
-				dotCount++
-				if dotCount == 2 {
-					return string(parts[i+1:])
-				}
-			}
+		apex, err := domainutil.EffectiveApex(domains[0])
+		if err != nil {
+			return domains[0]
 		}
-		return domains[0]
+		return apex
 	}
 
 	return ""
