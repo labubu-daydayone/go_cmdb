@@ -82,6 +82,14 @@ func (h *Handler) Pull(c *gin.Context) {
 		limit = 50
 	}
 
+	// Step 0: 补派发离线期间的 pending release_tasks
+	dispatcher := service.NewAgentTaskDispatcher(h.db)
+	dispatchPendingResult, err := dispatcher.EnsureDispatchPendingForNode(nodeID)
+	if err != nil {
+		log.Printf("[Agent Pull] Failed to dispatch pending tasks for node %d: %v", nodeID, err)
+		// 不阻断 pull，继续返回已有任务
+	}
+
 	// Step 1: SELECT可领取任务id列表
 	var taskIDs []int64
 	err = h.db.Model(&model.AgentTask{}).
@@ -167,7 +175,15 @@ func (h *Handler) Pull(c *gin.Context) {
 		})
 	}
 
-	httpx.OK(c, gin.H{"items": responseTasks})
+	// 添加补派发统计字段到响应
+	response := gin.H{"items": responseTasks}
+	if dispatchPendingResult != nil {
+		response["dispatchedBeforePull"] = dispatchPendingResult.DispatchedBeforePull
+		response["dispatchedCreatedCount"] = dispatchPendingResult.DispatchedCreatedCount
+		response["dispatchedSkippedCount"] = dispatchPendingResult.DispatchedSkippedCount
+		response["pendingReleaseTaskTouchedCount"] = dispatchPendingResult.PendingReleaseTaskTouchedCount
+	}
+	httpx.OK(c, response)
 }
 
 // UpdateStatus handles POST /api/v1/agent/tasks/update-status
