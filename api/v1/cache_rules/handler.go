@@ -91,13 +91,12 @@ type ListResponse struct {
 
 // ListItemDTO 列表项DTO
 type ListItemDTO struct {
-	ID          int    `json:"id"`
-	Name        string `json:"name"`
-	Enabled     bool   `json:"enabled"`
-	CachePolicy string `json:"cachePolicy"`
-	ItemCount   int    `json:"itemCount"`
-	CreatedAt   string `json:"createdAt"`
-	UpdatedAt   string `json:"updatedAt"`
+	ID        int    `json:"id"`
+	Name      string `json:"name"`
+	Enabled   bool   `json:"enabled"`
+	ItemCount int    `json:"itemCount"`
+	CreatedAt string `json:"createdAt"`
+	UpdatedAt string `json:"updatedAt"`
 }
 
 // List 缓存规则组列表
@@ -167,13 +166,12 @@ func (h *Handler) List(c *gin.Context) {
 	items := make([]ListItemDTO, len(rules))
 	for i, rule := range rules {
 		items[i] = ListItemDTO{
-			ID:          rule.ID,
-			Name:        rule.Name,
-			Enabled:     rule.Enabled,
-			CachePolicy: rule.CachePolicy,
-			ItemCount:   countMap[rule.ID],
-			CreatedAt:   rule.CreatedAt.Format("2006-01-02T15:04:05Z07:00"),
-			UpdatedAt:   rule.UpdatedAt.Format("2006-01-02T15:04:05Z07:00"),
+			ID:        rule.ID,
+			Name:      rule.Name,
+			Enabled:   rule.Enabled,
+			ItemCount: countMap[rule.ID],
+			CreatedAt: rule.CreatedAt.Format("2006-01-02T15:04:05Z07:00"),
+			UpdatedAt: rule.UpdatedAt.Format("2006-01-02T15:04:05Z07:00"),
 		}
 	}
 
