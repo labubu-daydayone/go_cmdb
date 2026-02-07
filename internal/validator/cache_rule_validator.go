@@ -16,7 +16,29 @@ func NewCacheRuleItemValidator() *CacheRuleItemValidator {
 	return &CacheRuleItemValidator{}
 }
 
+// Normalize 规范化 matchValue
+// 返回规范化后的值
+func (v *CacheRuleItemValidator) Normalize(matchType, matchValue string) string {
+	// 去除首尾空格
+	matchValue = strings.TrimSpace(matchValue)
+
+	switch matchType {
+	case model.MatchTypePath:
+		// 规范化连续的 / 为单个 /
+		for strings.Contains(matchValue, "//") {
+			matchValue = strings.ReplaceAll(matchValue, "//", "/")
+		}
+	case model.MatchTypeSuffix:
+		// suffix 不需要额外规范化
+	case model.MatchTypeExact:
+		// exact 不需要额外规范化
+	}
+
+	return matchValue
+}
+
 // Validate 校验缓存规则项
+// 注意：调用此方法前应先调用 Normalize
 func (v *CacheRuleItemValidator) Validate(matchType, matchValue string, ttlSeconds int) error {
 	// 去除首尾空格
 	matchValue = strings.TrimSpace(matchValue)

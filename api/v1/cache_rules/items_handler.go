@@ -42,13 +42,27 @@ func (h *Handler) ItemCreate(c *gin.Context) {
 		return
 	}
 
-	// 去除首尾空格
-	req.MatchValue = strings.TrimSpace(req.MatchValue)
+	// 规范化 matchValue
+	validatorInst := validator.NewCacheRuleItemValidator()
+	req.MatchValue = validatorInst.Normalize(req.MatchType, req.MatchValue)
 
 	// 校验规则项
-	validatorInst := validator.NewCacheRuleItemValidator()
 	if err := validatorInst.Validate(req.MatchType, req.MatchValue, req.TTLSeconds); err != nil {
 		httpx.FailErr(c, httpx.ErrParamInvalid(err.Error()))
+		return
+	}
+
+	// 检查唯一性：同一 cache_rule_id 下不能有重复的 (match_type, match_value)
+	var existingItem model.CacheRuleItem
+	err := h.db.Where("cache_rule_id = ? AND match_type = ? AND match_value = ?",
+		req.CacheRuleID, req.MatchType, req.MatchValue).First(&existingItem).Error
+	if err == nil {
+		// 找到了重复的规则项
+		httpx.FailErr(c, httpx.ErrParamInvalid("重复的缓存规则项"))
+		return
+	} else if err != gorm.ErrRecordNotFound {
+		// 数据库错误
+		httpx.FailErr(c, httpx.ErrDatabaseError("failed to check uniqueness", err))
 		return
 	}
 
@@ -107,15 +121,26 @@ func (h *Handler) ItemsUpsert(c *gin.Context) {
 
 	// 校验每个规则项
 	validatorInst := validator.NewCacheRuleItemValidator()
+	seenItems := make(map[string]bool) // 用于检查批量内部的重复
+
 	for i, item := range req.Items {
-		// 去除首尾空格
-		item.MatchValue = strings.TrimSpace(item.MatchValue)
+		// 规范化 matchValue
+		item.MatchValue = validatorInst.Normalize(item.MatchType, item.MatchValue)
 		req.Items[i].MatchValue = item.MatchValue
 
+		// 校验规则项
 		if err := validatorInst.Validate(item.MatchType, item.MatchValue, item.TTLSeconds); err != nil {
 			httpx.FailErr(c, httpx.ErrParamInvalid(err.Error()))
 			return
 		}
+
+		// 检查批量内部的唯一性
+		key := item.MatchType + ":" + item.MatchValue
+		if seenItems[key] {
+			httpx.FailErr(c, httpx.ErrParamInvalid("重复的缓存规则项"))
+			return
+		}
+		seenItems[key] = true
 	}
 
 	// 开始事务
