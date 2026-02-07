@@ -185,6 +185,7 @@ func SetupRouter(r *gin.Engine, db *gorm.DB, cfg *config.Config, acmeWorker *acm
 			cacheRulesHandler := cache_rules.NewHandler(db)
 			cacheRulesGroup := protected.Group("/cache-rules")
 			{
+				cacheRulesGroup.GET("/options", cacheRulesHandler.Options)
 				cacheRulesGroup.POST("/create", cacheRulesHandler.Create)
 				cacheRulesGroup.GET("", cacheRulesHandler.List)
 				cacheRulesGroup.POST("/update", cacheRulesHandler.Update)
