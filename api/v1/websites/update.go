@@ -3,11 +3,13 @@ package websites
 import (
 	"database/sql"
 	"fmt"
+	"log"
+
+	dnspkg "go_cmdb/internal/dns"
 	"go_cmdb/internal/domainutil"
 	"go_cmdb/internal/httpx"
 	"go_cmdb/internal/model"
 	"go_cmdb/internal/service"
-	"log"
 
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
@@ -212,8 +214,39 @@ func (h *Handler) Update(c *gin.Context) {
 				}
 			}
 
-			if err := h.handleHTTPSConfigUpdate(tx, website.ID, req.HTTPSEnabled, req.ForceHTTPSRedirect, currentDomains); err != nil {
+			_, actualHTTPS, err := h.handleHTTPSConfigUpdate(tx, website.ID, req.HTTPSEnabled, req.ForceHTTPSRedirect, currentDomains)
+			if err != nil {
 				return err
+			}
+
+			// 如果 HTTPS 被降级，更新 website 记录
+			if actualHTTPS != nil && !*actualHTTPS && req.HTTPSEnabled != nil && *req.HTTPSEnabled {
+				log.Printf("[Update] Website %d: HTTPS downgraded from requested=true to actual=false", website.ID)
+			}
+		}
+
+		// DNS CNAME 解析（无论 HTTPS 状态如何）
+		var allDomains []string
+		if req.DomainsText != nil {
+			lines := parseText(*req.DomainsText)
+			if len(lines) > 0 {
+				allDomains = lines[0]
+			}
+		} else {
+			for _, d := range website.Domains {
+				allDomains = append(allDomains, d.Domain)
+			}
+		}
+
+		lineGroupID := website.LineGroupID
+		if req.LineGroupID != nil {
+			lineGroupID = *req.LineGroupID
+		}
+
+		if len(allDomains) > 0 && lineGroupID > 0 {
+			if err := dnspkg.EnsureWebsiteDomainCNAMEs(tx, website.ID, allDomains, lineGroupID); err != nil {
+				log.Printf("[Update] DNS CNAME creation failed for website %d: %v", website.ID, err)
+				// DNS 失败不阻塞更新
 			}
 		}
 

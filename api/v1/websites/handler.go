@@ -1,10 +1,11 @@
 package websites
 
 import (
-	"go_cmdb/internal/httpx"
+	"log"
 	"strconv"
 
 	"go_cmdb/internal/cert"
+	"go_cmdb/internal/httpx"
 	"go_cmdb/internal/model"
 	"go_cmdb/internal/upstream"
 
@@ -358,102 +359,148 @@ func (h *Handler) BindOriginSet(c *gin.Context) {
 
 
 // handleHTTPSConfigUpdate 处理 HTTPS 配置更新（update 专用）
-func (h *Handler) handleHTTPSConfigUpdate(tx *gorm.DB, websiteID int, httpsEnabled *bool, forceRedirect *bool, domains []string) error {
+// 返回: (certDecision, httpsActual, error)
+func (h *Handler) handleHTTPSConfigUpdate(tx *gorm.DB, websiteID int, httpsEnabled *bool, forceRedirect *bool, domains []string) (string, *bool, error) {
 	// 如果未传 httpsEnabled，不处理
 	if httpsEnabled == nil {
-		return nil
+		return "none", nil, nil
 	}
+
+	actualHTTPS := *httpsEnabled
 
 	// 查找现有的 website_https 记录
 	var websiteHTTPS model.WebsiteHTTPS
-	err := tx.Where("website_id = ?", websiteID).First(&websiteHTTPS).Error
-	
-	oldEnabled := false
-	if err == nil {
-		oldEnabled = websiteHTTPS.Enabled
-	}
+	existErr := tx.Where("website_id = ?", websiteID).First(&websiteHTTPS).Error
 
-	if err == gorm.ErrRecordNotFound {
-		// 创建新记录
-		if !*httpsEnabled {
-			// httpsEnabled=false，创建禁用状态的记录
-			return tx.Exec(
+	if !*httpsEnabled {
+		// httpsEnabled=false
+		if existErr == gorm.ErrRecordNotFound {
+			// 创建禁用状态的记录
+			if err := tx.Exec(
 				"INSERT INTO website_https (website_id, enabled, force_redirect, hsts, cert_mode, certificate_id, acme_provider_id, acme_account_id, created_at, updated_at) VALUES (?, ?, ?, ?, ?, NULL, NULL, NULL, NOW(), NOW())",
 				websiteID, false, false, false, model.CertModeACME,
-			).Error
-		}
-
-		// httpsEnabled=true，创建启用状态的记录
-		forceRedir := false
-		if forceRedirect != nil {
-			forceRedir = *forceRedirect
-		}
-
-		// 获取默认 ACME provider 和 account
-		acmeProviderID, acmeAccountID, err := h.getDefaultACME(tx)
-		if err != nil {
-			return err
-		}
-
-		// 使用 Exec 直接执行 SQL，确保 certificate_id 为 NULL
-		if err := tx.Exec(
-			"INSERT INTO website_https (website_id, enabled, force_redirect, hsts, cert_mode, acme_provider_id, acme_account_id, certificate_id, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, NULL, NOW(), NOW())",
-			websiteID, true, forceRedir, false, model.CertModeACME, acmeProviderID, acmeAccountID,
-		).Error; err != nil {
-			return err
-		}
-
-		// 触发证书申请（false -> true）
-		return h.triggerCertificateRequest(tx, websiteID, acmeAccountID, domains)
-	} else if err != nil {
-		return err
-	}
-
-	// 更新现有记录
-	updates := make(map[string]interface{})
-	
-	if !*httpsEnabled {
-		// httpsEnabled=false，禁用 HTTPS
-		updates["enabled"] = false
-		updates["force_redirect"] = false
-		updates["certificate_id"] = nil
-	} else {
-		// httpsEnabled=true，启用 HTTPS
-		updates["enabled"] = true
-		if forceRedirect != nil {
-			updates["force_redirect"] = *forceRedirect
-		} else {
-			updates["force_redirect"] = false
-		}
-		updates["hsts"] = false
-		updates["cert_mode"] = model.CertModeACME
-		updates["certificate_id"] = nil
-
-		// 如果之前没有设置 ACME，设置默认值
-		if websiteHTTPS.ACMEProviderID == nil || websiteHTTPS.ACMEAccountID == nil {
-			acmeProviderID, acmeAccountID, err := h.getDefaultACME(tx)
-			if err != nil {
-				return err
+			).Error; err != nil {
+				return "", nil, err
 			}
-			updates["acme_provider_id"] = acmeProviderID
-			updates["acme_account_id"] = acmeAccountID
-			// 只有在 enabled 从 false -> true 时触发证书申请
-			if !oldEnabled {
-				if err := h.triggerCertificateRequest(tx, websiteID, acmeAccountID, domains); err != nil {
-					return err
-				}
+		} else if existErr == nil {
+			// 更新为禁用
+			if err := tx.Model(&model.WebsiteHTTPS{}).Where("website_id = ?", websiteID).Updates(map[string]interface{}{
+				"enabled":        false,
+				"force_redirect": false,
+				"certificate_id": nil,
+			}).Error; err != nil {
+				return "", nil, err
 			}
 		} else {
-			// 只有在 enabled 从 false -> true 时触发证书申请
-			if !oldEnabled {
-				if err := h.triggerCertificateRequest(tx, websiteID, int(*websiteHTTPS.ACMEAccountID), domains); err != nil {
-					return err
-				}
+			return "", nil, existErr
+		}
+		return "none", &actualHTTPS, nil
+	}
+
+	// httpsEnabled=true，执行证书决策流程
+	forceRedir := false
+	if forceRedirect != nil {
+		forceRedir = *forceRedirect
+	}
+
+	decision, err := cert.DecideCertificate(tx, websiteID, domains)
+	if err != nil {
+		return "", nil, err
+	}
+
+	certDecisionStr := "none"
+
+	if decision.CertFound {
+		certDecisionStr = "existing_cert"
+		log.Printf("[Update] Website %d: found existing certificate %d", websiteID, decision.CertificateID)
+
+		if existErr == gorm.ErrRecordNotFound {
+			if err := tx.Exec(
+				"INSERT INTO website_https (website_id, enabled, force_redirect, hsts, cert_mode, certificate_id, acme_provider_id, acme_account_id, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, NULL, NULL, NOW(), NOW())",
+				websiteID, true, forceRedir, false, model.CertModeSelect, decision.CertificateID,
+			).Error; err != nil {
+				return "", nil, err
+			}
+		} else {
+			if err := tx.Model(&model.WebsiteHTTPS{}).Where("website_id = ?", websiteID).Updates(map[string]interface{}{
+				"enabled":        true,
+				"force_redirect": forceRedir,
+				"cert_mode":      model.CertModeSelect,
+				"certificate_id": decision.CertificateID,
+			}).Error; err != nil {
+				return "", nil, err
+			}
+		}
+
+		// 创建/更新证书绑定
+		var existingBinding model.CertificateBinding
+		if err := tx.Where("website_id = ?", websiteID).First(&existingBinding).Error; err == gorm.ErrRecordNotFound {
+			binding := model.CertificateBinding{
+				CertificateID: decision.CertificateID,
+				WebsiteID:     websiteID,
+				Status:        model.CertificateBindingStatusActive,
+			}
+			if err := tx.Create(&binding).Error; err != nil {
+				return "", nil, err
+			}
+		} else if err == nil {
+			if err := tx.Model(&existingBinding).Updates(map[string]interface{}{
+				"certificate_id": decision.CertificateID,
+				"status":         model.CertificateBindingStatusActive,
+			}).Error; err != nil {
+				return "", nil, err
+			}
+		}
+
+	} else if decision.ACMETriggered {
+		certDecisionStr = "acme_triggered"
+		log.Printf("[Update] Website %d: ACME certificate request triggered", websiteID)
+
+		acmeProviderID, acmeAccountID, _ := cert.FindDefaultACME(tx)
+		if existErr == gorm.ErrRecordNotFound {
+			if err := tx.Exec(
+				"INSERT INTO website_https (website_id, enabled, force_redirect, hsts, cert_mode, certificate_id, acme_provider_id, acme_account_id, created_at, updated_at) VALUES (?, ?, ?, ?, ?, NULL, ?, ?, NOW(), NOW())",
+				websiteID, true, forceRedir, false, model.CertModeACME, acmeProviderID, acmeAccountID,
+			).Error; err != nil {
+				return "", nil, err
+			}
+		} else {
+			if err := tx.Model(&model.WebsiteHTTPS{}).Where("website_id = ?", websiteID).Updates(map[string]interface{}{
+				"enabled":          true,
+				"force_redirect":   forceRedir,
+				"cert_mode":        model.CertModeACME,
+				"certificate_id":   nil,
+				"acme_provider_id": acmeProviderID,
+				"acme_account_id":  acmeAccountID,
+			}).Error; err != nil {
+				return "", nil, err
+			}
+		}
+
+	} else if decision.Downgraded {
+		certDecisionStr = "downgraded"
+		actualHTTPS = false
+		log.Printf("[Update] Website %d: HTTPS downgraded - %s", websiteID, decision.DowngradeReason)
+
+		if existErr == gorm.ErrRecordNotFound {
+			if err := tx.Exec(
+				"INSERT INTO website_https (website_id, enabled, force_redirect, hsts, cert_mode, certificate_id, acme_provider_id, acme_account_id, created_at, updated_at) VALUES (?, ?, ?, ?, ?, NULL, NULL, NULL, NOW(), NOW())",
+				websiteID, false, false, false, model.CertModeACME,
+			).Error; err != nil {
+				return "", nil, err
+			}
+		} else {
+			if err := tx.Model(&model.WebsiteHTTPS{}).Where("website_id = ?", websiteID).Updates(map[string]interface{}{
+				"enabled":        false,
+				"force_redirect": false,
+				"certificate_id": nil,
+			}).Error; err != nil {
+				return "", nil, err
 			}
 		}
 	}
 
-	return tx.Model(&model.WebsiteHTTPS{}).Where("website_id = ?", websiteID).Updates(updates).Error
+	return certDecisionStr, &actualHTTPS, nil
 }
 
 // WebsiteHTTPSDTO HTTPS 配置 DTO

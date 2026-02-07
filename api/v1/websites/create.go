@@ -3,6 +3,8 @@ package websites
 import (
 	"database/sql"
 	"fmt"
+	"go_cmdb/internal/cert"
+	dnspkg "go_cmdb/internal/dns"
 	"go_cmdb/internal/domainutil"
 	"go_cmdb/internal/httpx"
 	"go_cmdb/internal/model"
@@ -18,8 +20,8 @@ import (
 // CreateRequest 创建请求
 type CreateRequest struct {
 	DomainsText        string  `json:"domainsText" binding:"required"`
-	LineGroupID        int  `json:"lineGroupId" binding:"required"`
-	CacheRuleID        *int `json:"cacheRuleId"`
+	LineGroupID        int     `json:"lineGroupId" binding:"required"`
+	CacheRuleID        *int    `json:"cacheRuleId"`
 	OriginMode         string  `json:"originMode" binding:"required,oneof=group manual redirect"`
 	OriginGroupID      *int    `json:"originGroupId"`
 	OriginSetID        *int    `json:"originSetId"`
@@ -41,16 +43,19 @@ type CreateResultItem struct {
 	WebsiteID             *int     `json:"websiteId"`
 	Domains               []string `json:"domains"`
 	Error                 *string  `json:"error"`
-	ReleaseTaskID          int      `json:"releaseTaskId"`
-	TaskCreated            bool     `json:"taskCreated"`
-	SkipReason             string   `json:"skipReason"`
-	DispatchTriggered      bool     `json:"dispatchTriggered"`
-	TargetNodeCount        int      `json:"targetNodeCount"`
-	CreatedAgentTaskCount  int      `json:"createdAgentTaskCount"`
-	SkippedAgentTaskCount  int      `json:"skippedAgentTaskCount"`
-	AgentTaskCountAfter    int      `json:"agentTaskCountAfter"`
-	PayloadValid           bool     `json:"payloadValid"`
-	PayloadInvalidReason   string   `json:"payloadInvalidReason"` 
+	ReleaseTaskID         int      `json:"releaseTaskId"`
+	TaskCreated           bool     `json:"taskCreated"`
+	SkipReason            string   `json:"skipReason"`
+	DispatchTriggered     bool     `json:"dispatchTriggered"`
+	TargetNodeCount       int      `json:"targetNodeCount"`
+	CreatedAgentTaskCount int      `json:"createdAgentTaskCount"`
+	SkippedAgentTaskCount int      `json:"skippedAgentTaskCount"`
+	AgentTaskCountAfter   int      `json:"agentTaskCountAfter"`
+	PayloadValid          bool     `json:"payloadValid"`
+	PayloadInvalidReason  string   `json:"payloadInvalidReason"`
+	// 证书决策结果
+	CertDecision string `json:"certDecision"` // existing_cert / acme_triggered / downgraded / none
+	HTTPSActual  *bool  `json:"httpsActual"`  // 实际 HTTPS 状态（可能被降级）
 }
 
 // Create 创建网站
@@ -132,70 +137,72 @@ func (h *Handler) Create(c *gin.Context) {
 				}
 			}
 
-				// 创建 website
-				website := model.Website{
-					LineGroupID: req.LineGroupID,
-					OriginMode:  req.OriginMode,
-					Status:      model.WebsiteStatusActive,
-				}
+			// 创建 website
+			website := model.Website{
+				LineGroupID: req.LineGroupID,
+				OriginMode:  req.OriginMode,
+				Status:      model.WebsiteStatusActive,
+			}
 
-				// 处理 CacheRuleID
-				if req.CacheRuleID != nil && *req.CacheRuleID > 0 {
-					website.CacheRuleID = sql.NullInt32{Int32: int32(*req.CacheRuleID), Valid: true}
+			// 处理 CacheRuleID
+			if req.CacheRuleID != nil && *req.CacheRuleID > 0 {
+				website.CacheRuleID = sql.NullInt32{Int32: int32(*req.CacheRuleID), Valid: true}
+			} else {
+				website.CacheRuleID = sql.NullInt32{Valid: false}
+			}
+
+			// 根据 originMode 设置字段
+			switch req.OriginMode {
+			case model.OriginModeGroup:
+				website.OriginGroupID = sql.NullInt32{Int32: int32(*req.OriginGroupID), Valid: true}
+				website.OriginSetID = sql.NullInt32{Int32: int32(*req.OriginSetID), Valid: true}
+				website.RedirectURL = ""
+				website.RedirectStatusCode = 0
+			case model.OriginModeManual:
+				website.OriginSetID = sql.NullInt32{Int32: int32(*req.OriginSetID), Valid: true}
+				website.OriginGroupID = sql.NullInt32{Valid: false}
+				website.RedirectURL = ""
+				website.RedirectStatusCode = 0
+			case model.OriginModeRedirect:
+				website.RedirectURL = *req.RedirectURL
+				if req.RedirectStatusCode != nil {
+					website.RedirectStatusCode = *req.RedirectStatusCode
 				} else {
-					website.CacheRuleID = sql.NullInt32{Valid: false}
+					website.RedirectStatusCode = 301
 				}
-
-				// 根据 originMode 设置字段
-				switch req.OriginMode {
-				case model.OriginModeGroup:
-					// group 模式：设置 originGroupId 和 originSetId
-					website.OriginGroupID = sql.NullInt32{Int32: int32(*req.OriginGroupID), Valid: true}
-					website.OriginSetID = sql.NullInt32{Int32: int32(*req.OriginSetID), Valid: true}
-					// 确保 redirectUrl 和 redirectStatusCode 为空
-					website.RedirectURL = ""
-					website.RedirectStatusCode = 0
-				case model.OriginModeManual:
-					// manual 模式：设置 originSetId
-					website.OriginSetID = sql.NullInt32{Int32: int32(*req.OriginSetID), Valid: true}
-					// originGroupId 设置为 NULL
-					website.OriginGroupID = sql.NullInt32{Valid: false}
-					// 确保 redirectUrl 和 redirectStatusCode 为空
-					website.RedirectURL = ""
-					website.RedirectStatusCode = 0
-				case model.OriginModeRedirect:
-					// redirect 模式：设置 redirectUrl 和 redirectStatusCode
-					website.RedirectURL = *req.RedirectURL
-					if req.RedirectStatusCode != nil {
-						website.RedirectStatusCode = *req.RedirectStatusCode
-					} else {
-						website.RedirectStatusCode = 301
-					}
-					// originGroupId 和 originSetId 设置为 NULL
-					website.OriginGroupID = sql.NullInt32{Valid: false}
-					website.OriginSetID = sql.NullInt32{Valid: false}
-				}
+				website.OriginGroupID = sql.NullInt32{Valid: false}
+				website.OriginSetID = sql.NullInt32{Valid: false}
+			}
 
 			if err := tx.Create(&website).Error; err != nil {
 				return err
 			}
 
-				// 创建 website_domains
-				for idx, domain := range domains {
-					wd := model.WebsiteDomain{
-						WebsiteID: website.ID,
-						Domain:    domain,
-						IsPrimary: idx == 0,
-					}
-					if err := tx.Create(&wd).Error; err != nil {
-						return err
-					}
+			// 创建 website_domains
+			for idx, domain := range domains {
+				wd := model.WebsiteDomain{
+					WebsiteID: website.ID,
+					Domain:    domain,
+					IsPrimary: idx == 0,
 				}
-
-				// 处理 HTTPS 配置
-				if err := h.handleHTTPSConfig(tx, website.ID, req.HTTPSEnabled, req.ForceHTTPSRedirect, domains); err != nil {
+				if err := tx.Create(&wd).Error; err != nil {
 					return err
 				}
+			}
+
+			// 处理 HTTPS 配置（含证书决策和降级逻辑）
+			certDecisionStr, httpsActual, err := h.handleHTTPSConfig(tx, website.ID, req.HTTPSEnabled, req.ForceHTTPSRedirect, domains)
+			if err != nil {
+				return err
+			}
+			result.CertDecision = certDecisionStr
+			result.HTTPSActual = httpsActual
+
+			// 创建 DNS CNAME 记录（无论 HTTPS 状态如何）
+			if err := dnspkg.EnsureWebsiteDomainCNAMEs(tx, website.ID, domains, req.LineGroupID); err != nil {
+				log.Printf("[Create] Failed to create DNS CNAME records for website %d: %v", website.ID, err)
+				// DNS 创建失败不阻塞网站创建
+			}
 
 			result.Created = true
 			websiteID := website.ID
@@ -234,6 +241,112 @@ func (h *Handler) Create(c *gin.Context) {
 	}
 
 	httpx.OK(c, CreateResponse{Items: results})
+}
+
+// handleHTTPSConfig 处理 HTTPS 配置
+// 返回: (certDecision, httpsActual, error)
+// certDecision: "existing_cert" / "acme_triggered" / "downgraded" / "none"
+// httpsActual: 实际 HTTPS 状态（可能被降级为 false）
+func (h *Handler) handleHTTPSConfig(tx *gorm.DB, websiteID int, httpsEnabled *bool, forceRedirect *bool, domains []string) (string, *bool, error) {
+	// 如果未传 httpsEnabled，不处理
+	if httpsEnabled == nil {
+		return "none", nil, nil
+	}
+
+	actualHTTPS := *httpsEnabled
+
+	if !*httpsEnabled {
+		// httpsEnabled=false，创建禁用状态的记录
+		if err := tx.Exec(
+			"INSERT INTO website_https (website_id, enabled, force_redirect, hsts, cert_mode, certificate_id, acme_provider_id, acme_account_id, created_at, updated_at) VALUES (?, ?, ?, ?, ?, NULL, NULL, NULL, NOW(), NOW())",
+			websiteID, false, false, false, model.CertModeACME,
+		).Error; err != nil {
+			return "", nil, err
+		}
+		return "none", &actualHTTPS, nil
+	}
+
+	// httpsEnabled=true，执行证书决策流程
+	forceRedir := false
+	if forceRedirect != nil {
+		forceRedir = *forceRedirect
+	}
+
+	// 调用证书决策逻辑
+	decision, err := cert.DecideCertificate(tx, websiteID, domains)
+	if err != nil {
+		return "", nil, err
+	}
+
+	certDecisionStr := "none"
+
+	if decision.CertFound {
+		// 找到已有证书，直接绑定
+		certDecisionStr = "existing_cert"
+		log.Printf("[Create] Website %d: found existing certificate %d", websiteID, decision.CertificateID)
+
+		// 创建 website_https 记录（cert_mode=select）
+		if err := tx.Exec(
+			"INSERT INTO website_https (website_id, enabled, force_redirect, hsts, cert_mode, certificate_id, acme_provider_id, acme_account_id, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, NULL, NULL, NOW(), NOW())",
+			websiteID, true, forceRedir, false, model.CertModeSelect, decision.CertificateID,
+		).Error; err != nil {
+			return "", nil, err
+		}
+
+		// 创建证书绑定
+		binding := model.CertificateBinding{
+			CertificateID: decision.CertificateID,
+			WebsiteID:     websiteID,
+			Status:        model.CertificateBindingStatusActive,
+		}
+		if err := tx.Create(&binding).Error; err != nil {
+			return "", nil, err
+		}
+
+	} else if decision.ACMETriggered {
+		// 触发了 ACME 申请
+		certDecisionStr = "acme_triggered"
+		log.Printf("[Create] Website %d: ACME certificate request triggered", websiteID)
+
+		// 创建 website_https 记录（cert_mode=acme，ACME provider/account 已由 decision 设置）
+		// 先查询 ACME provider/account
+		acmeProviderID, acmeAccountID, _ := getDefaultACMEIDs(tx)
+		if err := tx.Exec(
+			"INSERT INTO website_https (website_id, enabled, force_redirect, hsts, cert_mode, certificate_id, acme_provider_id, acme_account_id, created_at, updated_at) VALUES (?, ?, ?, ?, ?, NULL, ?, ?, NOW(), NOW())",
+			websiteID, true, forceRedir, false, model.CertModeACME, acmeProviderID, acmeAccountID,
+		).Error; err != nil {
+			return "", nil, err
+		}
+
+	} else if decision.Downgraded {
+		// 降级：无证书、无 ACME
+		certDecisionStr = "downgraded"
+		actualHTTPS = false
+		log.Printf("[Create] Website %d: HTTPS downgraded - %s", websiteID, decision.DowngradeReason)
+
+		// 创建 website_https 记录（enabled=false）
+		if err := tx.Exec(
+			"INSERT INTO website_https (website_id, enabled, force_redirect, hsts, cert_mode, certificate_id, acme_provider_id, acme_account_id, created_at, updated_at) VALUES (?, ?, ?, ?, ?, NULL, NULL, NULL, NOW(), NOW())",
+			websiteID, false, false, false, model.CertModeACME,
+		).Error; err != nil {
+			return "", nil, err
+		}
+	}
+
+	return certDecisionStr, &actualHTTPS, nil
+}
+
+// getDefaultACMEIDs 获取默认的 ACME provider 和 account ID
+func getDefaultACMEIDs(tx *gorm.DB) (int, int, error) {
+	var provider model.AcmeProvider
+	if err := tx.Where("status = ?", "active").First(&provider).Error; err != nil {
+		return 0, 0, err
+	}
+	var account model.AcmeAccount
+	if err := tx.Where("provider_id = ? AND status = ?", provider.ID, "active").First(&account).Error; err != nil {
+		return 0, 0, err
+	}
+	return int(provider.ID), int(account.ID), nil
 }
 
 // parseText 解析文本为域名列表
@@ -295,14 +408,12 @@ func normalizeDomain(domain string) string {
 func validateCreateRequest(req *CreateRequest) *httpx.AppError {
 	switch req.OriginMode {
 	case model.OriginModeGroup:
-		// group 模式必须有 originGroupId 和 originSetId
 		if req.OriginGroupID == nil || *req.OriginGroupID <= 0 {
 			return httpx.ErrParamMissing("originGroupId is required for group mode")
 		}
 		if req.OriginSetID == nil || *req.OriginSetID <= 0 {
 			return httpx.ErrParamMissing("originSetId is required for group mode")
 		}
-		// 禁止 redirectUrl 和 redirectStatusCode
 		if req.RedirectURL != nil && *req.RedirectURL != "" {
 			return httpx.ErrParamInvalid("redirectUrl must be empty for group mode")
 		}
@@ -310,11 +421,9 @@ func validateCreateRequest(req *CreateRequest) *httpx.AppError {
 			return httpx.ErrParamInvalid("redirectStatusCode must be empty for group mode")
 		}
 	case model.OriginModeManual:
-		// manual 模式必须有 originSetId
 		if req.OriginSetID == nil || *req.OriginSetID <= 0 {
 			return httpx.ErrParamMissing("originSetId is required for manual mode")
 		}
-		// 禁止 redirectUrl 和 redirectStatusCode
 		if req.RedirectURL != nil && *req.RedirectURL != "" {
 			return httpx.ErrParamInvalid("redirectUrl must be empty for manual mode")
 		}
@@ -322,17 +431,14 @@ func validateCreateRequest(req *CreateRequest) *httpx.AppError {
 			return httpx.ErrParamInvalid("redirectStatusCode must be empty for manual mode")
 		}
 	case model.OriginModeRedirect:
-		// redirect 模式必须有 redirectUrl
 		if req.RedirectURL == nil || *req.RedirectURL == "" {
 			return httpx.ErrParamMissing("redirectUrl is required for redirect mode")
 		}
-		// redirectStatusCode 只允许 301 或 302
 		if req.RedirectStatusCode != nil {
 			if *req.RedirectStatusCode != 301 && *req.RedirectStatusCode != 302 {
 				return httpx.ErrParamInvalid("redirectStatusCode must be 301 or 302")
 			}
 		}
-		// 禁止 originGroupId 和 originSetId
 		if req.OriginGroupID != nil && *req.OriginGroupID != 0 {
 			return httpx.ErrParamInvalid("originGroupId must be empty for redirect mode")
 		}
@@ -343,162 +449,3 @@ func validateCreateRequest(req *CreateRequest) *httpx.AppError {
 
 	return nil
 }
-
-// handleHTTPSConfig 处理 HTTPS 配置
-func (h *Handler) handleHTTPSConfig(tx *gorm.DB, websiteID int, httpsEnabled *bool, forceRedirect *bool, domains []string) error {
-	// 如果未传 httpsEnabled，不处理
-	if httpsEnabled == nil {
-		return nil
-	}
-
-	// 查找或创建 website_https 记录
-	var websiteHTTPS model.WebsiteHTTPS
-	err := tx.Where("website_id = ?", websiteID).First(&websiteHTTPS).Error
-	
-	if err == gorm.ErrRecordNotFound {
-		// 创建新记录
-		if !*httpsEnabled {
-			// httpsEnabled=false，创建禁用状态的记录
-			// 使用 map 确保 NULL 值正确写入
-			return tx.Exec(
-				"INSERT INTO website_https (website_id, enabled, force_redirect, hsts, cert_mode, certificate_id, acme_provider_id, acme_account_id, created_at, updated_at) VALUES (?, ?, ?, ?, ?, NULL, NULL, NULL, NOW(), NOW())",
-				websiteID, false, false, false, model.CertModeACME,
-			).Error
-		}
-
-		// httpsEnabled=true，创建启用状态的记录
-		forceRedir := false
-		if forceRedirect != nil {
-			forceRedir = *forceRedirect
-		}
-
-		// 获取默认 ACME provider 和 account
-		acmeProviderID, acmeAccountID, err := h.getDefaultACME(tx)
-		if err != nil {
-			return err
-		}
-
-		// 使用 Exec 直接执行 SQL，确保 certificate_id 为 NULL
-		if err := tx.Exec(
-			"INSERT INTO website_https (website_id, enabled, force_redirect, hsts, cert_mode, acme_provider_id, acme_account_id, certificate_id, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, NULL, NOW(), NOW())",
-			websiteID, true, forceRedir, false, model.CertModeACME, acmeProviderID, acmeAccountID,
-		).Error; err != nil {
-			return err
-		}
-
-		// 触发证书申请
-		return h.triggerCertificateRequest(tx, websiteID, acmeAccountID, domains)
-	} else if err != nil {
-		return err
-	}
-
-	// 更新现有记录
-	updates := make(map[string]interface{})
-	
-	if !*httpsEnabled {
-		// httpsEnabled=false，禁用 HTTPS
-		updates["enabled"] = false
-		updates["force_redirect"] = false
-		updates["certificate_id"] = nil
-	} else {
-		// httpsEnabled=true，启用 HTTPS
-		updates["enabled"] = true
-		if forceRedirect != nil {
-			updates["force_redirect"] = *forceRedirect
-		} else {
-			updates["force_redirect"] = false
-		}
-		updates["hsts"] = false
-		updates["cert_mode"] = model.CertModeACME
-		updates["certificate_id"] = nil
-
-		// 如果之前没有设置 ACME，设置默认值
-		if websiteHTTPS.ACMEProviderID == nil || websiteHTTPS.ACMEAccountID == nil {
-			acmeProviderID, acmeAccountID, err := h.getDefaultACME(tx)
-			if err != nil {
-				return err
-			}
-			updates["acme_provider_id"] = acmeProviderID
-			updates["acme_account_id"] = acmeAccountID
-			// 触发证书申请
-			if err := h.triggerCertificateRequest(tx, websiteID, acmeAccountID, domains); err != nil {
-				return err
-			}
-		} else {
-			// 触发证书申请
-			if err := h.triggerCertificateRequest(tx, websiteID, int(*websiteHTTPS.ACMEAccountID), domains); err != nil {
-				return err
-			}
-		}
-	}
-
-	return tx.Model(&model.WebsiteHTTPS{}).Where("website_id = ?", websiteID).Updates(updates).Error
-}
-
-// getDefaultACME 获取默认的 ACME provider 和 account
-func (h *Handler) getDefaultACME(tx *gorm.DB) (int, int, error) {
-	// 查找第一个 active 的 provider
-	var provider model.AcmeProvider
-	if err := tx.Where("status = ?", "active").First(&provider).Error; err != nil {
-		return 0, 0, httpx.ErrNotFound("no active ACME provider found")
-	}
-
-	// 查找该 provider 下第一个 active 的 account
-	var account model.AcmeAccount
-	if err := tx.Where("provider_id = ? AND status = ?", provider.ID, "active").First(&account).Error; err != nil {
-		return 0, 0, httpx.ErrNotFound("no active ACME account found")
-	}
-
-	return int(provider.ID), int(account.ID), nil
-}
-
-// triggerCertificateRequest 触发证书申请（幂等）
-func (h *Handler) triggerCertificateRequest(tx *gorm.DB, websiteID int, acmeAccountID int, domains []string) error {
-	if len(domains) == 0 {
-		return nil
-	}
-
-	// 构建 domains JSON 字符串（排序后）
-	domainsJSON := buildDomainsJSON(domains)
-
-	// 检查是否已存在相同的证书请求（幂等性）
-	var existingRequest model.CertificateRequest
-	err := tx.Where("acme_account_id = ? AND domains_json = ? AND status IN (?)", 
-		acmeAccountID, domainsJSON, []string{"pending", "running"}).
-		First(&existingRequest).Error
-
-	if err == nil {
-		// 已存在相同的请求，跳过
-		return nil
-	} else if err != gorm.ErrRecordNotFound {
-		return err
-	}
-
-	// 创建新的证书请求
-	certRequest := model.CertificateRequest{
-		AccountID:       acmeAccountID,
-		Domains:         domainsJSON,
-		Status:          model.CertificateRequestStatusPending,
-		PollIntervalSec: 40,
-		PollMaxAttempts: 10,
-		Attempts:        0,
-	}
-
-	return tx.Create(&certRequest).Error
-}
-
-// buildDomainsJSON 构建 domains JSON 字符串
-func buildDomainsJSON(domains []string) string {
-	// 简单实现：直接拼接 JSON 数组
-	result := "["
-	for i, domain := range domains {
-		if i > 0 {
-			result += ","
-		}
-		result += "\"" + domain + "\""
-	}
-	result += "]"
-	return result
-}
-
-
