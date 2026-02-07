@@ -52,15 +52,23 @@ func (s *WebsiteReleaseService) CreateWebsiteReleaseTaskWithDispatch(websiteID i
 	}
 
 	// 2. 构建 content_hash
+	// 收集 domains
+	domains := make([]string, 0, len(website.Domains))
+	for _, d := range website.Domains {
+		domains = append(domains, d.Domain)
+	}
+
 	contentData := map[string]interface{}{
-		"websiteId":     website.ID,
-		"lineGroupId":   website.LineGroupID,
-		"cacheRuleId":   website.CacheRuleID,
-		"originMode":    website.OriginMode,
-		"originGroupId": website.OriginGroupID.Int32,
-		"originSetId":   website.OriginSetID.Int32,
-		"redirectUrl":   website.RedirectURL,
-		"status":        website.Status,
+		"websiteId":          website.ID,
+		"lineGroupId":        website.LineGroupID,
+		"cacheRuleId":        website.CacheRuleID,
+		"originMode":         website.OriginMode,
+		"originGroupId":      website.OriginGroupID.Int32,
+		"originSetId":        website.OriginSetID.Int32,
+		"redirectUrl":        website.RedirectURL,
+		"redirectStatusCode": website.RedirectStatusCode,
+		"domains":            domains,
+		"status":             website.Status,
 	}
 	contentJSON, _ := json.Marshal(contentData)
 	hashBytes := sha256.Sum256(contentJSON)

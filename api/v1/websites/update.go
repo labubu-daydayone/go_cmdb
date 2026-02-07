@@ -26,6 +26,21 @@ type UpdateRequest struct {
 	ForceHTTPSRedirect *bool   `json:"forceHttpsRedirect"`
 }
 
+// UpdateResultItem 更新结果
+type UpdateResultItem struct {
+	WebsiteDTO
+	ReleaseTaskID          int    `json:"releaseTaskId"`
+	TaskCreated            bool   `json:"taskCreated"`
+	SkipReason             string `json:"skipReason"`
+	DispatchTriggered      bool   `json:"dispatchTriggered"`
+	TargetNodeCount        int    `json:"targetNodeCount"`
+	CreatedAgentTaskCount  int    `json:"createdAgentTaskCount"`
+	SkippedAgentTaskCount  int    `json:"skippedAgentTaskCount"`
+	AgentTaskCountAfter    int    `json:"agentTaskCountAfter"`
+	PayloadValid           bool   `json:"payloadValid"`
+	PayloadInvalidReason   string `json:"payloadInvalidReason"`
+}
+
 // Update 更新网站
 func (h *Handler) Update(c *gin.Context) {
 	var req UpdateRequest
@@ -57,6 +72,14 @@ func (h *Handler) Update(c *gin.Context) {
 		// 更新 cacheRuleId
 		if req.CacheRuleID != nil {
 			updates["cache_rule_id"] = *req.CacheRuleID
+		}
+
+		// 更新 redirectUrl 和 redirectStatusCode（允许单独更新）
+		if req.RedirectURL != nil {
+			updates["redirect_url"] = *req.RedirectURL
+		}
+		if req.RedirectStatusCode != nil {
+			updates["redirect_status_code"] = *req.RedirectStatusCode
 		}
 
 		// 更新 originMode 及相关字段
@@ -187,9 +210,12 @@ func (h *Handler) Update(c *gin.Context) {
 		// 更新成功后触发发布任务
 		releaseService := service.NewWebsiteReleaseService(h.db)
 		traceID := fmt.Sprintf("website_update_%d", req.ID)
-		_, releaseErr := releaseService.CreateWebsiteReleaseTaskWithDispatch(int64(req.ID), traceID)
+		releaseResult, releaseErr := releaseService.CreateWebsiteReleaseTaskWithDispatch(int64(req.ID), traceID)
 		if releaseErr != nil {
 			log.Printf("[Update] Failed to create release task for website %d: %v", req.ID, releaseErr)
+			// 发布任务创建失败，返回错误
+			httpx.FailErr(c, httpx.ErrInternalError("failed to create release task", releaseErr))
+			return
 		}
 
 	// 重新查询返回
@@ -253,7 +279,26 @@ func (h *Handler) Update(c *gin.Context) {
 		item.HTTPSEnabled = website.HTTPS.Enabled
 	}
 
-	httpx.OK(c, item)
+	// 构造返回结果
+	result := UpdateResultItem{
+		WebsiteDTO: item,
+	}
+
+	// 填充发布任务信息
+	if releaseResult != nil {
+		result.ReleaseTaskID = int(releaseResult.ReleaseTaskID)
+		result.TaskCreated = releaseResult.TaskCreated
+		result.SkipReason = releaseResult.SkipReason
+		result.DispatchTriggered = releaseResult.DispatchTriggered
+		result.TargetNodeCount = releaseResult.TargetNodeCount
+		result.CreatedAgentTaskCount = releaseResult.CreatedAgentTaskCount
+		result.SkippedAgentTaskCount = releaseResult.SkippedAgentTaskCount
+		result.AgentTaskCountAfter = releaseResult.AgentTaskCountAfter
+		result.PayloadValid = releaseResult.PayloadValid
+		result.PayloadInvalidReason = releaseResult.PayloadInvalidReason
+	}
+
+	httpx.OK(c, result)
 }
 
 // validateUpdateOriginMode 校验更新请求中的 originMode 字段组合
