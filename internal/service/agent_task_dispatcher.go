@@ -146,6 +146,25 @@ func (d *AgentTaskDispatcher) EnsureDispatched(releaseTaskID int64, websiteID in
 		return result, nil
 	}
 
+	// 9.5. 查询缓存规则项（仅当 originMode != redirect 且绑定了 cacheRuleId 时）
+	var cacheItems []map[string]interface{}
+	if website.OriginMode != "redirect" && website.CacheRuleID.Valid && website.CacheRuleID.Int32 > 0 {
+		var cacheRuleItems []model.CacheRuleItem
+		if err := d.db.Where("cache_rule_id = ? AND enabled = ?", website.CacheRuleID.Int32, true).Find(&cacheRuleItems).Error; err != nil {
+			log.Printf("[Dispatcher] Failed to query cache_rule_items: cacheRuleId=%d, error=%v", website.CacheRuleID.Int32, err)
+		} else {
+			for _, item := range cacheRuleItems {
+				cacheItem := map[string]interface{}{
+					"matchType":  item.MatchType,
+					"matchValue": item.MatchValue,
+					"mode":       item.Mode,
+					"ttlSeconds": item.TTLSeconds,
+				}
+				cacheItems = append(cacheItems, cacheItem)
+			}
+		}
+	}
+
 	// 10. 为每个节点创建 agent_task（幂等）
 	for _, nodeID := range targetNodes {
 		idKey := fmt.Sprintf("release-%d-node-%d", releaseTaskID, nodeID)
@@ -200,6 +219,7 @@ func (d *AgentTaskDispatcher) EnsureDispatched(releaseTaskID int64, websiteID in
 			case "redirect":
 				payload["redirectUrl"] = website.RedirectURL
 				payload["redirectStatusCode"] = website.RedirectStatusCode
+				// redirect 模式不添加 cacheItems（强制不缓存）
 			case "manual":
 				if website.OriginSetID.Valid {
 					payload["originSetId"] = website.OriginSetID.Int32
@@ -207,6 +227,11 @@ func (d *AgentTaskDispatcher) EnsureDispatched(releaseTaskID int64, websiteID in
 				payload["origins"] = map[string]interface{}{
 					"items": origins,
 				}
+			}
+
+			// 添加缓存规则项（仅当 originMode != redirect 且 cacheItems 非空时）
+			if website.OriginMode != "redirect" && len(cacheItems) > 0 {
+				payload["cacheItems"] = cacheItems
 			}
 			payloadBytes, err := json.Marshal(payload)
 			if err != nil {
