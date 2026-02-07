@@ -106,7 +106,7 @@ func (h *Handler) Delete(c *gin.Context) {
 
 	// 4. 派发任务（使用专门的删除派发方法，不查询已删除的 website）
 	dispatcher := service.NewAgentTaskDispatcher(h.db)
-	dispatchResult, err := dispatcher.EnsureDispatchedForDelete(releaseTaskID, deleteInfo.LineGroupID, deleteInfo.Domains, traceID)
+	dispatchResult, err := dispatcher.EnsureDispatchedForDelete(releaseTaskID, deleteInfo.WebsiteID, deleteInfo.LineGroupID, deleteInfo.Domains, traceID)
 	if err != nil {
 		log.Printf("[Website Delete] Failed to dispatch tasks: %v", err)
 		httpx.FailErr(c, httpx.ErrDatabaseError("failed to dispatch tasks", err))

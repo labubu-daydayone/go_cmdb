@@ -8,7 +8,7 @@ import (
 )
 
 // EnsureDispatchedForDelete 专门用于删除场景的派发逻辑（不查询 website）
-func (d *AgentTaskDispatcher) EnsureDispatchedForDelete(releaseTaskID int64, lineGroupID int64, domains []string, traceID string) (*DispatchResult, error) {
+func (d *AgentTaskDispatcher) EnsureDispatchedForDelete(releaseTaskID int64, websiteID int64, lineGroupID int64, domains []string, traceID string) (*DispatchResult, error) {
 	result := &DispatchResult{}
 
 	// 1. 查询 release_task
@@ -43,12 +43,15 @@ func (d *AgentTaskDispatcher) EnsureDispatchedForDelete(releaseTaskID int64, lin
 	// 4. 标记派发已触发
 	result.DispatchTriggered = true
 
-	// 5. 构建 payload（使用传入的 domains）
+	// 5. 构建 payload（使用传入的 domains 和 websiteID）
 	payload := make(map[string]interface{})
-	payload["releaseTaskId"] = releaseTaskID
+	payload["type"] = "applyConfig"
 	payload["action"] = "delete"
-	payload["domains"] = domains
+	payload["websiteId"] = websiteID
+	payload["releaseTaskId"] = releaseTaskID
 	payload["traceId"] = traceID
+	payload["reload"] = true
+	payload["domains"] = domains
 
 	// 6. 派发到每个目标节点
 	for _, nodeID := range targetNodes {
