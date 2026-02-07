@@ -60,15 +60,17 @@ func (d *AgentTaskDispatcher) EnsureDispatched(releaseTaskID int64, websiteID in
 
 	result.TargetNodeCount = len(targetNodes)
 
-	// 5. 无目标节点时标记失败（断链止血）
+	// 5. 无目标节点时不派发（但任务保持 pending，不标记为 failed）
 	if result.TargetNodeCount == 0 {
-		errMsg := fmt.Sprintf("no eligible nodes for lineGroupId=%d", website.LineGroupID)
+		errMsg := "no eligible nodes, dispatch skipped"
 		result.ErrorMsg = errMsg
 		result.DispatchTriggered = false
+		// 更新 last_error 但保持 status 为 pending（不改为 failed）
 		d.db.Model(&releaseTask).Updates(map[string]interface{}{
-			"status":     model.ReleaseTaskStatusFailed,
-			"last_error": errMsg,
+			"total_nodes": 0,
+			"last_error":  errMsg,
 		})
+		log.Printf("[Dispatcher] No eligible nodes for lineGroupId=%d, releaseTaskId=%d remains pending", website.LineGroupID, releaseTaskID)
 		// 不返回错误，让上层接口返回 code=0
 		return result, nil
 	}
