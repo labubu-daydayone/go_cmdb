@@ -2,7 +2,6 @@ package cache_rules
 
 import (
 	"strconv"
-	"strings"
 
 	"go_cmdb/internal/httpx"
 	"go_cmdb/internal/model"
